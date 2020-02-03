@@ -1,8 +1,7 @@
-/*eslint-disable*/
-import {EventEmitter} from 'events';
-import {TcpNetConnectOpts} from 'net';
-import {ConnectionOptions} from 'tls';
-import {DeepPartial} from './internal-types';
+import { EventEmitter } from 'events';
+import { TcpNetConnectOpts } from 'net';
+import { ConnectionOptions } from 'tls';
+import { DeepPartial } from './internal-types';
 
 // User defined schemas
 export interface TableSchema {
@@ -960,10 +959,10 @@ export interface RTable<TSchema extends TableSchema, T = TSchema['type']> extend
 
   get(key: any): RSingleSelection<T>;
   getAll(key: RValue<string> | RValue<Date> | RValue<boolean> | RValue<number>,
-    options?: {index: TSchema['index'] | 'id'}): RSelection<T>;
+         options?: {index: TSchema['index'] | 'id'}): RSelection<T>;
   getAll(key1: RValue<string> | RValue<Date> | RValue<boolean> | RValue<number>,
-    key2: RValue<string> | RValue<Date> | RValue<boolean> | RValue<number>,
-    options?: {index: TSchema['index'] | 'id'}): RSelection<T>;
+         key2: RValue<string> | RValue<Date> | RValue<boolean> | RValue<number>,
+         options?: {index: TSchema['index'] | 'id'}): RSelection<T>;
   getAll(
     key1: RValue<string> | RValue<Date> | RValue<boolean> | RValue<number>,
     key2: RValue<string> | RValue<Date> | RValue<boolean> | RValue<number>,
