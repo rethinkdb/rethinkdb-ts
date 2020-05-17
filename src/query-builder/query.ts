@@ -40,10 +40,6 @@ const queryProxyHandler: ProxyHandler<any> = {
     // tslint:disable-next-line:no-shadowed-variable
     const { term } = target;
     switch (p) {
-      case 'then':
-        throw new RethinkDBError(
-          'Cannot `await` a query, did you forget `run` or `getCursor`?'
-        );
       case 'toString':
         return () => backtraceTerm(term)[0];
       case 'run':
