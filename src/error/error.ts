@@ -1,4 +1,4 @@
-import { RethinkDBErrorType } from '..';
+import { RethinkDBErrorType } from '../types';
 import { QueryJson, TermJson } from '../internal-types';
 import { ErrorType, ResponseType } from '../proto/enums';
 import { globals } from '../query-builder/globals';

@@ -14,13 +14,20 @@ export type RValue<T = any> = RDatum<T> | T;
 // : T extends null | string | number | boolean
 // ? RDatum<T>
 // : T extends Array<infer T1>
-// ? RArray<T1> : T extends Function ? never : T extends object ? { [P in keyof T]: RValue<any> } : never;
+// ? RArray<T1> : T extends Function ? never : T extends Record<string, unknown> ? { [P in keyof T]: RValue<any> } : never;
 // type RObject<T> =  {
 //     [x: keyof T]: RValue<T[keyof T]>;
 // } | RDatum<T>;
-type RArray<T> = Array<RValue<T>>;
+
+export type NestedField =
+  | RDatum<NestedField>
+  | { [property: string]: NestedField }
+  | string
+  | boolean
+  | number;
+
 export type Func<T, Res = any> = (doc: RDatum<T>) => RValue<Res>;
-export type MultiFieldSelector = object | any[] | string;
+export type MultiFieldSelector = NestedField[];
 export type FieldSelector<T, U = any> = string | Func<T, U>;
 
 export interface ServerInfo {
@@ -64,7 +71,7 @@ export interface TableCreateOptions {
   replicas?: number | { [serverTag: string]: number };
   primaryReplicaTag?: string;
   nonvotingReplicaTags?: string[];
-  durability?: Durability; // "soft" or "hard" defualt: "hard"
+  durability?: Durability; // "soft" or "hard" default: "hard"
 }
 
 export interface TableReconfigureOptions {
@@ -83,7 +90,7 @@ export interface TableOptions {
 export interface DeleteOptions {
   ignoreWriteHook?: boolean;
   returnChanges?: boolean | string | 'always'; // true, false or "always" default: false
-  durability?: Durability; // "soft" or "hard" defualt: table
+  durability?: Durability; // "soft" or "hard" default: table
 }
 
 export interface InsertOptions extends DeleteOptions {
@@ -91,7 +98,11 @@ export interface InsertOptions extends DeleteOptions {
     | 'error'
     | 'replace'
     | 'update'
-    | ((id: RDatum, oldDoc: RDatum, newDoc: RDatum) => RDatum | object);
+    | ((
+        id: RDatum,
+        oldDoc: RDatum,
+        newDoc: RDatum,
+      ) => RDatum | Record<string, unknown>);
 }
 
 export interface UpdateOptions extends DeleteOptions {
@@ -132,9 +143,9 @@ export interface HttpRequestOptions {
 
   // Request Options
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD'; // "GET" "POST" "PUT" "PATCH" "DELETE" "HEAD"
-  params?: object;
-  header?: { [key: string]: string | object };
-  data?: object;
+  params?: Record<string, unknown>;
+  header?: { [key: string]: string | Record<string, unknown> };
+  data?: Record<string, unknown>;
 }
 
 export interface HTTPStreamRequestOptions extends HttpRequestOptions {
@@ -216,7 +227,7 @@ export interface TableConfig {
   shards: TableShard[];
   indexes: string[];
   write_acks: string;
-  durability: Durability; // "soft" or "hard" defualt: "hard"
+  durability: Durability; // "soft" or "hard" default: "hard"
 }
 export interface TableStatus {
   id: string;
@@ -421,10 +432,10 @@ export interface RDatum<T = any> extends RQuery<T> {
   ): U extends RStream ? RStream : RDatum;
   <U extends string | number>(attribute: RValue<U>): U extends keyof T
     ? RDatum<T[U]>
-    : RDatum<any>;
+    : RDatum;
   getField<U extends string | number>(
     attribute: RValue<U>,
-  ): U extends keyof T ? RDatum<T[U]> : RDatum<any>;
+  ): U extends keyof T ? RDatum<T[U]> : RDatum;
   nth(
     attribute: RValue<number>,
   ): T extends Array<infer T1> ? RDatum<T1> : never;
@@ -488,8 +499,10 @@ export interface RDatum<T = any> extends RQuery<T> {
 
   // LOGIC
   contains<U = T extends Array<infer T1> ? T1 : never>(
-    val1: any[] | null | string | number | object | Func<U>,
-    ...value: Array<any[] | null | string | number | object | Func<U>>
+    val1: any[] | null | string | number | Record<string, unknown> | Func<U>,
+    ...value: Array<
+      any[] | null | string | number | Record<string, unknown> | Func<U>
+    >
   ): T extends Array<infer T1> ? RDatum<boolean> : never; // also predicate
 
   // ORDER BY
@@ -505,7 +518,7 @@ export interface RDatum<T = any> extends RQuery<T> {
     ...fieldOrFunc: Array<FieldSelector<T>>
   ): T extends Array<infer T1> ? RDatum : never; // <GroupResults<T[U], T[]>>;
 
-  ungroup(): RDatum<Array<GroupResults<any, any>>>;
+  ungroup(): RDatum<Array<GroupResults>>;
 
   // SELECT FUNCTIONS
   count<U = T extends Array<infer T1> ? T1 : never>(
@@ -555,7 +568,9 @@ export interface RDatum<T = any> extends RQuery<T> {
     : RDatum<Partial<T>>;
 
   merge<U = any>(
-    ...objects: Array<object | RDatum | ((arg: RDatum<T>) => any)>
+    ...objects: Array<
+      Record<string, unknown> | RDatum | ((arg: RDatum<T>) => any)
+    >
   ): RDatum<U>;
 
   innerJoin<U, T2 = T extends Array<infer T1> ? T1 : never>(
@@ -667,7 +682,7 @@ export interface RDatum<T = any> extends RQuery<T> {
     trueBranch: any,
     falseBranchOrTest: any,
     ...branches: any[]
-  ): T extends boolean ? RDatum<any> : never;
+  ): T extends boolean ? RDatum : never;
   and(
     ...bool: Array<RValue<boolean>>
   ): T extends boolean ? RDatum<boolean> : never;
@@ -776,8 +791,10 @@ export interface RStream<T = any> extends RQuery<T[]> {
 
   // LOGIC
   contains(
-    val1: any[] | null | string | number | object | Func<T>,
-    ...value: Array<any[] | null | string | number | object | Func<T>>
+    val1: any[] | null | string | number | Record<string, unknown> | Func<T>,
+    ...value: Array<
+      any[] | null | string | number | Record<string, unknown> | Func<T>
+    >
   ): RDatum<boolean>;
 
   // ORDER BY
@@ -820,7 +837,9 @@ export interface RStream<T = any> extends RQuery<T[]> {
   without(...fields: MultiFieldSelector[]): RStream<Partial<T>>;
 
   merge<U = any>(
-    ...objects: Array<object | RDatum | ((arg: RDatum<T>) => any)>
+    ...objects: Array<
+      Record<string, unknown> | RDatum | ((arg: RDatum<T>) => any)
+    >
   ): RStream<U>;
 
   skip(n: RValue<number>): this;
@@ -1149,7 +1168,7 @@ export interface R {
   ): RDatum;
   geojson(geoJSON: any): RDatum;
   // special
-  args(arg: Array<RValue<Primitives | object | any[]>>): any;
+  args(arg: Array<RValue<Primitives | Record<string, unknown> | any[]>>): any;
   error(message?: RValue<string>): any;
   js(js: RValue<string>, options?: { timeout: number }): RDatum;
   literal(): RDatum;
@@ -1449,7 +1468,7 @@ export interface R {
   hasFields<T>(stream: RStream<T>, ...fields: MultiFieldSelector[]): RStream<T>;
   hasFields<T>(
     datum: RDatum<T>,
-    ...fields: string[]
+    ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
   filter<T>(
     feed: RFeed<T>,
@@ -1480,13 +1499,17 @@ export interface R {
   intersects<T>(stream: RStream<T>, geometry: RDatum): RStream<T>;
   contains<T, U = T extends Array<infer T1> ? T1 : never>(
     datum: RDatum<T>,
-    val1: any[] | null | string | number | object | Func<U>,
-    ...value: Array<any[] | null | string | number | object | Func<U>>
+    val1: any[] | null | string | number | Record<string, unknown> | Func<U>,
+    ...value: Array<
+      any[] | null | string | number | Record<string, unknown> | Func<U>
+    >
   ): T extends Array<infer T1> ? RDatum<boolean> : never; // also predicate
   contains<T>(
     stream: RStream<T>,
-    val1: any[] | null | string | number | object | Func<T>,
-    ...value: Array<any[] | null | string | number | object | Func<T>>
+    val1: any[] | null | string | number | Record<string, unknown> | Func<T>,
+    ...value: Array<
+      any[] | null | string | number | Record<string, unknown> | Func<T>
+    >
   ): RDatum<boolean>;
   orderBy<T, U = T extends Array<infer T1> ? T1 : never>(
     datum: RDatum<T>,
@@ -1619,12 +1642,12 @@ export interface R {
     ...fields: MultiFieldSelector[]
   ): RStream<Partial<T>>;
   merge<U = any>(
-    obj: object | RDatum,
-    ...objects: Array<object | RDatum | ((arg: RDatum) => any)>
+    obj: Record<string, unknown> | RDatum,
+    ...objects: Array<Record<string, unknown> | RDatum | ((arg: RDatum) => any)>
   ): RDatum<U>;
   merge<U = any>(
     stream: RStream,
-    ...objects: Array<object | RDatum | ((arg: RDatum) => any)>
+    ...objects: Array<Record<string, unknown> | RDatum | ((arg: RDatum) => any)>
   ): RStream<U>;
   skip<T extends any[]>(datum: RDatum<T>, n: RValue<number>): RDatum<T>;
   skip<T>(stream: RStream<T>, n: RValue<number>): RStream<T>;
@@ -1695,10 +1718,13 @@ export interface R {
     type: 'binary',
   ): T extends string ? RDatum<Buffer> : never;
 
-  do<T extends Primitives | object, U>(
+  do<T extends Primitives | Record<string, unknown>, U>(
     datum: RValue<T>,
     ...args: Array<
-      RDatum | Primitives | object | ((arg: RDatum<T>, ...args: RDatum[]) => U)
+      | RDatum
+      | Primitives
+      | Record<string, unknown>
+      | ((arg: RDatum<T>, ...args: RDatum[]) => U)
     >
   ): U extends RStream ? RStream : RDatum;
 
@@ -1752,7 +1778,7 @@ export interface R {
     index: RValue<number>,
     value: RValue<U>,
   ): T extends U[] ? RDatum<T> : never;
-  ungroup(datum: RDatum): RDatum<Array<GroupResults<any, any>>>;
+  ungroup(datum: RDatum): RDatum<Array<GroupResults>>;
 
   // Works only if T is a string
 
@@ -1815,7 +1841,7 @@ export interface R {
     trueBranch: any,
     falseBranchOrTest: any,
     ...branches: any[]
-  ): RDatum<any>;
+  ): RDatum;
   and(datum: RValue<boolean>, ...bool: Array<RValue<boolean>>): RDatum<boolean>;
   or(datum: RValue<boolean>, ...bool: Array<RValue<boolean>>): RDatum<boolean>;
   not(datum: RValue<boolean>): RDatum<boolean>;
