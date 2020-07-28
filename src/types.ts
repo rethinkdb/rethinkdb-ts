@@ -1166,7 +1166,9 @@ export interface R {
   ): RDatum;
   geojson(geoJSON: any): RDatum;
   // special
-  args(arg: Array<RValue<Primitives | Record<string, unknown> | any[]>>): any;
+  args(
+    arg: RDatum | Array<RValue<Primitives | Record<string, unknown> | any[]>>,
+  ): any;
   error(message?: RValue<string>): any;
   js(js: RValue<string>, options?: { timeout: number }): RDatum;
   literal(): RDatum;
