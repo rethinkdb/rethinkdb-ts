@@ -19,15 +19,13 @@ export type RValue<T = any> = RDatum<T> | T;
 //     [x: keyof T]: RValue<T[keyof T]>;
 // } | RDatum<T>;
 
-export type NestedField =
-  | RDatum<NestedField>
-  | { [property: string]: NestedField }
+export type Func<T, Res = any> = (doc: RDatum<T>) => RValue<Res>;
+export type MultiFieldSelector =
+  | RDatum<MultiFieldSelector>
+  | { [property: string]: MultiFieldSelector }
   | string
   | boolean
   | number;
-
-export type Func<T, Res = any> = (doc: RDatum<T>) => RValue<Res>;
-export type MultiFieldSelector = NestedField[];
 export type FieldSelector<T, U = any> = string | Func<T, U>;
 
 export interface ServerInfo {
