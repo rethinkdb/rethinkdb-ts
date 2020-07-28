@@ -1,4 +1,3 @@
-import { isArray, isUndefined } from 'util';
 import { QueryJson, TermJson } from '../internal-types';
 import { QueryType, TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
@@ -8,20 +7,20 @@ import { rConfig, rConsts, termConfig } from '../query-builder/query-config';
 export function backtraceTerm(
   term?: TermJson,
   head = true,
-  backtrace?: Array<number | string>
+  backtrace?: Array<number | string>,
 ): [string, string] {
   const parseArg = (
     arg: TermJson,
     index: number,
     all?: any[],
-    forceHead = false
+    forceHead = false,
   ) =>
     backtraceTerm(
       arg,
       forceHead || (!all && index === 0),
-      nextBacktrace(index, backtrace)
+      nextBacktrace(index, backtrace),
     );
-  if (isUndefined(term)) {
+  if (term === undefined) {
     return getMarked('');
   }
   if (!Array.isArray(term)) {
@@ -37,7 +36,7 @@ export function backtraceTerm(
     }
     return getMarked(
       head ? combineMarks`r.expr(${termStr})` : termStr,
-      backtrace
+      backtrace,
     );
   }
   const [type, args, optarg] = term;
@@ -55,44 +54,43 @@ export function backtraceTerm(
           : combineMarks`[${args
               .map(parseArg)
               .reduce(joinMultiArray, ['', ''])}]`,
-        backtrace
+        backtrace,
       );
     }
     case TermType.IMPLICIT_VAR:
       return getMarked('r.row', backtrace);
     case TermType.FUNC: {
-      if (!!args && isArray(args) && hasImplicitVar(term)) {
+      if (!!args && Array.isArray(args) && hasImplicitVar(term)) {
         return backtraceTerm(args[1], false, nextBacktrace(1, backtrace));
       }
       const paramsBacktrace = nextBacktrace(0, backtrace);
       const params = (args as any)[0][1].map((i: number) =>
-        getMarked(`var_${i}`, nextBacktrace(i, paramsBacktrace))
+        getMarked(`var_${i}`, nextBacktrace(i, paramsBacktrace)),
       );
       if (globals.backtraceType === 'lambda') {
         return getMarked(
           combineMarks`(${params.reduce(joinMultiArray, [
             '',
-            ''
+            '',
           ])}) => ${backtraceTerm(
             (args as any)[1],
             false,
-            nextBacktrace(1, backtrace)
+            nextBacktrace(1, backtrace),
           )}`,
-          backtrace
-        );
-      } else {
-        return getMarked(
-          combineMarks`function(${params.reduce(joinMultiArray, [
-            '',
-            ''
-          ])}) { return ${backtraceTerm(
-            (args as any)[1],
-            false,
-            nextBacktrace(1, backtrace)
-          )} }`,
-          backtrace
+          backtrace,
         );
       }
+      return getMarked(
+        combineMarks`function(${params.reduce(joinMultiArray, [
+          '',
+          '',
+        ])}) { return ${backtraceTerm(
+          (args as any)[1],
+          false,
+          nextBacktrace(1, backtrace),
+        )} }`,
+        backtrace,
+      );
     }
     case TermType.VAR: {
       return getMarked(`var_${(args as any)[0]}`, backtrace);
@@ -111,7 +109,7 @@ export function backtraceTerm(
         parsedParams[0]
           ? combineMarks`${parsedCaller}.do(${parsedParams}, ${parsedFunc})`
           : combineMarks`${parsedCaller}.do(${parsedFunc})`,
-        backtrace
+        backtrace,
       );
     }
     case TermType.BRACKET: {
@@ -124,17 +122,17 @@ export function backtraceTerm(
         .reduce(joinMultiArray, ['', '']);
       return getMarked(
         combineMarks`${parseArg(caller, 0)}(${parsedParams})`,
-        backtrace
+        backtrace,
       );
     }
     default: {
-      const c = rConsts.find(co => co[0] === type);
+      const c = rConsts.find((co) => co[0] === type);
       if (c) {
         return getMarked(`r.${c[1]}`, backtrace);
       }
-      const func = termConfig.find(conf => conf[0] === type);
+      const func = termConfig.find((conf) => conf[0] === type);
       if (!func) {
-        const rfunc = rConfig.find(conf => conf[0] === type);
+        const rfunc = rConfig.find((conf) => conf[0] === type);
         if (rfunc) {
           const rparsedParams = [...(args || [])]
             .map(parseArg)
@@ -147,10 +145,10 @@ export function backtraceTerm(
                   }(${rparsedParams}, ${backtraceObject(optarg, backtrace)})`
                 : combineMarks`r.${rfunc[1]}(${backtraceObject(
                     optarg,
-                    backtrace
+                    backtrace,
                   )})`
               : combineMarks`r.${rfunc[1]}(${rparsedParams})`,
-            backtrace
+            backtrace,
           );
         }
         return getMarked('');
@@ -158,7 +156,7 @@ export function backtraceTerm(
       if (!args) {
         return getMarked(
           combineMarks`r.${func[1]}(${backtraceObject(optarg, backtrace)})`,
-          backtrace
+          backtrace,
         );
       }
       const [caller, ...params] = args;
@@ -196,12 +194,10 @@ export function backtraceTerm(
       return getMarked(
         parsedOptarg
           ? hasParams
-            ? combineMarks`${parsedCaller}.${
-                func[1]
-              }(${parsedParams}, ${parsedOptarg})`
+            ? combineMarks`${parsedCaller}.${func[1]}(${parsedParams}, ${parsedOptarg})`
             : combineMarks`${parsedCaller}.${func[1]}(${parsedOptarg})`
           : combineMarks`${parsedCaller}.${func[1]}(${parsedParams})`,
-        backtrace
+        backtrace,
       );
     }
   }
@@ -219,19 +215,23 @@ function backtraceObject(obj: any, backtrace?: Array<number | string>) {
     .map(([key, val]) => {
       const next = param === key ? nextB : undefined;
       return getMarked(
-        combineMarks`${snakeToCamel(key)}: ${backtraceTerm(val, false, next)}`
+        combineMarks`${snakeToCamel(key)}: ${backtraceTerm(
+          val as TermJson,
+          false,
+          next,
+        )}`,
       );
     })
     .reduce(joinMultiArray, ['', ''])} }`;
 }
 
 function snakeToCamel(name: string) {
-  return name.replace(/(_[a-z])/g, x => x.charAt(1).toUpperCase());
+  return name.replace(/(_[a-z])/g, (x) => x.charAt(1).toUpperCase());
 }
 
 export function backtraceQuery(
   query: QueryJson,
-  backtrace?: number[]
+  backtrace?: number[],
 ): [string] | [string, string] {
   const [type, term, optarg] = query;
   switch (type) {
@@ -260,7 +260,7 @@ function joinMultiArray(acc: string[], next: string[]): [string, string] {
 
 function getMarked(
   str: string | [string, string],
-  backtrace?: Array<number | string>
+  backtrace?: Array<number | string>,
 ): [string, string] {
   const s = Array.isArray(str) ? str[0] : str;
   const emptyMarks = Array.isArray(str) ? str[1] : ' '.repeat(str.length);

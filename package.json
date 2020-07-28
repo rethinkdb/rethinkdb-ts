@@ -1,6 +1,6 @@
 {
   "name": "rethinkdb-ts",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "RethinkDB TypeScript driver",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -8,10 +8,12 @@
     "test": "test"
   },
   "scripts": {
-    "test": "ts-mocha -p ./tsconfig.test.json --check-leaks -t 60000 ./test/*.ts",
-    "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "build": "tsc",
-    "proto": "pbjs -t static-module -w commonjs -o src/proto/ql2.js src/proto/ql2.proto && pbts -o src/proto/ql2.d.ts src/proto/ql2.js && ts-node ./generate-enums"
+    "coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "lint": "eslint src",
+    "test": "ts-mocha -p ./tsconfig.test.json --check-leaks -t 60000 ./test/*.ts",
+    "proto": "pbjs -t static-module -w commonjs -o src/proto/ql2.js src/proto/ql2.proto && pbts -o src/proto/ql2.d.ts src/proto/ql2.js && ts-node ./generate-enums",
+    "start:dev": "tsc --watch"
   },
   "repository": {
     "type": "git",
@@ -24,22 +26,38 @@
   },
   "homepage": "https://github.com/rethinkdb/rethinkdb-ts#readme",
   "devDependencies": {
-    "@types/mocha": "^5.2.5",
-    "@types/node": "^10.11.7",
-    "@types/semver": "^5.5.0",
-    "coveralls": "^3.0.2",
-    "iterall": "^1.2.2",
-    "mocha": "^5.2.0",
-    "nyc": "^13.0.1",
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^14.0.5",
+    "@types/semver": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^3.0.0",
+    "@typescript-eslint/parser": "^3.0.0",
+    "coveralls": "^3.1.0",
+    "eslint": "^7.0.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-prettier": "^3.1.3",
+    "husky": "^4.2.5",
+    "iterall": "^1.3.0",
+    "lint-staged": "^10.2.6",
+    "mocha": "^7.1.2",
+    "nyc": "^15.0.1",
+    "prettier": "^2.0.5",
     "protobufjs": "^6.8.8",
-    "semver": "^5.5.1",
-    "ts-mocha": "^2.0.0",
-    "ts-node": "^7.0.1",
-    "tslint": "^5.11.0",
-    "typescript": "^3.1.3"
+    "semver": "^5.7.1",
+    "ts-mocha": "^7.0.0",
+    "ts-node": "^8.10.1",
+    "typescript": "^3.9.3"
   },
-  "dependencies": {},
   "publishConfig": {
     "access": "public"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts}": "eslint --cache --fix"
   }
 }

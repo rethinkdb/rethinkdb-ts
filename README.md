@@ -1,6 +1,6 @@
 # rethinkdb-ts
 [![npm Package Version](https://img.shields.io/npm/v/rethinkdb-ts.svg?maxAge=2592000)](https://www.npmjs.com/package/rethinkdb-ts)
-
+[![Build Status](https://travis-ci.org/rethinkdb/rethinkdb-ts.svg?branch=master)](https://travis-ci.org/rethinkdb/rethinkdb-ts) [![Coverage Status](https://coveralls.io/repos/github/rethinkdb/rethinkdb-ts/badge.svg?branch=master)](https://coveralls.io/github/rethinkdb/rethinkdb-ts?branch=master)
 ## Install
 
 `npm i rethinkdb-ts`

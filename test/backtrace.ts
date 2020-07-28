@@ -2391,7 +2391,7 @@ describe('backtraces', () => {
   [ { type: 'POS', pos: 0 } ]
 
   Error:
-  Error in time logic: Year is out of valid range: 1400..10000 in:
+  Error in time logic: Year is out of valid range: 1400..9999 in:
   r.time(1023, 11, 3, "Z").add("Hello")
   ^^^^^^^^^^^^^^^^^^^^^^^^
   */
@@ -2406,7 +2406,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Error in time logic: Year is out of valid range: 1400..10000 in:\nr.time(1023, 11, 3, "Z").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+          'Error in time logic: Year is out of valid range: 1400..9999 in:\nr.time(1023, 11, 3, "Z").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });

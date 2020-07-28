@@ -6,56 +6,28 @@ import {
   doTermFunc,
   getCursorQueryFunc,
   runQueryFunc,
-  termBuilder
+  termBuilder,
 } from './term-builder';
 
 export const querySymbol = Symbol('RethinkDBQuery');
 
 export const isQuery = (query: any) =>
-  ((query !== null && typeof query === 'object') ||
-    typeof query === 'function') &&
-  querySymbol in query;
+  query === Object(query) && Object.hasOwnProperty.call(query, querySymbol);
 
 export function toQuery(term: TermJson) {
-  // Using proxy since:
-  //  'classes' -
-  //    does not support bracket operation
-  //    (unless they inherit from Function and it has no access to the surroundings)
-  //  'functions' -
-  //    require adding all query functions for each new terms or
-  //    changing the prototype each time which is a big performance no-no
-  const query: any = new Proxy(termBuilder(bracket, term), queryProxyHandler);
+  const query: any = termBuilder(bracket, term);
   query.term = term;
+
+  query[querySymbol] = true;
+
+  query.toString = () => backtraceTerm(term)[0];
+  query.run = runQueryFunc(term);
+  query.getCursor = getCursorQueryFunc(term);
+  query.do = doTermFunc(query);
+
+  for (let i = 0; i < termConfig.length; i += 1) {
+    const config = termConfig[i];
+    query[config[1]] = termBuilder(config, term);
+  }
   return query;
 }
-
-const proxyKeys = new Set<PropertyKey>([
-  querySymbol,
-  'run',
-  'do',
-  ...termConfig.map(t => t[1])
-]);
-const queryProxyHandler: ProxyHandler<any> = {
-  get(target, p, receiver) {
-    // tslint:disable-next-line:no-shadowed-variable
-    const { term } = target;
-    switch (p) {
-      case 'toString':
-        return () => backtraceTerm(term)[0];
-      case 'run':
-        return runQueryFunc(term);
-      case 'getCursor':
-        return getCursorQueryFunc(term);
-      case 'do':
-        return doTermFunc(receiver);
-    }
-    const config = termConfig.find(t => t[1] === p);
-    if (config) {
-      return termBuilder(config, term);
-    }
-    return target[p];
-  },
-  has(target, p) {
-    return p in target || proxyKeys.has(p);
-  }
-};

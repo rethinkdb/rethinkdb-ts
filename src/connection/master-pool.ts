@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { isIPv6 } from 'net';
-import { isUndefined } from 'util';
 import { RethinkDBError } from '../error/error';
 import { TermJson } from '../internal-types';
 import { r } from '../query-builder/r';
@@ -13,7 +12,7 @@ import {
   RethinkDBErrorType,
   RPoolConnectionOptions,
   RServer,
-  RunOptions
+  RunOptions,
 } from '../types';
 import { RethinkDBConnection } from './connection';
 import { ServerConnectionPool } from './server-pool';
@@ -21,10 +20,15 @@ import { setConnectionDefaults } from './socket';
 
 export class MasterConnectionPool extends EventEmitter implements MasterPool {
   public draining = false;
+
   private healthy: boolean | undefined = undefined;
+
   private discovery: boolean;
+
   private discoveryCursor?: RCursor<Changes<ServerStatus>>;
+
   private servers: RServer[];
+
   private serverPools: ServerConnectionPool[];
 
   private connParam: RPoolConnectionOptions;
@@ -43,7 +47,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     timeoutGb = 60 * 60 * 1000,
     maxExponent = 6,
     silent = false,
-    log = (message: string) => undefined
+    log = (message: string) => undefined,
   }: RPoolConnectionOptions = {}) {
     super();
     // min one per server but wont redistribute conn from failed servers
@@ -60,7 +64,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       timeoutGb,
       maxExponent,
       silent,
-      log
+      log,
     };
     this.servers = servers.map(setConnectionDefaults);
     this.serverPools = [];
@@ -74,7 +78,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     timeoutGb = this.connParam.timeoutGb,
     maxExponent = this.connParam.maxExponent,
     silent = this.connParam.silent,
-    log = this.connParam.log
+    log = this.connParam.log,
   }) {
     if (this.discovery !== discovery) {
       this.discovery = discovery;
@@ -92,7 +96,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       timeoutGb,
       maxExponent,
       silent,
-      log
+      log,
     };
     this.setServerPoolsOptions(this.connParam);
   }
@@ -104,26 +108,26 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       'size',
       'available-size',
       'healthy',
-      'error'
+      'error',
     ];
   }
 
   public async initServers(serverNum = 0): Promise<void> {
     if (serverNum < this.servers.length) {
-      return this.createServerPool(this.servers[serverNum]).then(pool => {
+      return this.createServerPool(this.servers[serverNum]).then((pool) => {
         if (!this.draining) {
           return this.initServers(serverNum + 1);
-        } else {
-          return pool.drain();
         }
+        return pool.drain();
       });
-    } else if (!this.draining) {
+    }
+    if (!this.draining) {
       this.setServerPoolsOptions(this.connParam);
     }
   }
 
   public get isHealthy() {
-    return this.serverPools.some(pool => pool.isHealthy);
+    return this.serverPools.some((pool) => pool.isHealthy);
   }
 
   public waitForHealthy() {
@@ -138,8 +142,8 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
             reject(
               new RethinkDBError('Error initializing master pool', {
                 type: RethinkDBErrorType.MASTER_POOL_FAIL,
-                cause: error
-              })
+                cause: error,
+              }),
             );
           }
         });
@@ -155,7 +159,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       this.discoveryCursor.close();
     }
     this.setHealthy(false);
-    await Promise.all(this.serverPools.map(pool => this.closeServerPool(pool)));
+    await Promise.all(
+      this.serverPools.map((pool) => this.closeServerPool(pool)),
+    );
   }
 
   public getPools() {
@@ -163,7 +169,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   }
 
   public getConnections(): Connection[] {
-    return this.serverPools.map(pool => pool.getConnections()).reduce(flat, []);
+    return this.serverPools
+      .map((pool) => pool.getConnections())
+      .reduce(flat, []);
   }
 
   public getLength() {
@@ -176,12 +184,12 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
 
   public async queue(
     term: TermJson,
-    globalArgs: RunOptions = {}
+    globalArgs: RunOptions = {},
   ): Promise<Cursor | undefined> {
     if (!this.isHealthy) {
       throw new RethinkDBError(
         'None of the pools have an opened connection and failed to open a new one.',
-        { type: RethinkDBErrorType.POOL_FAIL }
+        { type: RethinkDBErrorType.POOL_FAIL },
       );
     }
     this.emit('queueing');
@@ -193,7 +201,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     const pool = new ServerConnectionPool(server, {
       ...this.connParam,
       buffer: 1,
-      max: 1
+      max: 1,
     });
     this.serverPools.push(pool);
     this.subscribeToPool(pool);
@@ -204,7 +212,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   private setServerPoolsOptions(params: RPoolConnectionOptions) {
     const { buffer = 1, max = 1, ...otherParams } = params;
     const pools = this.getPools();
-    const healthyLength = pools.filter(pool => pool.isHealthy).length;
+    const healthyLength = pools.filter((pool) => pool.isHealthy).length;
     for (let i = 0; i < pools.length; i++) {
       const pool = pools[i];
       pool
@@ -217,9 +225,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
                   (i === (buffer % healthyLength) - 1 ? 1 : 0),
                 max:
                   Math.floor(max / healthyLength) +
-                  (i === (max % healthyLength) - 1 ? 1 : 0)
+                  (i === (max % healthyLength) - 1 ? 1 : 0),
               }
-            : otherParams
+            : otherParams,
         )
         .then(() => {
           if (this.draining) {
@@ -228,7 +236,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
         });
     }
     if (this.draining) {
-      pools.forEach(pool => pool.drain());
+      pools.forEach((pool) => pool.drain());
     }
   }
 
@@ -242,13 +250,13 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     let state: 'initializing' | 'ready' = 'initializing';
     return (
       this.discoveryCursor
-        .eachAsync(async row => {
+        .eachAsync(async (row) => {
           if (row.state) {
             state = row.state;
             if (row.state === 'ready') {
               this.servers
-                .filter(server => !newServers.some(s => s === server))
-                .forEach(server => this.removeServer(server));
+                .filter((server) => !newServers.some((s) => s === server))
+                .forEach((server) => this.removeServer(server));
             }
           }
           if (row.new_val) {
@@ -259,7 +267,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
             if (!this.servers.includes(server)) {
               this.servers.push(server);
               this.createServerPool(server).then(() =>
-                this.setServerPoolsOptions(this.connParam)
+                this.setServerPoolsOptions(this.connParam),
               );
             }
           } else if (row.old_val) {
@@ -267,34 +275,34 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
           }
         })
         // handle disconnections
-        .catch(() => new Promise(resolve => setTimeout(resolve, 20 * 1000)))
+        .catch(() => new Promise((resolve) => setTimeout(resolve, 20 * 1000)))
         .then(() => (this.discovery ? this.discover() : undefined))
     );
   }
 
   private getServerFromStatus(status: ServerStatus) {
     const oldServer = this.servers.find(
-      server =>
+      (server) =>
         (server.host === status.network.hostname ||
           !!status.network.canonical_addresses.find(
-            addr => addr.host === server.host
+            (addr) => addr.host === server.host,
           )) &&
-        server.port === status.network.reql_port
+        server.port === status.network.reql_port,
     );
     return (
       oldServer || {
         host: getCanonicalAddress(status.network.canonical_addresses),
-        port: status.network.reql_port
+        port: status.network.reql_port,
       }
     );
   }
 
   private async removeServer(server: RServer) {
     if (this.servers.includes(server)) {
-      this.servers = this.servers.filter(s => s !== server);
+      this.servers = this.servers.filter((s) => s !== server);
     }
     const pool = this.serverPools.find(
-      p => server.host === p.server.host && server.port === p.server.port
+      (p) => server.host === p.server.host && server.port === p.server.port,
     );
     if (pool) {
       await this.closeServerPool(pool);
@@ -311,9 +319,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     pool
       .on('size', () => this.emit('size', this.getOpenConnections().length))
       .on('available-size', () =>
-        this.emit('available-size', this.getAvailableLength())
+        this.emit('available-size', this.getAvailableLength()),
       )
-      .on('error', error => {
+      .on('error', (error) => {
         if (this.listenerCount('error') > 0) {
           this.emit('error', error);
         }
@@ -324,9 +332,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
           this.closeServerPool(pool)
             .then(
               () =>
-                new Promise(resolve =>
-                  setTimeout(resolve, this.connParam.timeoutError)
-                )
+                new Promise((resolve) =>
+                  setTimeout(resolve, this.connParam.timeoutError),
+                ),
             )
             .then(() => {
               if (!this.draining) {
@@ -339,9 +347,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   }
 
   private setHealthy(healthy: boolean | undefined, error?: Error) {
-    if (isUndefined(healthy)) {
+    if (healthy === undefined) {
       this.healthy = undefined;
-    } else if (healthy !== this.healthy && !isUndefined(healthy)) {
+    } else if (healthy !== this.healthy && healthy !== undefined) {
       this.healthy = healthy;
       this.emit('healthy', healthy, error);
     }
@@ -359,22 +367,22 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   }
 
   private getHealthyServerPools() {
-    return this.serverPools.filter(pool => pool.isHealthy);
+    return this.serverPools.filter((pool) => pool.isHealthy);
   }
 
   private getPoolWithMinQueries() {
     return this.getHealthyServerPools().reduce((min, next) =>
-      min.getNumOfRunningQueries() < next.getNumOfRunningQueries() ? min : next
+      min.getNumOfRunningQueries() < next.getNumOfRunningQueries() ? min : next,
     );
   }
 
   private getOpenConnections() {
-    return this.getConnections().filter(conn => conn.open);
+    return this.getConnections().filter((conn) => conn.open);
   }
 
   private getIdleConnections() {
     return this.getOpenConnections().filter(
-      conn => !(conn as RethinkDBConnection).numOfQueries
+      (conn) => !(conn as RethinkDBConnection).numOfQueries,
     );
   }
 }
@@ -388,35 +396,32 @@ function flat<T>(acc: T[], next: T[]) {
 function getCanonicalAddress(addresses: RServer[]) {
   // We suppose that the addresses are all valid, and therefore use loose regex
   return addresses
-    .map(address => {
+    .map((address) => {
       if (
         /^127(\.\d{1,3}){3}$/.test(address.host) ||
         /0?:?0?:?0?:?0?:?0?:?0?:0?:1/.test(address.host)
       ) {
         return { address, value: 0 };
-      } else if (
-        isIPv6(address.host) &&
-        /^[fF]|[eE]80:.*\:.*\:/.test(address.host)
-      ) {
-        return { address, value: 1 };
-      } else if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
-        return { address, value: 2 };
-      } else if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
-        return { address, value: 3 };
-      } else if (
-        /^172\.(1\d|2\d|30|31)\.\d{1,3}\.\d{1,3}$/.test(address.host)
-      ) {
-        return { address, value: 4 };
-      } else if (/^10(\.\d{1,3}){3}$/.test(address.host)) {
-        return { address, value: 5 };
-      } else if (
-        isIPv6(address.host) &&
-        /^[fF]|[cCdD].*\:.*\:/.test('address.host')
-      ) {
-        return { address, value: 6 };
-      } else {
-        return { address, value: 7 };
       }
+      if (isIPv6(address.host) && /^[fF]|[eE]80:.*\:.*\:/.test(address.host)) {
+        return { address, value: 1 };
+      }
+      if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
+        return { address, value: 2 };
+      }
+      if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
+        return { address, value: 3 };
+      }
+      if (/^172\.(1\d|2\d|30|31)\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
+        return { address, value: 4 };
+      }
+      if (/^10(\.\d{1,3}){3}$/.test(address.host)) {
+        return { address, value: 5 };
+      }
+      if (isIPv6(address.host) && /^[fF]|[cCdD].*\:.*\:/.test('address.host')) {
+        return { address, value: 6 };
+      }
+      return { address, value: 7 };
     })
     .reduce((acc, next) => (acc.value > next.value ? acc : next)).address.host;
 }

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { connect as netConnect, Socket, TcpNetConnectOpts } from 'net';
 import { connect as tlsConnect } from 'tls';
-import { isError } from 'util';
+import { types } from 'util';
 import { RethinkDBErrorType, RServerConnectionOptions } from '..';
 import { RethinkDBError } from '../error/error';
 import { QueryJson, ResponseJson } from '../internal-types';
@@ -12,7 +12,7 @@ import {
   compareDigest,
   computeSaltedPassword,
   NULL_BUFFER,
-  validateVersion
+  validateVersion,
 } from './handshake-utils';
 
 export type RNConnOpts = RServerConnectionOptions & {
@@ -22,20 +22,28 @@ export type RNConnOpts = RServerConnectionOptions & {
 
 export class RethinkDBSocket extends EventEmitter {
   public connectionOptions: RNConnOpts;
+
   public readonly user: string;
+
   public readonly password: Buffer;
+
   public lastError?: Error;
+
   public get status() {
-    if (!!this.lastError) {
+    if (this.lastError) {
       return 'errored';
-    } else if (!this.isOpen) {
+    }
+    if (!this.isOpen) {
       return 'closed';
-    } else if (this.mode === 'handshake') {
+    }
+    if (this.mode === 'handshake') {
       return 'handshake';
     }
     return 'open';
   }
+
   public socket?: Socket;
+
   public runningQueries = new Map<
     number,
     {
@@ -43,15 +51,19 @@ export class RethinkDBSocket extends EventEmitter {
       data: DataQueue<ResponseJson | Error>;
     }
   >();
+
   private isOpen = false;
+
   private nextToken = 0;
+
   private buffer = Buffer.alloc(0);
+
   private mode: 'handshake' | 'response' = 'handshake';
 
   constructor({
     connectionOptions,
     user = 'admin',
-    password = ''
+    password = '',
   }: {
     connectionOptions: RNConnOpts;
     user?: string;
@@ -70,7 +82,7 @@ export class RethinkDBSocket extends EventEmitter {
   public async connect() {
     if (this.socket) {
       throw new RethinkDBError('Socket already connected', {
-        type: RethinkDBErrorType.CONNECTION
+        type: RethinkDBErrorType.CONNECTION,
       });
     }
     const { tls = false, ...options } = this.connectionOptions;
@@ -85,8 +97,8 @@ export class RethinkDBSocket extends EventEmitter {
       socket
         .on('close', () => this.close())
         .on('end', () => this.close())
-        .on('error', error => this.handleError(error))
-        .on('data', data => {
+        .on('error', (error) => this.handleError(error))
+        .on('data', (data) => {
           try {
             this.buffer = Buffer.concat([this.buffer, data]);
             switch (this.mode) {
@@ -129,7 +141,7 @@ export class RethinkDBSocket extends EventEmitter {
     if (!this.socket || this.status !== 'open') {
       throw new RethinkDBError(
         '`run` was called with a closed connection after:',
-        { query: newQuery, type: RethinkDBErrorType.CONNECTION }
+        { query: newQuery, type: RethinkDBErrorType.CONNECTION },
       );
     }
     const encoded = JSON.stringify(newQuery);
@@ -157,18 +169,19 @@ export class RethinkDBSocket extends EventEmitter {
         data.destroy(
           new RethinkDBError('Query cancelled', {
             query,
-            type: RethinkDBErrorType.CANCEL
-          })
+            type: RethinkDBErrorType.CANCEL,
+          }),
         );
         this.runningQueries.delete(token);
         this.emit('release', this.runningQueries.size);
       }
       return token;
-    } else if (!data) {
+    }
+    if (!data) {
       // console.log('START ' + token);
       this.runningQueries.set(token, {
         data: new DataQueue(),
-        query
+        query,
       });
       // } else {
       // console.log('CONTINUE ' + token);
@@ -183,6 +196,7 @@ export class RethinkDBSocket extends EventEmitter {
       return this.sendQuery([QueryType.STOP], token);
     }
   }
+
   public continueQuery(token: number) {
     if (this.runningQueries.has(token)) {
       // console.log('CONTINUING ' + token);
@@ -192,29 +206,31 @@ export class RethinkDBSocket extends EventEmitter {
 
   public async readNext<T = ResponseJson>(token: number): Promise<T> {
     if (!this.isOpen) {
-      throw this.lastError ||
+      throw (
+        this.lastError ||
         new RethinkDBError(
           'The connection was closed before the query could be completed',
           {
-            type: RethinkDBErrorType.CONNECTION
-          }
-        );
+            type: RethinkDBErrorType.CONNECTION,
+          },
+        )
+      );
     }
     if (!this.runningQueries.has(token)) {
       throw new RethinkDBError('No more rows in the cursor.', {
-        type: RethinkDBErrorType.CURSOR_END
+        type: RethinkDBErrorType.CURSOR_END,
       });
     }
     const { data = null } = this.runningQueries.get(token) || {};
     if (!data) {
       throw new RethinkDBError('Query is not running.', {
-        type: RethinkDBErrorType.CURSOR
+        type: RethinkDBErrorType.CURSOR,
       });
     }
     // console.log('WAITING ' + token);
     const res = await data.dequeue();
     // console.log('RESULT ' + token);
-    if (isError(res)) {
+    if (types.isNativeError(res)) {
       data.destroy(res);
       this.runningQueries.delete(token);
       throw res;
@@ -235,9 +251,9 @@ export class RethinkDBSocket extends EventEmitter {
           'The connection was closed before the query could be completed',
           {
             query,
-            type: RethinkDBErrorType.CONNECTION
-          }
-        )
+            type: RethinkDBErrorType.CONNECTION,
+          },
+        ),
       );
     }
     this.runningQueries.clear();
@@ -259,12 +275,12 @@ export class RethinkDBSocket extends EventEmitter {
     const generateRunningQuery = () => {
       this.runningQueries.set(token++, {
         data: new DataQueue(),
-        query: [QueryType.START]
+        query: [QueryType.START],
       });
     };
     if (!this.socket || this.status !== 'handshake') {
       throw new RethinkDBError('Connection is not open', {
-        type: RethinkDBErrorType.CONNECTION
+        type: RethinkDBErrorType.CONNECTION,
       });
     }
     const { randomString, authBuffer } = buildAuthBuffer(this.user);
@@ -277,7 +293,7 @@ export class RethinkDBSocket extends EventEmitter {
       authentication,
       randomString,
       this.user,
-      this.password
+      this.password,
     );
     generateRunningQuery();
     this.socket.write(proof);
@@ -287,7 +303,7 @@ export class RethinkDBSocket extends EventEmitter {
   }
 
   private handleHandshakeData() {
-    let index: number = -1;
+    let index = -1;
     while ((index = this.buffer.indexOf(0)) >= 0) {
       const strMsg = this.buffer.slice(0, index).toString('utf8');
       const { data = null } = this.runningQueries.get(this.nextToken++) || {};
@@ -300,13 +316,13 @@ export class RethinkDBSocket extends EventEmitter {
           }
         } else {
           err = new RethinkDBError(jsonMsg.error, {
-            errorCode: jsonMsg.error_code
+            errorCode: jsonMsg.error_code,
           });
         }
       } catch (cause) {
         err = new RethinkDBError(strMsg, {
           cause,
-          type: RethinkDBErrorType.AUTH
+          type: RethinkDBErrorType.AUTH,
         });
       }
       if (err) {
@@ -332,7 +348,7 @@ export class RethinkDBSocket extends EventEmitter {
 
       const responseBuffer = this.buffer.slice(12, 12 + responseLength);
       const response: ResponseJson = JSON.parse(
-        responseBuffer.toString('utf8')
+        responseBuffer.toString('utf8'),
       );
       this.buffer = this.buffer.slice(12 + responseLength);
       const { data = null } = this.runningQueries.get(token) || {};
@@ -354,7 +370,7 @@ export class RethinkDBSocket extends EventEmitter {
 }
 
 export function setConnectionDefaults(
-  connectionOptions: RServerConnectionOptions
+  connectionOptions: RServerConnectionOptions,
 ): RNConnOpts {
   connectionOptions.host = connectionOptions.host || 'localhost';
   connectionOptions.port = connectionOptions.port || 28015;

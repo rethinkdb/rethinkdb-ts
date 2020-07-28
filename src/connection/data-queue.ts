@@ -1,5 +1,6 @@
 export class DataQueue<T> {
   private queue: Array<{ op?: () => void; data: T }> = [];
+
   private waiting: Array<{
     resolve: (data: T) => void;
     promise: Promise<T>;
@@ -42,7 +43,7 @@ export class DataQueue<T> {
       }
     }
     let resolve: any;
-    const promise = new Promise<T>(r => {
+    const promise = new Promise<T>((r) => {
       const index = this.waiting.length;
       resolve = (t: T) => {
         this.waiting.splice(index, 1);
@@ -51,7 +52,7 @@ export class DataQueue<T> {
     });
     this.waiting.push({
       resolve,
-      promise
+      promise,
     });
     return promise;
   }

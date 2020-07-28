@@ -1,28 +1,29 @@
-import { isBuffer, isDate, isFunction, isObject, isUndefined } from 'util';
+import { types } from 'util';
 import { RethinkDBErrorType } from '..';
 import { RethinkDBError } from '../error/error';
 import { TermJson } from '../internal-types';
 import { TermType } from '../proto/enums';
 import { globals } from './globals';
 import { isQuery, toQuery } from './query';
+import { isFunction, isObject } from '../util';
 
 export function parseParam(
   param: any,
-  nestingLevel = globals.nestingLevel
+  nestingLevel = globals.nestingLevel,
 ): TermJson {
   if (nestingLevel === 0) {
     throw new RethinkDBError(
       'Nesting depth limit exceeded.\nYou probably have a circular reference somewhere.',
-      { type: RethinkDBErrorType.PARSE }
+      { type: RethinkDBErrorType.PARSE },
     );
   }
   if (param === null) {
     return null;
   }
   if (isQuery(param)) {
-    if (isUndefined(param.term)) {
+    if (param.term === undefined) {
       throw new RethinkDBError("'r' cannot be an argument", {
-        type: RethinkDBErrorType.PARSE
+        type: RethinkDBErrorType.PARSE,
       });
     }
     if (
@@ -37,23 +38,23 @@ export function parseParam(
   if (Array.isArray(param)) {
     const arrTerm = [
       TermType.MAKE_ARRAY,
-      param.map(p => parseParam(p, nestingLevel - 1))
+      param.map((p) => parseParam(p, nestingLevel - 1)),
     ];
     return hasImplicitVar(arrTerm)
       ? [TermType.FUNC, [[TermType.MAKE_ARRAY, [1]], arrTerm]]
       : arrTerm;
   }
-  if (isDate(param)) {
+  if (types.isDate(param)) {
     return {
       $reql_type$: 'TIME',
       epoch_time: param.getTime() / 1000,
-      timezone: '+00:00'
+      timezone: '+00:00',
     };
   }
-  if (isBuffer(param)) {
+  if (Buffer.isBuffer(param)) {
     return {
       $reql_type$: 'BINARY',
-      data: param.toString('base64')
+      data: param.toString('base64'),
     };
   }
   if (isFunction(param)) {
@@ -63,27 +64,26 @@ export function parseParam(
       const funcResult = param(
         ...Array(param.length)
           .fill(0)
-          .map((_, i) => toQuery([TermType.VAR, [i + nextVarId]]))
+          .map((_, i) => toQuery([TermType.VAR, [i + nextVarId]])),
       );
-      if (isUndefined(funcResult)) {
+      if (funcResult === undefined) {
         throw new RethinkDBError(
           `Anonymous function returned \`undefined\`. Did you forget a \`return\`? in:\n${param.toString()}`,
-          { type: RethinkDBErrorType.PARSE }
+          { type: RethinkDBErrorType.PARSE },
         );
       }
-      const term = [
+      return [
         TermType.FUNC,
         [
           [
             TermType.MAKE_ARRAY,
             Array(param.length)
               .fill(0)
-              .map((_, i) => i + nextVarId)
+              .map((_, i) => i + nextVarId),
           ],
-          parseParam(funcResult)
-        ]
+          parseParam(funcResult),
+        ],
       ];
-      return term;
     } finally {
       globals.nextVarId = nextVarId;
     }
@@ -92,17 +92,20 @@ export function parseParam(
     const objTerm = Object.entries(param).reduce(
       (acc, [key, value]) => ({
         ...acc,
-        [key]: parseParam(value, nestingLevel - 1)
+        [key]: parseParam(value, nestingLevel - 1),
       }),
-      {}
+      {},
     );
     return hasImplicitVar(objTerm)
       ? [TermType.FUNC, [[TermType.MAKE_ARRAY, [1]], objTerm]]
       : objTerm;
   }
-  if (typeof param === 'number' && (isNaN(param) || !isFinite(param))) {
+  if (
+    typeof param === 'number' &&
+    (Number.isNaN(param) || !Number.isFinite(param))
+  ) {
     throw new RethinkDBError(`Cannot convert \`${param}\` to JSON`, {
-      type: RethinkDBErrorType.PARSE
+      type: RethinkDBErrorType.PARSE,
     });
   }
   return param;
@@ -115,30 +118,29 @@ export function parseOptarg(obj?: any) {
   return Object.entries(obj).reduce(
     (acc, [key, value]) => ({
       ...acc,
-      [camelToSnake(key)]: parseParam(value)
+      [camelToSnake(key)]: parseParam(value),
     }),
-    {}
+    {},
   );
 }
 
 export function hasImplicitVar(term: TermJson | undefined): boolean {
   if (!Array.isArray(term)) {
     if (term !== null && typeof term === 'object') {
-      return Object.values(term).some(value => hasImplicitVar(value));
-    } else {
-      return false;
+      return Object.values(term).some((value) => hasImplicitVar(value));
     }
+    return false;
   }
   if (term[0] === TermType.IMPLICIT_VAR) {
     return true;
   }
   const termParam = term[1];
   if (termParam) {
-    return termParam.some(value => hasImplicitVar(value));
+    return termParam.some((value) => hasImplicitVar(value));
   }
   return false;
 }
 
 function camelToSnake(name: string) {
-  return name.replace(/([A-Z])/g, x => `_${x.toLowerCase()}`);
+  return name.replace(/([A-Z])/g, (x) => `_${x.toLowerCase()}`);
 }

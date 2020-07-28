@@ -1,28 +1,43 @@
 import { EventEmitter } from 'events';
-import { isUndefined } from 'util';
 import { isRethinkDBError, RethinkDBError } from '../error/error';
 import { TermJson } from '../internal-types';
 import { Cursor } from '../response/cursor';
-import { ConnectionPool, RConnectionOptions, RethinkDBErrorType, RServerConnectionOptions, RunOptions } from '../types';
+import {
+  ConnectionPool,
+  RConnectionOptions,
+  RethinkDBErrorType,
+  RServerConnectionOptions,
+  RunOptions,
+} from '../types';
 import { RethinkDBConnection } from './connection';
 import { RNConnOpts, setConnectionDefaults } from './socket';
 
 export class ServerConnectionPool extends EventEmitter
   implements ConnectionPool {
   public readonly server: RNConnOpts;
+
   private draining = false;
+
   private healthy: boolean | undefined = undefined;
+
   private buffer: number;
+
   private max: number;
+
   private timeoutError: number;
+
   private timeoutGb: number;
+
   private maxExponent: number;
+
   private silent: boolean;
+
   private log: (message: string) => any;
 
   private connParam: any;
 
   private connections: RethinkDBConnection[] = [];
+
   private timers = new Map<RethinkDBConnection, NodeJS.Timer>();
 
   constructor(
@@ -39,8 +54,8 @@ export class ServerConnectionPool extends EventEmitter
       timeoutGb = 60 * 60 * 1000,
       maxExponent = 6,
       silent = false,
-      log = (message: string) => undefined
-    }: RConnectionOptions = {}
+      log = (message: string) => undefined,
+    }: RConnectionOptions = {},
   ) {
     super();
     this.buffer = Math.max(buffer, 1);
@@ -62,7 +77,7 @@ export class ServerConnectionPool extends EventEmitter
       'size',
       'available-size',
       'healthy',
-      'error'
+      'error',
     ];
   }
 
@@ -73,7 +88,7 @@ export class ServerConnectionPool extends EventEmitter
   }
 
   public get isHealthy() {
-    return this.connections.some(conn => conn.open);
+    return this.connections.some((conn) => conn.open);
   }
 
   public waitForHealthy(this: ServerConnectionPool) {
@@ -88,8 +103,8 @@ export class ServerConnectionPool extends EventEmitter
             reject(
               new RethinkDBError('Error initializing pool', {
                 type: RethinkDBErrorType.POOL_FAIL,
-                cause: error
-              })
+                cause: error,
+              }),
             );
           }
         });
@@ -104,7 +119,7 @@ export class ServerConnectionPool extends EventEmitter
     log = this.log,
     timeoutError = this.timeoutError,
     timeoutGb = this.timeoutGb,
-    maxExponent = this.maxExponent
+    maxExponent = this.maxExponent,
   }: RConnectionOptions) {
     this.silent = silent;
     this.log = log;
@@ -115,7 +130,7 @@ export class ServerConnectionPool extends EventEmitter
       this.buffer = buffer;
       await this.initConnections();
     } else {
-      this.connections.forEach(conn => this.checkIdle(conn));
+      this.connections.forEach((conn) => this.checkIdle(conn));
     }
     if (this.max > max) {
       const connections = this.getIdleConnections();
@@ -136,7 +151,9 @@ export class ServerConnectionPool extends EventEmitter
       this.setHealthy(undefined);
     }
     this.draining = true;
-    await Promise.all(this.connections.map(conn => this.closeConnection(conn)));
+    await Promise.all(
+      this.connections.map((conn) => this.closeConnection(conn)),
+    );
   }
 
   public getConnections() {
@@ -154,26 +171,26 @@ export class ServerConnectionPool extends EventEmitter
   public getNumOfRunningQueries() {
     return this.getOpenConnections().reduce(
       (num, next) => next.numOfQueries + num,
-      0
+      0,
     );
   }
 
   public async queue(
     term: TermJson,
-    globalArgs: RunOptions = {}
+    globalArgs: RunOptions = {},
   ): Promise<Cursor | undefined> {
     this.emit('queueing');
     const openConnections = this.getOpenConnections();
     if (!openConnections) {
       throw this.reportError(
         new RethinkDBError('No connections available', {
-          type: RethinkDBErrorType.POOL_FAIL
+          type: RethinkDBErrorType.POOL_FAIL,
         }),
-        true
+        true,
       );
     }
     const minQueriesRunningConnection = openConnections.reduce(
-      minQueriesRunning
+      minQueriesRunning,
     );
     if (this.connections.length < this.max) {
       this.createConnection();
@@ -182,9 +199,9 @@ export class ServerConnectionPool extends EventEmitter
   }
 
   private setHealthy(healthy: boolean | undefined, error?: Error) {
-    if (isUndefined(healthy)) {
+    if (healthy === undefined) {
       this.healthy = undefined;
-    } else if (healthy !== this.healthy && !isUndefined(healthy)) {
+    } else if (healthy !== this.healthy && healthy !== undefined) {
       this.healthy = healthy;
       this.emit('healthy', healthy, error);
     }
@@ -203,7 +220,7 @@ export class ServerConnectionPool extends EventEmitter
       this.setHealthy(true);
       this.checkIdle(conn);
       conn
-        .on('close', error => {
+        .on('close', (error) => {
           const innerSize = this.getOpenConnections().length;
           this.emit('size', innerSize);
           if (innerSize === 0) {
@@ -223,7 +240,7 @@ export class ServerConnectionPool extends EventEmitter
   private async closeConnection(conn: RethinkDBConnection) {
     this.removeIdleTimer(conn);
     conn.removeAllListeners();
-    this.connections = this.connections.filter(c => c !== conn);
+    this.connections = this.connections.filter((c) => c !== conn);
     await conn.close();
     this.emit('size', this.getOpenConnections().length);
   }
@@ -238,10 +255,10 @@ export class ServerConnectionPool extends EventEmitter
           this.timers.delete(conn);
           if (this.connections.length > this.buffer) {
             this.closeConnection(conn).then(() =>
-              this.emit('available-size', this.getIdleConnections().length)
+              this.emit('available-size', this.getIdleConnections().length),
             );
           }
-        }, this.timeoutGb)
+        }, this.timeoutGb),
       );
     }
   }
@@ -266,11 +283,11 @@ export class ServerConnectionPool extends EventEmitter
           this.closeConnection(conn);
           break;
         }
-        if (isUndefined(this.healthy)) {
+        if (this.healthy === undefined) {
           this.setHealthy(false, err);
         }
-        await new Promise(resolve =>
-          setTimeout(resolve, 2 ** exp * this.timeoutError)
+        await new Promise((resolve) =>
+          setTimeout(resolve, 2 ** exp * this.timeoutError),
         );
         exp = Math.min(exp + 1, this.maxExponent);
       }
@@ -301,17 +318,17 @@ export class ServerConnectionPool extends EventEmitter
   }
 
   private getOpenConnections() {
-    return this.connections.filter(conn => conn.open);
+    return this.connections.filter((conn) => conn.open);
   }
 
   private getIdleConnections() {
-    return this.getOpenConnections().filter(conn => !conn.numOfQueries);
+    return this.getOpenConnections().filter((conn) => !conn.numOfQueries);
   }
 }
 
 function minQueriesRunning(
   acc: RethinkDBConnection,
-  next: RethinkDBConnection
+  next: RethinkDBConnection,
 ) {
   return acc.numOfQueries <= next.numOfQueries ? acc : next;
 }

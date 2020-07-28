@@ -10,7 +10,7 @@ export type TermConfig = [
   number,
   // must exist as the last parameter
 
-
+  (
     | 'required'
     // can exist as the replacement of last parameter if it's an object
     | 'optional'
@@ -20,6 +20,7 @@ export type TermConfig = [
     | 'last-optional'
     // no optarg
     | false
+  ),
 ];
 
 export const bracket: TermConfig = [TermType.BRACKET, '(...)', 1, 1, false];
@@ -159,7 +160,7 @@ export const termConfig: TermConfig[] = [
   [TermType.BIT_SAL, 'bitSal', 1, -1, false],
   [TermType.BIT_SAL, 'bitShl', 1, -1, false],
   [TermType.BIT_SAR, 'bitSar', 1, -1, false],
-  [197 as any /*TermType.BIT_SHR*/, 'bitShr', 1, -1, false]
+  [197 as any /* TermType.BIT_SHR */, 'bitShr', 1, -1, false],
 ];
 
 export const rConfig: TermConfig[] = [
@@ -193,7 +194,7 @@ export const rConfig: TermConfig[] = [
   [TermType.TABLE, 'table', 1, 2, 'last'],
   [TermType.TABLE_CREATE, 'tableCreate', 1, 2, 'last'],
   [TermType.TABLE_DROP, 'tableDrop', 1, 1, false],
-  [TermType.TABLE_LIST, 'tableList', 0, 0, false]
+  [TermType.TABLE_LIST, 'tableList', 0, 0, false],
 ];
 
 export const rConsts: Array<[TermType, string]> = [
@@ -218,5 +219,5 @@ export const rConsts: Array<[TermType, string]> = [
   [TermType.SEPTEMBER, 'september'],
   [TermType.OCTOBER, 'october'],
   [TermType.NOVEMBER, 'november'],
-  [TermType.DECEMBER, 'december']
+  [TermType.DECEMBER, 'december'],
 ];

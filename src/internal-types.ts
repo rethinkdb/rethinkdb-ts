@@ -3,7 +3,7 @@ import {
   QueryType,
   ResponseNote,
   ResponseType,
-  TermType
+  TermType,
 } from './proto/enums';
 
 export type DeepPartial<T> =
@@ -13,7 +13,7 @@ export type DeepPartial<T> =
         ? Array<DeepPartial<U1>>
         : T[P] extends ReadonlyArray<infer U2>
         ? ReadonlyArray<DeepPartial<U2>>
-        : DeepPartial<T[P]>
+        : DeepPartial<T[P]>;
     };
 
 export type TermJson =

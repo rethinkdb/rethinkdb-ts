@@ -3,5 +3,5 @@ export const globals = {
   nestingLevel: 20,
   arrayLimit: undefined as number | undefined,
   pretty: true,
-  backtraceType: 'lambda' as 'lambda' | 'function'
+  backtraceType: 'lambda' as 'lambda' | 'function',
 };
