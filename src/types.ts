@@ -439,7 +439,7 @@ export interface RDatum<T = any> extends RQuery<T> {
   ): T extends Array<infer T1> ? RDatum<T1> : never;
   default<U>(value: U): RDatum<T | U>;
   hasFields(
-    ...fields: string[]
+    ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
   // Works only if T is an array
   append<U>(value: RValue<U>): T extends U[] ? RDatum<T> : never;
