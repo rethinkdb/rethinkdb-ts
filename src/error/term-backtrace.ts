@@ -1,8 +1,82 @@
-import { QueryJson, TermJson } from '../internal-types';
-import { QueryType, TermType } from '../proto/enums';
+import { TermJson } from '../internal-types';
+import { TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
-import { hasImplicitVar } from '../query-builder/param-parser';
+import { hasImplicitVar } from '../query-builder/has-implicit-var';
 import { rConfig, rConsts, termConfig } from '../query-builder/query-config';
+
+function snakeToCamel(name: string) {
+  return name.replace(/(_[a-z])/g, (x) => x.charAt(1).toUpperCase());
+}
+
+function nextBacktrace(i: number, backtrace?: Array<number | string>) {
+  if (backtrace && backtrace[0] === i) {
+    return backtrace.slice(1);
+  }
+}
+
+function joinMultiArray(acc: string[], next: string[]): [string, string] {
+  return acc[0]
+    ? [`${acc[0]}, ${next[0]}`, `${acc[1]}  ${next[1]}`]
+    : [next[0], next[1]];
+}
+
+function getMarked(
+  str: string | [string, string],
+  backtrace?: Array<number | string>,
+): [string, string] {
+  const s = Array.isArray(str) ? str[0] : str;
+  const emptyMarks = Array.isArray(str) ? str[1] : ' '.repeat(str.length);
+  return backtrace && backtrace.length === 0
+    ? [s, '^'.repeat(s.length)]
+    : [s, emptyMarks];
+}
+
+function combineMarks(
+  literals: TemplateStringsArray,
+  ...placeholders: Array<string | string[]>
+): [string, string] {
+  let result = '';
+  let mark = '';
+
+  for (let i = 0; i < placeholders.length; i++) {
+    result += literals[i];
+    mark += ' '.repeat(literals[i].length);
+    if (!Array.isArray(placeholders[i])) {
+      result += placeholders[i];
+      mark += ' '.repeat(placeholders[i].length);
+    } else {
+      result += placeholders[i][0];
+      mark += placeholders[i][1];
+    }
+  }
+
+  // add the last literal
+  result += literals[literals.length - 1];
+  mark += ' '.repeat(literals[literals.length - 1].length);
+  return [result, mark];
+}
+
+function backtraceObject(obj: any, backtrace?: Array<number | string>) {
+  const [param, ...nextB]: any = backtrace || [];
+  if (obj.$reql_type$ === 'BINARY') {
+    return getMarked('<Buffer>', backtrace);
+  }
+  if (Object.keys(obj).length === 0) {
+    return getMarked('{}', backtrace);
+  }
+  return combineMarks`{ ${Object.entries(obj)
+    .map(([key, val]) => {
+      const next = param === key ? nextB : undefined;
+      return getMarked(
+        combineMarks`${snakeToCamel(key)}: ${backtraceTerm(
+          val as TermJson,
+          false,
+          next,
+        )}`,
+      );
+    })
+    .reduce(joinMultiArray, ['', ''])} }`;
+}
 
 export function backtraceTerm(
   term?: TermJson,
@@ -201,95 +275,4 @@ export function backtraceTerm(
       );
     }
   }
-}
-
-function backtraceObject(obj: any, backtrace?: Array<number | string>) {
-  const [param, ...nextB]: any = backtrace || [];
-  if (obj.$reql_type$ === 'BINARY') {
-    return getMarked('<Buffer>', backtrace);
-  }
-  if (Object.keys(obj).length === 0) {
-    return getMarked('{}', backtrace);
-  }
-  return combineMarks`{ ${Object.entries(obj)
-    .map(([key, val]) => {
-      const next = param === key ? nextB : undefined;
-      return getMarked(
-        combineMarks`${snakeToCamel(key)}: ${backtraceTerm(
-          val as TermJson,
-          false,
-          next,
-        )}`,
-      );
-    })
-    .reduce(joinMultiArray, ['', ''])} }`;
-}
-
-function snakeToCamel(name: string) {
-  return name.replace(/(_[a-z])/g, (x) => x.charAt(1).toUpperCase());
-}
-
-export function backtraceQuery(
-  query: QueryJson,
-  backtrace?: number[],
-): [string] | [string, string] {
-  const [type, term, optarg] = query;
-  switch (type) {
-    case QueryType.START:
-      return backtraceTerm(term, true); // `${backtraceTerm(term)}.run(${backtraceObject(optarg)})`
-    case QueryType.SERVER_INFO:
-      return ['conn.server()'];
-    case QueryType.NOREPLY_WAIT:
-      return ['conn.noreplyWait()'];
-    default:
-      return [''];
-  }
-}
-
-function nextBacktrace(i: number, backtrace?: Array<number | string>) {
-  if (backtrace && backtrace[0] === i) {
-    return backtrace.slice(1);
-  }
-}
-
-function joinMultiArray(acc: string[], next: string[]): [string, string] {
-  return acc[0]
-    ? [`${acc[0]}, ${next[0]}`, `${acc[1]}  ${next[1]}`]
-    : [next[0], next[1]];
-}
-
-function getMarked(
-  str: string | [string, string],
-  backtrace?: Array<number | string>,
-): [string, string] {
-  const s = Array.isArray(str) ? str[0] : str;
-  const emptyMarks = Array.isArray(str) ? str[1] : ' '.repeat(str.length);
-  return backtrace && backtrace.length === 0
-    ? [s, '^'.repeat(s.length)]
-    : [s, emptyMarks];
-}
-
-function combineMarks(
-  literals: TemplateStringsArray,
-  ...placeholders: Array<string | string[]>
-): [string, string] {
-  let result = '';
-  let mark = '';
-
-  for (let i = 0; i < placeholders.length; i++) {
-    result += literals[i];
-    mark += ' '.repeat(literals[i].length);
-    if (!Array.isArray(placeholders[i])) {
-      result += placeholders[i];
-      mark += ' '.repeat(placeholders[i].length);
-    } else {
-      result += placeholders[i][0];
-      mark += placeholders[i][1];
-    }
-  }
-
-  // add the last literal
-  result += literals[literals.length - 1];
-  mark += ' '.repeat(literals[literals.length - 1].length);
-  return [result, mark];
 }

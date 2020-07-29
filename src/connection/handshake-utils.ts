@@ -1,6 +1,6 @@
 import { createHash, createHmac, pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
-import { RethinkDBErrorType } from '..';
+import { RethinkDBErrorType } from '../types';
 import { RethinkDBError } from '../error/error';
 import { Version } from '../proto/enums';
 
