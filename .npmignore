@@ -6,3 +6,12 @@ generate-enums.ts
 tsconfig.json
 tsconfig.test.json
 tslint.json
+
+.github
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+.eslintignore
+.eslintrc.js
+LICENSE
+.prettierrc.json
+test.ts
