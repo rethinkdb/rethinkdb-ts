@@ -18,9 +18,14 @@ export type RValue<T = any> = RDatum<T> | T;
 // type RObject<T> =  {
 //     [x: keyof T]: RValue<T[keyof T]>;
 // } | RDatum<T>;
-type RArray<T> = Array<RValue<T>>;
+
 export type Func<T, Res = any> = (doc: RDatum<T>) => RValue<Res>;
-export type MultiFieldSelector = Record<string, unknown> | any[] | string;
+export type MultiFieldSelector =
+  | RDatum<MultiFieldSelector>
+  | { [property: string]: MultiFieldSelector }
+  | string
+  | boolean
+  | number;
 export type FieldSelector<T, U = any> = string | Func<T, U>;
 
 export interface ServerInfo {
@@ -434,7 +439,7 @@ export interface RDatum<T = any> extends RQuery<T> {
   ): T extends Array<infer T1> ? RDatum<T1> : never;
   default<U>(value: U): RDatum<T | U>;
   hasFields(
-    ...fields: string[]
+    ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
   // Works only if T is an array
   append<U>(value: RValue<U>): T extends U[] ? RDatum<T> : never;
@@ -1161,7 +1166,9 @@ export interface R {
   ): RDatum;
   geojson(geoJSON: any): RDatum;
   // special
-  args(arg: Array<RValue<Primitives | Record<string, unknown> | any[]>>): any;
+  args(
+    arg: RDatum | Array<RValue<Primitives | Record<string, unknown> | any[]>>,
+  ): any;
   error(message?: RValue<string>): any;
   js(js: RValue<string>, options?: { timeout: number }): RDatum;
   literal(): RDatum;
@@ -1461,7 +1468,7 @@ export interface R {
   hasFields<T>(stream: RStream<T>, ...fields: MultiFieldSelector[]): RStream<T>;
   hasFields<T>(
     datum: RDatum<T>,
-    ...fields: string[]
+    ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
   filter<T>(
     feed: RFeed<T>,
