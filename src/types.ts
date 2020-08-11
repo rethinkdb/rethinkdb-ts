@@ -436,7 +436,7 @@ export interface RDatum<T = any> extends RQuery<T> {
   nth(
     attribute: RValue<number>,
   ): T extends Array<infer T1> ? RDatum<T1> : never;
-  default<U>(value: U): RDatum<T | U>;
+  default<U>(value: RValue<U>): RDatum<T | U>;
   hasFields(
     ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
@@ -552,11 +552,7 @@ export interface RDatum<T = any> extends RQuery<T> {
   // SELECT
   distinct(): RDatum<T>;
 
-  pluck(
-    ...fields: MultiFieldSelector[]
-  ): T extends Array<infer T1>
-    ? RDatum<Array<Partial<T1>>>
-    : RDatum<Partial<T>>;
+  pluck(...fields: MultiFieldSelector[]): RDatum<Partial<T>[] | Partial<T>>;
 
   without(
     ...fields: MultiFieldSelector[]
