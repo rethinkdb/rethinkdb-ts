@@ -488,8 +488,8 @@ export interface RDatum<T = any> extends RQuery<T> {
     ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<Array<Partial<T1>>> : never;
   filter<U = T extends Array<infer T1> ? T1 : never>(
-    predicate: DeepPartial<U> | ((doc: RDatum<U>) => RValue<boolean>),
-    options?: { default: boolean },
+    predicate: DeepPartial<U> | ((doc: RDatum<U>) => RValue),
+    options?: { default: boolean | RethinkDBError },
   ): this;
   includes(geometry: RDatum): T extends Array<infer T1> ? RDatum<T> : never;
   intersects(geometry: RDatum): T extends Array<infer T1> ? RDatum<T> : never;
