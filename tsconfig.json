@@ -9,5 +9,5 @@
     "moduleResolution": "node",
     "esModuleInterop": true
     },
-  "include": ["src"]
+  "include": ["src", "test", "generate-enums.ts"]
 }
