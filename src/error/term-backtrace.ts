@@ -3,10 +3,7 @@ import { TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
 import { hasImplicitVar } from '../query-builder/has-implicit-var';
 import { rConfig, rConsts, termConfig } from '../query-builder/query-config';
-
-function snakeToCamel(name: string) {
-  return name.replace(/(_[a-z])/g, (x) => x.charAt(1).toUpperCase());
-}
+import { snakeToCamel } from '../util';
 
 function nextBacktrace(i: number, backtrace?: Array<number | string>) {
   if (backtrace && backtrace[0] === i) {
@@ -211,17 +208,17 @@ export function backtraceTerm(
           const rparsedParams = [...(args || [])]
             .map(parseArg)
             .reduce(joinMultiArray, ['', '']);
+          if (optarg) {
+            const wrappedOptarg = backtraceObject(optarg, backtrace);
+            return getMarked(
+              hasArgs
+                ? combineMarks`r.${rfunc[1]}(${rparsedParams}, ${wrappedOptarg})`
+                : combineMarks`r.${rfunc[1]}(${wrappedOptarg})`,
+              backtrace,
+            );
+          }
           return getMarked(
-            optarg
-              ? hasArgs
-                ? combineMarks`r.${
-                    rfunc[1]
-                  }(${rparsedParams}, ${backtraceObject(optarg, backtrace)})`
-                : combineMarks`r.${rfunc[1]}(${backtraceObject(
-                    optarg,
-                    backtrace,
-                  )})`
-              : combineMarks`r.${rfunc[1]}(${rparsedParams})`,
+            combineMarks`r.${rfunc[1]}(${rparsedParams})`,
             backtrace,
           );
         }
@@ -258,19 +255,23 @@ export function backtraceTerm(
       //   );
       // }
       const hasParams = params.length > 0;
-      const parsedParams = [...params]
+      const parsedParams = params
         .map((a, i) => parseArg(a, i + 1))
         .reduce(joinMultiArray, ['', '']);
       const parsedCaller = parseArg(caller, 0);
       const parsedOptarg = optarg
         ? backtraceObject(optarg, backtrace)
         : undefined;
-      return getMarked(
-        parsedOptarg
-          ? hasParams
+      if (parsedOptarg) {
+        return getMarked(
+          hasParams
             ? combineMarks`${parsedCaller}.${func[1]}(${parsedParams}, ${parsedOptarg})`
-            : combineMarks`${parsedCaller}.${func[1]}(${parsedOptarg})`
-          : combineMarks`${parsedCaller}.${func[1]}(${parsedParams})`,
+            : combineMarks`${parsedCaller}.${func[1]}(${parsedOptarg})`,
+          backtrace,
+        );
+      }
+      return getMarked(
+        combineMarks`${parsedCaller}.${func[1]}(${parsedParams})`,
         backtrace,
       );
     }
