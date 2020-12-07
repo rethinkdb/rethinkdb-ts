@@ -6,6 +6,12 @@ import { ResponseNote, ResponseType } from '../proto/enums';
 import { RCursor, RCursorType, RethinkDBErrorType, RunOptions } from '../types';
 import { getNativeTypes } from './response-parser';
 
+function isPromise(obj: any): obj is Promise<any> {
+  return (
+    obj !== null && typeof obj === 'object' && typeof obj.then === 'function'
+  );
+}
+
 export class Cursor extends Readable implements RCursor {
   public get profile() {
     return this._profile;
@@ -121,7 +127,7 @@ export class Cursor extends Readable implements RCursor {
         { type: RethinkDBErrorType.CURSOR },
       );
     }
-    return await this._next();
+    return this._next();
   }
 
   public async toArray() {
@@ -317,7 +323,7 @@ export class Cursor extends Readable implements RCursor {
           type: RethinkDBErrorType.CURSOR_END,
         });
       }
-      this.position++;
+      this.position += 1;
       return next;
     } catch (error) {
       this.closed = true;
@@ -389,9 +395,4 @@ export class Cursor extends Readable implements RCursor {
 
 export function isCursor<T = any>(cursor: any): cursor is RCursor<T> {
   return cursor instanceof Cursor;
-}
-function isPromise(obj: any): obj is Promise<any> {
-  return (
-    obj !== null && typeof obj === 'object' && typeof obj.then === 'function'
-  );
 }
