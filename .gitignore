@@ -62,3 +62,6 @@ typings/
 
 # compiled
 lib
+
+.idea
+.vscode
