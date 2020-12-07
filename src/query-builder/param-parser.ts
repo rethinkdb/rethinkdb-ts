@@ -1,11 +1,11 @@
-import { types } from 'util';
 import { RethinkDBErrorType } from '../types';
 import { RethinkDBError } from '../error/error';
 import { TermJson } from '../internal-types';
 import { TermType } from '../proto/enums';
 import { globals } from './globals';
-import { isQuery, toQuery } from './query';
-import { isFunction, isObject } from '../util';
+import { isQuery } from './query';
+import { toQuery } from './query-runner';
+import { isDate, isFunction } from '../util';
 import { hasImplicitVar } from './has-implicit-var';
 
 export function parseParam(
@@ -41,11 +41,12 @@ export function parseParam(
       TermType.MAKE_ARRAY,
       param.map((p) => parseParam(p, nestingLevel - 1)),
     ];
-    return hasImplicitVar(arrTerm)
-      ? [TermType.FUNC, [[TermType.MAKE_ARRAY, [1]], arrTerm]]
-      : arrTerm;
+    if (hasImplicitVar(arrTerm)) {
+      return [TermType.FUNC, [[TermType.MAKE_ARRAY, [1]], arrTerm]];
+    }
+    return arrTerm;
   }
-  if (types.isDate(param)) {
+  if (isDate(param)) {
     return {
       $reql_type$: 'TIME',
       epoch_time: param.getTime() / 1000,
@@ -53,19 +54,16 @@ export function parseParam(
     };
   }
   if (Buffer.isBuffer(param)) {
-    return {
-      $reql_type$: 'BINARY',
-      data: param.toString('base64'),
-    };
+    return { $reql_type$: 'BINARY', data: param.toString('base64') };
   }
   if (isFunction(param)) {
     const { nextVarId } = globals;
     globals.nextVarId = nextVarId + param.length;
     try {
       const funcResult = param(
-        ...Array(param.length)
-          .fill(0)
-          .map((_, i) => toQuery([TermType.VAR, [i + nextVarId]])),
+        ...Array.from({ length: param.length }, (_, i) =>
+          toQuery([TermType.VAR, [i + nextVarId]]),
+        ),
       );
       if (funcResult === undefined) {
         throw new RethinkDBError(
@@ -78,9 +76,7 @@ export function parseParam(
         [
           [
             TermType.MAKE_ARRAY,
-            Array(param.length)
-              .fill(0)
-              .map((_, i) => i + nextVarId),
+            Array.from({ length: param.length }, (_, i) => i + nextVarId),
           ],
           parseParam(funcResult),
         ],
@@ -90,13 +86,10 @@ export function parseParam(
     }
   }
   if (typeof param === 'object') {
-    const objTerm = Object.entries(param).reduce(
-      (acc, [key, value]) => ({
-        ...acc,
-        [key]: parseParam(value, nestingLevel - 1),
-      }),
-      {},
-    );
+    const objTerm = Object.entries(param).reduce((acc, [key, value]) => {
+      acc[key] = parseParam(value, nestingLevel - 1);
+      return acc;
+    }, {});
     return hasImplicitVar(objTerm)
       ? [TermType.FUNC, [[TermType.MAKE_ARRAY, [1]], objTerm]]
       : objTerm;
@@ -110,21 +103,4 @@ export function parseParam(
     });
   }
   return param;
-}
-
-export function parseOptarg(obj?: any) {
-  if (!isObject(obj) || Array.isArray(obj)) {
-    return undefined;
-  }
-  return Object.entries(obj).reduce(
-    (acc, [key, value]) => ({
-      ...acc,
-      [camelToSnake(key)]: parseParam(value),
-    }),
-    {},
-  );
-}
-
-function camelToSnake(name: string) {
-  return name.replace(/([A-Z])/g, (x) => `_${x.toLowerCase()}`);
 }

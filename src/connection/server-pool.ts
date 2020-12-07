@@ -11,8 +11,10 @@ import {
 } from '../types';
 import { RethinkDBConnection } from './connection';
 import { RNConnOpts, setConnectionDefaults } from './socket';
+import { delay } from '../util';
 
-export class ServerConnectionPool extends EventEmitter
+export class ServerConnectionPool
+  extends EventEmitter
   implements ConnectionPool {
   public readonly server: RNConnOpts;
 
@@ -145,7 +147,7 @@ export class ServerConnectionPool extends EventEmitter
     this.max = max;
   }
 
-  public async drain({ noreplyWait = false } = {}, emit = true) {
+  public async drain(emit = true) {
     if (emit) {
       this.emit('draining');
       this.setHealthy(undefined);
@@ -190,7 +192,8 @@ export class ServerConnectionPool extends EventEmitter
       );
     }
     const minQueriesRunningConnection = openConnections.reduce(
-      minQueriesRunning,
+      (acc: RethinkDBConnection, next: RethinkDBConnection) =>
+        acc.numOfQueries <= next.numOfQueries ? acc : next,
     );
     if (this.connections.length < this.max) {
       this.createConnection();
@@ -210,7 +213,7 @@ export class ServerConnectionPool extends EventEmitter
   private async createConnection() {
     const conn = new RethinkDBConnection(this.server, this.connParam);
     this.connections = [...this.connections, conn];
-    return await this.persistConnection(conn);
+    return this.persistConnection(conn);
   }
 
   private subscribeToConnection(conn: RethinkDBConnection) {
@@ -286,9 +289,7 @@ export class ServerConnectionPool extends EventEmitter
         if (this.healthy === undefined) {
           this.setHealthy(false, err);
         }
-        await new Promise((resolve) =>
-          setTimeout(resolve, 2 ** exp * this.timeoutError),
-        );
+        await delay(2 ** exp * this.timeoutError);
         exp = Math.min(exp + 1, this.maxExponent);
       }
     }
@@ -324,11 +325,4 @@ export class ServerConnectionPool extends EventEmitter
   private getIdleConnections() {
     return this.getOpenConnections().filter((conn) => !conn.numOfQueries);
   }
-}
-
-function minQueriesRunning(
-  acc: RethinkDBConnection,
-  next: RethinkDBConnection,
-) {
-  return acc.numOfQueries <= next.numOfQueries ? acc : next;
 }

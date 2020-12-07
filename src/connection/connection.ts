@@ -3,7 +3,7 @@ import { isRethinkDBError, RethinkDBError } from '../error/error';
 import { QueryJson, TermJson } from '../internal-types';
 import { ErrorType, QueryType, ResponseType, TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
-import { parseOptarg } from '../query-builder/param-parser';
+import { parseOptarg } from '../query-builder/parse-opt-arg';
 import { Cursor } from '../response/cursor';
 import {
   Connection,
@@ -13,6 +13,7 @@ import {
   ServerInfo,
 } from '../types';
 import { RethinkDBSocket, RNConnOpts, setConnectionDefaults } from './socket';
+import { delay } from '../util';
 
 const tableQueries = [
   TermType.TABLE_CREATE,
@@ -56,10 +57,8 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
   ) {
     super();
     this.options = setConnectionDefaults(connectionOptions);
-    this.clientPort = connectionOptions.port || 28015;
-    this.clientAddress = connectionOptions.host || 'localhost';
-    connectionOptions.port = this.clientPort;
-    connectionOptions.host = this.clientAddress;
+    this.clientPort = this.options.port || 28015;
+    this.clientAddress = this.options.host || 'localhost';
     this.timeout = timeout;
     this.pingInterval = pingInterval;
     this.silent = silent;
@@ -118,21 +117,12 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
         }
       });
     try {
-      let timer: any;
-      await Promise.race([
-        new Promise(
-          (resolve) => (timer = setTimeout(resolve, this.timeout * 1000)),
-        ),
-        this.socket.connect(),
-      ]);
-      if (timer) {
-        clearTimeout(timer);
-      }
-    } catch (cause) {
+      await Promise.race([delay(this.timeout * 1000), this.socket.connect()]);
+    } catch (connectionError) {
       const error = new RethinkDBError(
         'Unable to establish connection, see cause for more info.',
         {
-          cause,
+          cause: connectionError,
           type: RethinkDBErrorType.CONNECTION,
         },
       );
@@ -149,7 +139,7 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
     }
     if (this.socket.status !== 'open') {
       const error = new RethinkDBError(
-        `Failed to connect to ${this.connectionOptions.host}:${this.connectionOptions.port} in less than ${this.timeout}s.`,
+        `Failed to connect to ${this.clientAddress}:${this.clientPort} in less than ${this.timeout}s.`,
         { type: RethinkDBErrorType.TIMEOUT },
       );
       this.emit('timeout');
@@ -194,9 +184,9 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
 
   public async query(
     term: TermJson,
-    globalArgs: RunOptions = {},
+    options: RunOptions = {},
   ): Promise<Cursor | undefined> {
-    const { timeFormat, groupFormat, binaryFormat, ...gargs } = globalArgs;
+    const { timeFormat, groupFormat, binaryFormat, ...gargs } = options;
     gargs.db = gargs.db || this.db;
     this.findTableTermAndAddDb(term, gargs.db);
     if (globals.arrayLimit !== undefined && gargs.arrayLimit === undefined) {
@@ -204,10 +194,10 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
     }
     const query: QueryJson = [QueryType.START, term, parseOptarg(gargs)];
     const token = this.socket.sendQuery(query);
-    if (globalArgs.noreply) {
+    if (options.noreply) {
       return undefined;
     }
-    return new Cursor(this.socket, token, globalArgs, query);
+    return new Cursor(this.socket, token, options, query);
   }
 
   private findTableTermAndAddDb(term: TermJson | undefined, db: any) {

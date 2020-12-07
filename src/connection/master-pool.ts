@@ -17,6 +17,70 @@ import {
 import { RethinkDBConnection } from './connection';
 import { ServerConnectionPool } from './server-pool';
 import { setConnectionDefaults } from './socket';
+import { delay } from '../util';
+
+function flat<T>(acc: T[], next: T[]) {
+  return [...acc, ...next];
+}
+
+// Try to extract the most global address
+// https://github.com/neumino/rethinkdbdash/blob/f77d2ffb77a8c0fa41aabc511d74aa86ea1136d9/lib/helper.js
+function getCanonicalAddress(addresses: RServer[]) {
+  // We suppose that the addresses are all valid, and therefore use loose regex
+  return addresses
+    .map((address) => {
+      if (
+        /^127(\.\d{1,3}){3}$/.test(address.host) ||
+        /0?:?0?:?0?:?0?:?0?:?0?:0?:1/.test(address.host)
+      ) {
+        return { address, value: 0 };
+      }
+      if (isIPv6(address.host) && /^[fF]|[eE]80:.*:.*:/.test(address.host)) {
+        return { address, value: 1 };
+      }
+      if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
+        return { address, value: 2 };
+      }
+      if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
+        return { address, value: 3 };
+      }
+      if (/^172\.(1\d|2\d|30|31)\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
+        return { address, value: 4 };
+      }
+      if (/^10(\.\d{1,3}){3}$/.test(address.host)) {
+        return { address, value: 5 };
+      }
+      if (isIPv6(address.host) && /^[fF]|[cCdD].*:.*:/.test('address.host')) {
+        return { address, value: 6 };
+      }
+      return { address, value: 7 };
+    })
+    .reduce((acc, next) => (acc.value > next.value ? acc : next)).address.host;
+}
+
+interface ServerStatus {
+  id: string;
+  name: string;
+  network: {
+    canonical_addresses: Array<{
+      host: string;
+      port: number;
+    }>;
+    cluster_port: number;
+    connected_to: Record<string, unknown>;
+    hostname: string;
+    http_admin_port: number;
+    reql_port: number;
+    time_connected: Date;
+  };
+  process: {
+    argv: string[];
+    cache_size_mb: number;
+    pid: number;
+    time_started: Date;
+    version: string;
+  };
+}
 
 export class MasterConnectionPool extends EventEmitter implements MasterPool {
   public draining = false;
@@ -151,7 +215,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     });
   }
 
-  public async drain({ noreplyWait = false } = {}) {
+  public async drain() {
     this.emit('draining');
     this.draining = true;
     this.discovery = false;
@@ -254,9 +318,11 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
           if (row.state) {
             state = row.state;
             if (row.state === 'ready') {
-              this.servers
-                .filter((server) => !newServers.some((s) => s === server))
-                .forEach((server) => this.removeServer(server));
+              this.servers.forEach((server) => {
+                if (!newServers.some((s) => s === server)) {
+                  this.removeServer(server);
+                }
+              });
             }
           }
           if (row.new_val) {
@@ -275,7 +341,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
           }
         })
         // handle disconnections
-        .catch(() => new Promise((resolve) => setTimeout(resolve, 20 * 1000)))
+        .catch(() => delay(20000))
         .then(() => (this.discovery ? this.discover() : undefined))
     );
   }
@@ -338,7 +404,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
             )
             .then(() => {
               if (!this.draining) {
-                return this.createServerPool(server).catch(() => undefined);
+                this.createServerPool(server).catch(() => undefined);
               }
             });
         }
@@ -362,7 +428,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       if (index >= 0) {
         this.serverPools.splice(index, 1);
       }
-      return pool.drain();
+      await pool.drain();
     }
   }
 
@@ -385,67 +451,4 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       (conn) => !(conn as RethinkDBConnection).numOfQueries,
     );
   }
-}
-
-function flat<T>(acc: T[], next: T[]) {
-  return [...acc, ...next];
-}
-
-// Try to extract the most global address
-// https://github.com/neumino/rethinkdbdash/blob/f77d2ffb77a8c0fa41aabc511d74aa86ea1136d9/lib/helper.js
-function getCanonicalAddress(addresses: RServer[]) {
-  // We suppose that the addresses are all valid, and therefore use loose regex
-  return addresses
-    .map((address) => {
-      if (
-        /^127(\.\d{1,3}){3}$/.test(address.host) ||
-        /0?:?0?:?0?:?0?:?0?:?0?:0?:1/.test(address.host)
-      ) {
-        return { address, value: 0 };
-      }
-      if (isIPv6(address.host) && /^[fF]|[eE]80:.*\:.*\:/.test(address.host)) {
-        return { address, value: 1 };
-      }
-      if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
-        return { address, value: 2 };
-      }
-      if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
-        return { address, value: 3 };
-      }
-      if (/^172\.(1\d|2\d|30|31)\.\d{1,3}\.\d{1,3}$/.test(address.host)) {
-        return { address, value: 4 };
-      }
-      if (/^10(\.\d{1,3}){3}$/.test(address.host)) {
-        return { address, value: 5 };
-      }
-      if (isIPv6(address.host) && /^[fF]|[cCdD].*\:.*\:/.test('address.host')) {
-        return { address, value: 6 };
-      }
-      return { address, value: 7 };
-    })
-    .reduce((acc, next) => (acc.value > next.value ? acc : next)).address.host;
-}
-
-interface ServerStatus {
-  id: string;
-  name: string;
-  network: {
-    canonical_addresses: Array<{
-      host: string;
-      port: number;
-    }>;
-    cluster_port: number;
-    connected_to: object;
-    hostname: string;
-    http_admin_port: number;
-    reql_port: number;
-    time_connected: Date;
-  };
-  process: {
-    argv: string[];
-    cache_size_mb: number;
-    pid: number;
-    time_started: Date;
-    version: string;
-  };
 }
