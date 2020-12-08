@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { TcpNetConnectOpts } from 'net';
 import { ConnectionOptions } from 'tls';
 import { Readable } from 'stream';
-import { DeepPartial } from './internal-types';
+import { DeepPartial, TermJson } from './internal-types';
 
 // #region optargs
 export type Primitives = null | string | boolean | number;
@@ -394,7 +394,13 @@ export interface RCursor<T = any> extends Readable {
   ): Promise<void>;
 }
 
-export interface RQuery<T = any> {
+export const querySymbol = Symbol('RethinkDBQuery');
+
+export interface RQuery<T = unknown> {
+  (...args: unknown[]): RQuery<T>;
+  term: TermJson;
+  [querySymbol]: true;
+  do: () => RQuery;
   typeOf(): RDatum<string>;
   info(): RDatum<{
     value?: string;
