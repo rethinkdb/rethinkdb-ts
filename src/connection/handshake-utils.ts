@@ -6,15 +6,15 @@ import { Version } from '../proto/enums';
 
 export const NULL_BUFFER = Buffer.from('\0', 'binary');
 const PROTOCOL_VERSION = 0;
-const AUTHENTIFICATION_METHOD = 'SCRAM-SHA-256';
+const AUTHENTICATION_METHOD = 'SCRAM-SHA-256';
 const KEY_LENGTH = 32; // Because we are currently using SHA 256
 const CACHE_PBKDF2: { [cacheKey: string]: Buffer } = {};
 
 function xorBuffer(a: Buffer, b: Buffer) {
   const result = [];
   const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    // tslint:disable-next-line:no-bitwise
+  for (let i = 0; i < len; i += 1) {
+    // eslint-disable-next-line no-bitwise
     result.push(a[i] ^ b[i]);
   }
   return Buffer.from(result);
@@ -27,7 +27,7 @@ export function buildAuthBuffer(user: string) {
   const mainBuffer = Buffer.from(
     JSON.stringify({
       protocol_version: PROTOCOL_VERSION,
-      authentication_method: AUTHENTIFICATION_METHOD,
+      authentication_method: AUTHENTICATION_METHOD,
       authentication: `n,,n=${user},r=${randomString}`,
     }),
   );
@@ -37,11 +37,16 @@ export function buildAuthBuffer(user: string) {
   };
 }
 
-export function validateVersion(msg: {
+type VersionMessage = {
+  // eslint-disable-next-line camelcase
   max_protocol_version: number;
+  // eslint-disable-next-line camelcase
   min_protocol_version: number;
+  // eslint-disable-next-line camelcase
   server_version: string;
-}) {
+};
+
+export function validateVersion(msg: VersionMessage) {
   if (
     msg.max_protocol_version < PROTOCOL_VERSION ||
     msg.min_protocol_version > PROTOCOL_VERSION
