@@ -3,10 +3,11 @@ import { isRethinkDBError, RethinkDBError } from '../error/error';
 import { QueryJson, TermJson } from '../internal-types';
 import { ErrorType, QueryType, ResponseType, TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
-import { parseOptarg } from '../query-builder/parse-opt-arg';
+import { parseOptarg } from '../query-builder/query';
 import { Cursor } from '../response/cursor';
 import {
   Connection,
+  RCursor,
   RethinkDBErrorType,
   RServerConnectionOptions,
   RunOptions,
@@ -97,7 +98,7 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
     }
   }
 
-  public async reconnect(options?: { noreplyWait: boolean }) {
+  public async reconnect(options?: { noreplyWait: boolean }): Promise<RethinkDBConnection> {
     if (this.socket.status === 'open' || this.socket.status === 'handshake') {
       await this.close(options);
     }
@@ -280,5 +281,48 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
         console.error(err.toString());
       }
     }
+  }
+
+  public async run<T = any>(
+    term: TermJson,
+    options?: RunOptions,
+  ): Promise<void | T | { profile: any; result: T }> {
+    const cursor = await this.query(term, options);
+    if (cursor) {
+      const results = await cursor.resolve();
+      if (results) {
+        switch (cursor.getType()) {
+          case 'Atom':
+            if (cursor.profile) {
+              return { profile: cursor.profile, result: results[0] };
+            }
+            return results[0];
+
+          case 'Cursor':
+            if (cursor.profile) {
+              return {
+                profile: cursor.profile,
+                result: await cursor.toArray(),
+              };
+            }
+            return cursor.toArray();
+          default:
+            return cursor;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  public async getCursor(
+    term: TermJson,
+    options?: RunOptions,
+  ): Promise<RCursor<any> | undefined> {
+    const cursor = await this.query(term, options);
+    if (!cursor) {
+      return;
+    }
+    cursor.init();
+    return cursor;
   }
 }

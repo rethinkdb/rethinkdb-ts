@@ -16,21 +16,20 @@ export type DeepPartial<T> =
         : DeepPartial<T[P]>;
     };
 
+export type OptargsJson = Record<string, unknown> | undefined;
+
 export type TermJson =
-  | ComplexTermJson
+  | [TermType, TermJson[]?, OptargsJson?]
   | string
   | number
   | boolean
-  | object
+  | Record<string, unknown>
   | null;
-export type OptargsJson = Record<string, unknown> | undefined;
-export interface ComplexTermJson
-  extends Array<TermType | TermJson[] | OptargsJson> {
-  0: TermType;
-  1?: TermJson[];
-  2?: OptargsJson;
-}
+
+export type ComplexTermJson = [TermType, TermJson[]?, OptargsJson?];
+
 export type QueryJson = [QueryType, TermJson?, OptargsJson?];
+
 export interface ResponseJson {
   t: ResponseType;
   r: any[];
