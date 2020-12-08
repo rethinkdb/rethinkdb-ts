@@ -412,28 +412,6 @@ export interface RQuery<T = unknown> {
     primary_key?: string;
     type: string;
   }>;
-
-  run(options: RunOptions & { noreply: true }): Promise<undefined>;
-  run(
-    connection: Connection,
-    options: RunOptions & { noreply: true },
-  ): Promise<undefined>;
-  run(
-    options: RunOptions & { profile: true },
-  ): Promise<{ profile: any; result: T }>;
-  run(
-    connection: Connection,
-    options: RunOptions & { profile: true },
-  ): Promise<{ profile: any; result: T }>;
-  run(connection?: Connection | RunOptions, options?: RunOptions): Promise<T>;
-  getCursor(
-    connection?: Connection | RunOptions,
-    options?: RunOptions,
-  ): T extends Array<infer T1>
-    ? Promise<RCursor<T1>>
-    : T extends RCursor<infer T2>
-    ? Promise<T2>
-    : Promise<RCursor<T>>;
 }
 export interface RDatum<T = any> extends RQuery<T> {
   do<U>(
@@ -1094,10 +1072,6 @@ export interface R {
   november: RValue;
   december: RValue;
   // Global
-  connect(options: RConnectionOptions): Promise<Connection>;
-  connectPool(options?: RPoolConnectionOptions): Promise<MasterPool>;
-  getPoolMaster(): MasterPool | undefined;
-  waitForHealthy(): Promise<MasterPool>;
   setNestingLevel(level: number): void;
   setArrayLimit(limit?: number): void;
   serialize(query: RQuery): string;

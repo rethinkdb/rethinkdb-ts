@@ -453,4 +453,50 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       (conn) => !(conn as RethinkDBConnection).numOfQueries,
     );
   }
+
+  async run(term: TermJson, options?: RunOptions): Promise<any> {
+    if (this.draining) {
+      throw new RethinkDBError(
+        '`run` was called without a connection and no pool has been created after:',
+        { term, type: RethinkDBErrorType.API_FAIL },
+      );
+    }
+    const cursor = await this.queue(term, options);
+    if (!cursor) {
+      return;
+    }
+    const results = await cursor.resolve();
+    if (results) {
+      switch (cursor.getType()) {
+        case 'Atom':
+          return cursor.profile
+            ? { profile: cursor.profile, result: results[0] }
+            : results[0];
+        case 'Cursor':
+          return cursor.profile
+            ? { profile: cursor.profile, result: await cursor.toArray() }
+            : await cursor.toArray();
+        default:
+          return cursor;
+      }
+    }
+  }
+
+  async getCursor(
+    term: TermJson,
+    options?: RunOptions,
+  ): Promise<RCursor<any> | undefined> {
+    if (this.draining) {
+      throw new RethinkDBError(
+        '`run` was called without a connection and no pool has been created after:',
+        { term, type: RethinkDBErrorType.API_FAIL },
+      );
+    }
+    const cursor = await this.queue(term, options);
+    if (!cursor) {
+      return;
+    }
+    cursor.init();
+    return cursor;
+  }
 }
