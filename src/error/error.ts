@@ -4,158 +4,6 @@ import { ErrorType, ResponseType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
 import { backtraceTerm } from './term-backtrace';
 
-export interface RethinkDBErrorArgs {
-  cause?: Error;
-  type?: RethinkDBErrorType;
-  errorCode?: number;
-  term?: TermJson;
-  query?: QueryJson;
-  backtrace?: Array<number | string>;
-  responseType?: ResponseType;
-  responseErrorType?: ErrorType;
-}
-
-export function isRethinkDBError(error: any): error is RethinkDBError {
-  return error instanceof RethinkDBError;
-}
-
-export class RethinkDBError extends Error {
-  public readonly cause: Error | undefined;
-
-  public get type() {
-    return this._type;
-  }
-
-  // tslint:disable-next-line:variable-name
-  private _type: RethinkDBErrorType = RethinkDBErrorType.UNKNOWN;
-
-  private term?: TermJson;
-
-  private query?: QueryJson;
-
-  private backtrace?: Array<number | string>;
-
-  constructor(
-    public msg: string,
-    {
-      cause,
-      type,
-      term,
-      query,
-      errorCode,
-      backtrace,
-      responseType,
-      responseErrorType,
-    }: RethinkDBErrorArgs = {},
-  ) {
-    super(buildMessage(msg, query, term, backtrace));
-    this.cause = cause;
-    this.name = 'ReqlDriverError';
-    this.msg = msg;
-    this.term = query ? query[1] : term;
-    this.backtrace = backtrace;
-    this.setErrorType({ errorCode, type, responseErrorType });
-    Error.captureStackTrace(this, RethinkDBError);
-  }
-
-  public addBacktrace({
-    term,
-    query,
-    backtrace,
-  }: {
-    term?: TermJson;
-    query?: QueryJson;
-    backtrace?: [string, string];
-  } = {}) {
-    this.message = buildMessage(this.msg, query, term, backtrace);
-  }
-
-  private setErrorType({
-    errorCode,
-    type,
-    responseErrorType,
-  }: {
-    errorCode?: number;
-    type?: RethinkDBErrorType;
-    responseErrorType?: ErrorType;
-  }) {
-    if (type) {
-      this.name = 'ReqlDriverError';
-      this._type = type;
-    } else if (errorCode && errorCode >= 10 && errorCode <= 20) {
-      // https://rethinkdb.com/docs/writing-drivers/
-      // A ReqlAuthError should be thrown if the error code is between 10 and 20 (inclusive)
-      // what about other error codes?
-      this.name = 'ReqlAuthError';
-      this._type = RethinkDBErrorType.AUTH;
-    } else if (responseErrorType) {
-      switch (responseErrorType) {
-        case ErrorType.INTERNAL:
-          this.name = 'ReqlInternalError';
-          this._type = RethinkDBErrorType.INTERNAL;
-          break;
-        case ErrorType.NON_EXISTENCE:
-          this.name = 'ReqlNonExistanceError';
-          this._type = RethinkDBErrorType.NON_EXISTENCE;
-          break;
-        case ErrorType.OP_FAILED:
-          this.name = 'ReqlOpFailedError';
-          this._type = RethinkDBErrorType.OP_FAILED;
-          break;
-        case ErrorType.OP_INDETERMINATE:
-          this.name = 'ReqlOpIndeterminateError';
-          this._type = RethinkDBErrorType.OP_INDETERMINATE;
-          break;
-        case ErrorType.PERMISSION_ERROR:
-          this.name = 'ReqlPermissionError';
-          this._type = RethinkDBErrorType.PERMISSION_ERROR;
-          break;
-        case ErrorType.QUERY_LOGIC:
-          this.name = 'ReqlLogicError';
-          this._type = RethinkDBErrorType.QUERY_LOGIC;
-          break;
-        case ErrorType.RESOURCE_LIMIT:
-          this.name = 'ReqlResourceError';
-          this._type = RethinkDBErrorType.RESOURCE_LIMIT;
-          break;
-        case ErrorType.USER:
-          this.name = 'ReqlUserError';
-          this._type = RethinkDBErrorType.USER;
-          break;
-      }
-    } else {
-      this.name = 'ReqlUnknownError';
-    }
-  }
-}
-
-function buildMessage(
-  msg: string,
-  query?: QueryJson,
-  term?: TermJson,
-  backtrace?: Array<number | string>,
-) {
-  const t = query ? query[1] : term;
-  if (t) {
-    msg =
-      msg.charAt(msg.length - 1) === ':'
-        ? msg
-        : msg.charAt(msg.length - 1) === '.'
-        ? `${msg.substring(0, msg.length - 1)} in:`
-        : `${msg} in:`;
-    const [str, mark] = backtraceTerm(t, true, backtrace);
-    if (globals.pretty) {
-      msg += `\n${pretty(str, mark)}`;
-    } else {
-      msg += `\n${str}\n`;
-      if (backtrace) {
-        msg += `${mark}\n`;
-      }
-    }
-  }
-  return msg;
-}
-
 function pretty(query: string, mark: string) {
   let result = '';
   let indent = 0;
@@ -170,7 +18,7 @@ function pretty(query: string, mark: string) {
   let nextSign = '';
   let isLastIndentDot = false;
   const openBrackets: string[] = [];
-  for (let i = 0; i < query.length; i++) {
+  for (let i = 0; i < query.length; i += 1) {
     char = query.charAt(i);
     if (!inStr) {
       if (['{', '(', '['].includes(char)) {
@@ -264,7 +112,7 @@ function pretty(query: string, mark: string) {
       case ' ':
         shouldEscape = false;
         if (newline) {
-          lineMarkPos++;
+          lineMarkPos += 1;
         } else {
           result += char;
         }
@@ -295,4 +143,170 @@ function pretty(query: string, mark: string) {
   lineMark = lineMark.substring(0, result.length - lastNewlinePos);
   result += lineMark.includes('^') ? `\n${lineMark}\n` : '\n';
   return result;
+}
+function preparseMessage(message: string): string {
+  if (message.charAt(message.length - 1) === ':') {
+    return message;
+  }
+  if (message.charAt(message.length - 1) === '.') {
+    return `${message.substring(0, message.length - 1)} in:`;
+  }
+  return `${message} in:`;
+}
+function buildMessage(
+  messageString: string,
+  query?: QueryJson,
+  term?: TermJson,
+  backtrace?: Array<number | string>,
+) {
+  let message = messageString;
+  const t = query ? query[1] : term;
+  if (t) {
+    message = preparseMessage(message);
+    const [str, mark] = backtraceTerm(t, true, backtrace);
+    if (globals.pretty) {
+      message += `\n${pretty(str, mark)}`;
+    } else {
+      message += `\n${str}\n`;
+      if (backtrace) {
+        message += `${mark}\n`;
+      }
+    }
+  }
+  return message;
+}
+
+export interface RethinkDBErrorArgs {
+  cause?: Error;
+  type?: RethinkDBErrorType;
+  errorCode?: number;
+  term?: TermJson;
+  query?: QueryJson;
+  backtrace?: Array<number | string>;
+  responseType?: ResponseType;
+  responseErrorType?: ErrorType;
+}
+
+interface ErrorGetterOptions {
+  errorCode?: number;
+  type?: RethinkDBErrorType;
+  responseErrorType?: ErrorType;
+}
+
+interface ErrorGetterResult {
+  name: string;
+  type: RethinkDBErrorType;
+}
+function getErrorNameAndType({
+  errorCode,
+  type,
+  responseErrorType,
+}: ErrorGetterOptions): ErrorGetterResult {
+  if (type) {
+    return { name: 'ReqlDriverError', type };
+  }
+  if (errorCode && errorCode >= 10 && errorCode <= 20) {
+    // https://rethinkdb.com/docs/writing-drivers/
+    // A ReqlAuthError should be thrown if the error code is between 10 and 20 (inclusive)
+    // what about other error codes?
+    return { name: 'ReqlAuthError', type: RethinkDBErrorType.AUTH };
+  }
+  switch (responseErrorType) {
+    case ErrorType.INTERNAL:
+      return {
+        name: 'ReqlInternalError',
+        type: RethinkDBErrorType.INTERNAL,
+      };
+    case ErrorType.NON_EXISTENCE:
+      return {
+        name: 'ReqlNonExistanceError',
+        type: RethinkDBErrorType.NON_EXISTENCE,
+      };
+    case ErrorType.OP_FAILED:
+      return {
+        name: 'ReqlOpFailedError',
+        type: RethinkDBErrorType.OP_FAILED,
+      };
+    case ErrorType.OP_INDETERMINATE:
+      return {
+        name: 'ReqlOpIndeterminateError',
+        type: RethinkDBErrorType.OP_INDETERMINATE,
+      };
+    case ErrorType.PERMISSION_ERROR:
+      return {
+        name: 'ReqlPermissionError',
+        type: RethinkDBErrorType.PERMISSION_ERROR,
+      };
+    case ErrorType.QUERY_LOGIC:
+      return {
+        name: 'ReqlLogicError',
+        type: RethinkDBErrorType.QUERY_LOGIC,
+      };
+    case ErrorType.RESOURCE_LIMIT:
+      return {
+        name: 'ReqlResourceError',
+        type: RethinkDBErrorType.RESOURCE_LIMIT,
+      };
+    case ErrorType.USER:
+      return {
+        name: 'ReqlUserError',
+        type: RethinkDBErrorType.USER,
+      };
+    default:
+      return { name: 'ReqlUnknownError', type: RethinkDBErrorType.UNKNOWN };
+  }
+}
+
+export class RethinkDBError extends Error {
+  public readonly cause: Error | undefined;
+
+  public readonly type: RethinkDBErrorType = RethinkDBErrorType.UNKNOWN;
+
+  private term?: TermJson;
+
+  private backtrace?: Array<number | string>;
+
+  constructor(
+    public msg: string,
+    {
+      cause,
+      type,
+      term,
+      query,
+      errorCode,
+      backtrace,
+      responseErrorType,
+    }: RethinkDBErrorArgs = {},
+  ) {
+    super(buildMessage(msg, query, term, backtrace));
+    this.cause = cause;
+    this.name = 'ReqlDriverError';
+    this.msg = msg;
+    this.term = query ? query[1] : term;
+    this.backtrace = backtrace;
+    const { name, type: returnedType } = getErrorNameAndType({
+      errorCode,
+      responseErrorType,
+      type,
+    });
+    this.name = name;
+    this.type = returnedType;
+    Error.captureStackTrace(this, RethinkDBError);
+  }
+
+  public addBacktrace({
+    term,
+    query,
+    backtrace,
+  }: {
+    term?: TermJson;
+    query?: QueryJson;
+    backtrace?: [string, string];
+  } = {}) {
+    this.message = buildMessage(this.msg, query, term, backtrace);
+  }
+}
+
+export function isRethinkDBError(error: unknown): error is RethinkDBError {
+  return error instanceof RethinkDBError;
 }
