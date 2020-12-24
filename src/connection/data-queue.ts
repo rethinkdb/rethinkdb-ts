@@ -1,10 +1,12 @@
+interface WaitItem<T> {
+  resolve: (data: T) => void;
+  promise: Promise<T>;
+}
+
 export class DataQueue<T> {
   private queue: Array<{ op?: () => void; data: T }> = [];
 
-  private waiting: Array<{
-    resolve: (data: T) => void;
-    promise: Promise<T>;
-  }> = [];
+  private waiting: Array<WaitItem<T>> = [];
 
   public enqueue(data: T, op?: () => void) {
     if (this.waiting.length > 0) {
@@ -21,12 +23,7 @@ export class DataQueue<T> {
   }
 
   public destroy(data: T) {
-    let waiter:
-      | {
-          resolve: (data: T) => void;
-          promise: Promise<T>;
-        }
-      | undefined;
+    let waiter: WaitItem<T> | undefined;
     while ((waiter = this.waiting.shift())) {
       waiter.resolve(data);
     }
@@ -50,10 +47,7 @@ export class DataQueue<T> {
         r(t);
       };
     });
-    this.waiting.push({
-      resolve,
-      promise,
-    });
+    this.waiting.push({ resolve, promise });
     return promise;
   }
 }
