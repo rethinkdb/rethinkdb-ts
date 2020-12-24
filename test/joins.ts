@@ -1,69 +1,65 @@
 import assert from 'assert';
-import { r } from '../src';
+import { createRethinkdbMasterPool, r } from '../src';
 import config from './config';
 import { uuid } from './util/common';
+import { MasterConnectionPool } from '../src/connection/master-pool';
 
 describe('joins', () => {
   let dbName: string;
   let tableName: string;
   let pks: string[];
+  let pool: MasterConnectionPool;
 
   before(async () => {
-    await r.connectPool(config);
+    pool = await createRethinkdbMasterPool(config);
     dbName = uuid();
     tableName = uuid();
 
-    const result1 = await r.dbCreate(dbName).run();
+    const result1 = await pool.run(r.dbCreate(dbName));
     assert.equal(result1.dbs_created, 1);
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result2 = await pool.run(r.db(dbName).tableCreate(tableName));
     assert.equal(result2.tables_created, 1);
-    const result3 = await r
-      .db(dbName)
-      .table(tableName)
-      .insert([{ val: 1 }, { val: 2 }, { val: 3 }])
-      .run();
+    const result3 = await pool.run(
+      r
+        .db(dbName)
+        .table(tableName)
+        .insert([{ val: 1 }, { val: 2 }, { val: 3 }]),
+    );
     pks = result3.generated_keys;
     assert.equal(result3.inserted, 3);
 
-    await r
-      .db(dbName)
-      .table(tableName)
-      .indexCreate('val')
-      .run();
-    const result4 = await r
-      .db(dbName)
-      .table(tableName)
-      .indexWait('val')
-      .run();
+    await pool.run(r.db(dbName).table(tableName).indexCreate('val'));
+    const result4 = await pool.run(
+      r.db(dbName).table(tableName).indexWait('val'),
+    );
     assert(result4);
   });
 
   after(async () => {
-    await r.getPoolMaster().drain();
+    await pool.drain();
   });
 
   it('`innerJoin` should return -- array-array', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .innerJoin(r.expr([1, 2, 3]), (left, right) => left.eq(right))
-      .run();
+    const result = await pool.run(
+      r
+        .expr([1, 2, 3])
+        .innerJoin(r.expr([1, 2, 3]), (left, right) => left.eq(right)),
+    );
     assert.deepEqual(result, [
       { left: 1, right: 1 },
       { left: 2, right: 2 },
-      { left: 3, right: 3 }
+      { left: 3, right: 3 },
     ]);
   });
 
   it('`innerJoin` should return -- array-stream', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .innerJoin(r.db(dbName).table(tableName), (left, right) =>
-        left.eq(right('val'))
-      )
-      .run();
+    const result = await pool.run(
+      r
+        .expr([1, 2, 3])
+        .innerJoin(r.db(dbName).table(tableName), (left, right) =>
+          left.eq(right('val')),
+        ),
+    );
     assert.equal(result.length, 3);
     assert(result[0].left);
     assert(result[0].right);
@@ -74,11 +70,14 @@ describe('joins', () => {
   });
 
   it('`innerJoin` should return -- stream-stream', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .innerJoin(r.db(dbName).table(tableName), (left, right) => left.eq(right))
-      .run();
+    const result = await pool.run(
+      r
+        .db(dbName)
+        .table(tableName)
+        .innerJoin(r.db(dbName).table(tableName), (left, right) =>
+          left.eq(right),
+        ),
+    );
     assert.equal(result.length, 3);
     assert(result[0].left);
     assert(result[0].right);
@@ -91,11 +90,7 @@ describe('joins', () => {
   it('`innerJoin` should throw if no sequence', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .innerJoin()
-        .run();
+      await pool.run(r.db(dbName).table(tableName).innerJoin());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -104,7 +99,7 @@ describe('joins', () => {
           dbName +
           '").table("' +
           tableName +
-          '")\n'
+          '")\n',
       );
     }
   });
@@ -112,11 +107,12 @@ describe('joins', () => {
   it('`innerJoin` should throw if no predicate', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .innerJoin(r.expr([1, 2, 3]))
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .innerJoin(r.expr([1, 2, 3])),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -125,30 +121,32 @@ describe('joins', () => {
           dbName +
           '").table("' +
           tableName +
-          '")\n'
+          '")\n',
       );
     }
   });
 
   it('`outerJoin` should return -- array-array', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .outerJoin(r.expr([1, 2, 3]), (left, right) => left.eq(right))
-      .run();
+    const result = await pool.run(
+      r
+        .expr([1, 2, 3])
+        .outerJoin(r.expr([1, 2, 3]), (left, right) => left.eq(right)),
+    );
     assert.deepEqual(result, [
       { left: 1, right: 1 },
       { left: 2, right: 2 },
-      { left: 3, right: 3 }
+      { left: 3, right: 3 },
     ]);
   });
 
   it('`outerJoin` should return -- array-stream - 1', async () => {
-    const result = await r
-      .expr([1, 2, 3, 4])
-      .outerJoin(r.db(dbName).table(tableName), (left, right) =>
-        left.eq(right('val'))
-      )
-      .run();
+    const result = await pool.run(
+      r
+        .expr([1, 2, 3, 4])
+        .outerJoin(r.db(dbName).table(tableName), (left, right) =>
+          left.eq(right('val')),
+        ),
+    );
     assert.equal(result.length, 4);
     assert(result[0].left);
     assert(result[0].right);
@@ -159,12 +157,13 @@ describe('joins', () => {
   });
 
   it('`outerJoin` should return -- array-stream - 2', async () => {
-    const result = await r
-      .expr([1, 2, 3, 4])
-      .outerJoin(r.db(dbName).table(tableName), (left, right) =>
-        left.eq(right('val'))
-      )
-      .run();
+    const result = await pool.run(
+      r
+        .expr([1, 2, 3, 4])
+        .outerJoin(r.db(dbName).table(tableName), (left, right) =>
+          left.eq(right('val')),
+        ),
+    );
     assert.equal(result.length, 4);
     assert(result[0].left);
     assert(result[0].right);
@@ -177,11 +176,14 @@ describe('joins', () => {
   });
 
   it('`outerJoin` should return -- stream-stream', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .outerJoin(r.db(dbName).table(tableName), (left, right) => left.eq(right))
-      .run();
+    const result = await pool.run(
+      r
+        .db(dbName)
+        .table(tableName)
+        .outerJoin(r.db(dbName).table(tableName), (left, right) =>
+          left.eq(right),
+        ),
+    );
     assert.equal(result.length, 3);
     assert(result[0].left);
     assert(result[0].right);
@@ -194,11 +196,7 @@ describe('joins', () => {
   it('`outerJoin` should throw if no sequence', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .outerJoin()
-        .run();
+      await pool.run(r.db(dbName).table(tableName).outerJoin());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -207,7 +205,7 @@ describe('joins', () => {
           dbName +
           '").table("' +
           tableName +
-          '")\n'
+          '")\n',
       );
     }
   });
@@ -215,11 +213,12 @@ describe('joins', () => {
   it('`outerJoin` should throw if no predicate', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .outerJoin(r.expr([1, 2, 3]))
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .outerJoin(r.expr([1, 2, 3])),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -228,16 +227,15 @@ describe('joins', () => {
           dbName +
           '").table("' +
           tableName +
-          '")\n'
+          '")\n',
       );
     }
   });
 
   it('`eqJoin` should return -- pk -- array-stream - function', async () => {
-    const result = await r
-      .expr(pks)
-      .eqJoin(doc => doc, r.db(dbName).table(tableName))
-      .run();
+    const result = await pool.run(
+      r.expr(pks).eqJoin((doc) => doc, r.db(dbName).table(tableName)),
+    );
     assert.equal(result.length, 3);
     assert(result[0].left);
     assert(result[0].right);
@@ -248,10 +246,9 @@ describe('joins', () => {
   });
 
   it('`eqJoin` should return -- pk -- array-stream - row => row', async () => {
-    const result = await r
-      .expr(pks)
-      .eqJoin(row => row, r.db(dbName).table(tableName))
-      .run();
+    const result = await pool.run(
+      r.expr(pks).eqJoin((row) => row, r.db(dbName).table(tableName)),
+    );
     assert.equal(result.length, 3);
     assert(result[0].left);
     assert(result[0].right);
@@ -262,10 +259,11 @@ describe('joins', () => {
   });
 
   it('`eqJoin` should return -- secondary index -- array-stream - row => row', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .eqJoin(row => row, r.db(dbName).table(tableName), { index: 'val' })
-      .run();
+    const result = await pool.run(
+      r
+        .expr([1, 2, 3])
+        .eqJoin((row) => row, r.db(dbName).table(tableName), { index: 'val' }),
+    );
     assert.equal(result.length, 3);
     assert(result[0].left);
     assert(result[0].right);
@@ -278,11 +276,7 @@ describe('joins', () => {
   it('`eqJoin` should throw if no argument', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .eqJoin()
-        .run();
+      await pool.run(r.db(dbName).table(tableName).eqJoin());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -291,26 +285,25 @@ describe('joins', () => {
           dbName +
           '").table("' +
           tableName +
-          '")\n'
+          '")\n',
       );
     }
   });
 
   it('`eqJoin` should throw with a non valid key', async () => {
     try {
-      await r
-        .expr([1, 2, 3])
-        .eqJoin(row => row, r.db(dbName).table(tableName), {
+      await pool.run(
+        r.expr([1, 2, 3]).eqJoin((row) => row, r.db(dbName).table(tableName), {
           // @ts-ignore
-          nonValidKey: 'val'
-        })
-        .run();
+          nonValidKey: 'val',
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in'
-        )
+          'Unrecognized optional argument `non_valid_key` in',
+        ),
       );
     }
   });
@@ -318,11 +311,7 @@ describe('joins', () => {
   it('`eqJoin` should throw if no sequence', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .eqJoin('id')
-        .run();
+      await pool.run(r.db(dbName).table(tableName).eqJoin('id'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -331,7 +320,7 @@ describe('joins', () => {
           dbName +
           '").table("' +
           tableName +
-          '")\n'
+          '")\n',
       );
     }
   });
@@ -339,11 +328,7 @@ describe('joins', () => {
   it('`eqJoin` should throw if too many arguments', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .eqJoin(1, 1, 1, 1, 1)
-        .run();
+      await pool.run(r.db(dbName).table(tableName).eqJoin(1, 1, 1, 1, 1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -352,17 +337,18 @@ describe('joins', () => {
           dbName +
           '").table("' +
           tableName +
-          '")\n'
+          '")\n',
       );
     }
   });
 
   it('`zip` should zip stuff', async () => {
-    const result = await r
-      .expr(pks)
-      .eqJoin(doc => doc, r.db(dbName).table(tableName))
-      .zip()
-      .run();
+    const result = await pool.run(
+      r
+        .expr(pks)
+        .eqJoin((doc) => doc, r.db(dbName).table(tableName))
+        .zip(),
+    );
     assert.equal(result.length, 3);
     assert.equal(result[0].left, undefined);
   });

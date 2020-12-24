@@ -45,7 +45,7 @@ describe('accessing-reql', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`run` was called with a closed connection after:\nr.expr(1)\n',
+        '`run` was called with a closed connection after:',
       );
     }
   });
@@ -213,7 +213,7 @@ describe('accessing-reql', () => {
   it('`run` should throw on an unrecognized argument', async () => {
     try {
       // @ts-ignore
-      await r.expr(1).run(connection, { foo: 'bar' });
+      await pool.run(r.expr(1), { foo: 'bar' });
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(

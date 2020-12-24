@@ -1,19 +1,21 @@
 import assert from 'assert';
-import { r } from '../src';
+import { createRethinkdbMasterPool, r } from '../src';
 import config from './config';
+import { MasterConnectionPool } from '../src/connection/master-pool';
 
 describe('errors', () => {
+  let pool: MasterConnectionPool;
   before(async () => {
-    await r.connectPool(config);
+    pool = await createRethinkdbMasterPool(config);
   });
 
   after(async () => {
-    await r.getPoolMaster().drain();
+    await pool.drain();
   });
 
   it('ReqlResourceError', async () => {
     try {
-      await r.expr([1, 2, 3, 4]).run({ arrayLimit: 2 });
+      await pool.run(r.expr([1, 2, 3, 4]), { arrayLimit: 2 });
       assert.fail('should throw');
     } catch (e) {
       assert.equal(e.name, 'ReqlResourceError');
@@ -22,10 +24,7 @@ describe('errors', () => {
 
   it('ReqlLogicError', async () => {
     try {
-      await r
-        .expr(1)
-        .add('foo')
-        .run();
+      await pool.run(r.expr(1).add('foo'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(e.name, 'ReqlLogicError');
@@ -34,10 +33,7 @@ describe('errors', () => {
 
   it('ReqlOpFailedError', async () => {
     try {
-      await r
-        .db('DatabaseThatDoesNotExist')
-        .tableList()
-        .run();
+      await pool.run(r.db('DatabaseThatDoesNotExist').tableList());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(e.name, 'ReqlOpFailedError');
@@ -46,7 +42,7 @@ describe('errors', () => {
 
   it('ReqlUserError', async () => {
     try {
-      await r.branch(r.error('a'), 1, 2).run();
+      await pool.run(r.branch(r.error('a'), 1, 2));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(e.name, 'ReqlUserError');
