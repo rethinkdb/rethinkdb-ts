@@ -11,7 +11,9 @@ tslint.json
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
 .eslintignore
-.eslintrc.js
+.eslintrc.json
 LICENSE
 .prettierrc.json
 test.ts
+.idea
+.eslingcache
