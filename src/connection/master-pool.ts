@@ -6,11 +6,10 @@ import { r } from '../query-builder/r';
 import { Cursor } from '../response/cursor';
 import {
   Changes,
-  Connection,
-  MasterPool,
   RCursor,
   RethinkDBErrorType,
   RPoolConnectionOptions,
+  RQuery,
   RServer,
   RunOptions,
 } from '../types';
@@ -21,6 +20,17 @@ import { delay } from '../util';
 
 function flat<T>(acc: T[], next: T[]) {
   return [...acc, ...next];
+}
+
+export interface MasterPoolOptions {
+  discovery?: boolean;
+  buffer?: number;
+  max?: number;
+  timeoutError?: number;
+  timeoutGb?: number;
+  maxExponent?: number;
+  silent?: boolean;
+  log?: (msg: string) => void;
 }
 
 // Try to extract the most global address
@@ -62,27 +72,35 @@ interface ServerStatus {
   id: string;
   name: string;
   network: {
+    // eslint-disable-next-line camelcase
     canonical_addresses: Array<{
       host: string;
       port: number;
     }>;
+    // eslint-disable-next-line camelcase
     cluster_port: number;
+    // eslint-disable-next-line camelcase
     connected_to: Record<string, unknown>;
     hostname: string;
+    // eslint-disable-next-line camelcase
     http_admin_port: number;
+    // eslint-disable-next-line camelcase
     reql_port: number;
+    // eslint-disable-next-line camelcase
     time_connected: Date;
   };
   process: {
     argv: string[];
+    // eslint-disable-next-line camelcase
     cache_size_mb: number;
     pid: number;
+    // eslint-disable-next-line camelcase
     time_started: Date;
     version: string;
   };
 }
 
-export class MasterConnectionPool extends EventEmitter implements MasterPool {
+export class MasterConnectionPool extends EventEmitter {
   public draining = false;
 
   private healthy: boolean | undefined = undefined;
@@ -111,7 +129,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     timeoutGb = 60 * 60 * 1000,
     maxExponent = 6,
     silent = false,
-    log = (message: string) => undefined,
+    log = () => undefined,
   }: RPoolConnectionOptions = {}) {
     super();
     // min one per server but wont redistribute conn from failed servers
@@ -143,7 +161,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     maxExponent = this.connParam.maxExponent,
     silent = this.connParam.silent,
     log = this.connParam.log,
-  }) {
+  }: MasterPoolOptions): void {
     if (this.discovery !== discovery) {
       this.discovery = discovery;
       if (discovery) {
@@ -188,13 +206,14 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     if (!this.draining) {
       this.setServerPoolsOptions(this.connParam);
     }
+    return undefined;
   }
 
-  public get isHealthy() {
+  public get isHealthy(): boolean {
     return this.serverPools.some((pool) => pool.isHealthy);
   }
 
-  public waitForHealthy() {
+  public waitForHealthy(): Promise<this> {
     return new Promise<this>((resolve, reject) => {
       if (this.isHealthy) {
         resolve(this);
@@ -215,7 +234,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     });
   }
 
-  public async drain() {
+  public async drain(): Promise<void> {
     this.emit('draining');
     this.draining = true;
     this.discovery = false;
@@ -229,21 +248,21 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   }
 
   // @ts-ignore
-  public getPools() {
+  public getPools(): ServerConnectionPool[] {
     return this.serverPools;
   }
 
-  public getConnections(): Connection[] {
+  public getConnections(): RethinkDBConnection[] {
     return this.serverPools
       .map((pool) => pool.getConnections())
       .reduce(flat, []);
   }
 
-  public getLength() {
+  public getLength(): number {
     return this.getOpenConnections().length;
   }
 
-  public getAvailableLength() {
+  public getAvailableLength(): number {
     return this.getIdleConnections().length;
   }
 
@@ -278,7 +297,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     const { buffer = 1, max = 1, ...otherParams } = params;
     const pools = this.getPools();
     const healthyLength = pools.filter((pool) => pool.isHealthy).length;
-    for (let i = 0; i < pools.length; i++) {
+    for (let i = 0; i < pools.length; i += 1) {
       const pool = pools[i];
       pool
         .setOptions(
@@ -306,11 +325,12 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   }
 
   private async discover(): Promise<void> {
-    this.discoveryCursor = await r
-      .db('rethinkdb')
-      .table<ServerStatus>('server_status')
-      .changes({ includeInitial: true, includeStates: true })
-      .run();
+    this.discoveryCursor = await this.run(
+      r
+        .db('rethinkdb')
+        .table<ServerStatus>('server_status')
+        .changes({ includeInitial: true, includeStates: true }),
+    );
     const newServers: RServer[] = [];
     let state: 'initializing' | 'ready' = 'initializing';
     return (
@@ -454,7 +474,11 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     );
   }
 
-  async run(term: TermJson, options?: RunOptions): Promise<any> {
+  async run<TResult = any>(
+    query: RQuery,
+    options?: RunOptions,
+  ): Promise<TResult> {
+    const { term } = query;
     if (this.draining) {
       throw new RethinkDBError(
         '`run` was called without a connection and no pool has been created after:',
@@ -482,10 +506,8 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     }
   }
 
-  async getCursor(
-    term: TermJson,
-    options?: RunOptions,
-  ): Promise<RCursor<any> | undefined> {
+  async getCursor(query: RQuery, options?: RunOptions): Promise<RCursor> {
+    const { term } = query;
     if (this.draining) {
       throw new RethinkDBError(
         '`run` was called without a connection and no pool has been created after:',
@@ -494,7 +516,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     }
     const cursor = await this.queue(term, options);
     if (!cursor) {
-      return;
+      throw new RethinkDBError(
+        'cursor was not returned! maybe you provided "noreply" option?',
+      );
     }
     cursor.init();
     return cursor;

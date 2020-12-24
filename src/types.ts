@@ -215,7 +215,9 @@ export interface ChangesOptions {
 // #region results
 export interface ValueChange<T = any> {
   error?: string;
+  // eslint-disable-next-line camelcase
   old_val?: T;
+  // eslint-disable-next-line camelcase
   new_val?: T;
 }
 export interface DBConfig {
@@ -223,9 +225,13 @@ export interface DBConfig {
   name: string;
 }
 export interface DBChangeResult {
+  // eslint-disable-next-line camelcase
   config_changes: Array<ValueChange<DBConfig>>;
+  // eslint-disable-next-line camelcase
   tables_dropped: number;
+  // eslint-disable-next-line camelcase
   dbs_created: number;
+  // eslint-disable-next-line camelcase
   dbs_dropped: number;
 }
 export interface IndexChangeResult {
@@ -233,24 +239,11 @@ export interface IndexChangeResult {
   renamed?: number;
   dropped?: number;
 }
-export interface RebalanceResult {
-  reconfigured: number;
-  config_changes: Array<ValueChange<TableConfig>>;
-  status_changes: Array<ValueChange<TableStatus>>;
-}
-export interface ReconfigureResult {
-  rebalanced: number;
-  status_changes: Array<ValueChange<TableConfig>>;
-}
-export interface TableChangeResult {
-  tables_created?: number;
-  tables_dropped?: number;
-  config_changes: Array<ValueChange<TableConfig>>;
-}
-
 export interface TableShard {
+  // eslint-disable-next-line camelcase
   primary_replica: string;
   replicas: string[];
+  // eslint-disable-next-line camelcase
   nonvoting_replicas: string[];
 }
 
@@ -258,9 +251,11 @@ export interface TableConfig {
   id: string;
   name: string;
   db: string;
+  // eslint-disable-next-line camelcase
   primary_key: string; // default: "id"
   shards: TableShard[];
   indexes: string[];
+  // eslint-disable-next-line camelcase
   write_acks: string;
   durability: Durability; // "soft" or "hard" default: "hard"
 }
@@ -269,13 +264,42 @@ export interface TableStatus {
   name: string;
   db: string;
   status: {
+    // eslint-disable-next-line camelcase
     all_replicas_ready: boolean;
+    // eslint-disable-next-line camelcase
     ready_for_outdated_reads: boolean;
+    // eslint-disable-next-line camelcase
     ready_for_reads: boolean;
+    // eslint-disable-next-line camelcase
     ready_for_writes: boolean;
   };
   shards: TableShard[];
 }
+
+export interface RebalanceResult {
+  reconfigured: number;
+  // eslint-disable-next-line camelcase
+  config_changes: Array<ValueChange<TableConfig>>;
+  // eslint-disable-next-line camelcase
+  status_changes: Array<ValueChange<TableStatus>>;
+}
+
+export interface ReconfigureResult {
+  rebalanced: number;
+  // eslint-disable-next-line camelcase
+  status_changes: Array<ValueChange<TableConfig>>;
+}
+
+export interface TableChangeResult {
+  // eslint-disable-next-line camelcase
+  tables_created?: number;
+  // eslint-disable-next-line camelcase
+  tables_dropped?: number;
+  // eslint-disable-next-line camelcase
+  config_changes: Array<ValueChange<TableConfig>>;
+}
+
+
 export interface IndexStatus {
   function: Buffer;
   geo: boolean;
@@ -288,10 +312,12 @@ export interface WriteResult<T = any> {
   deleted: number;
   skipped: number;
   errors: number;
+  // eslint-disable-next-line camelcase
   first_error?: string;
   inserted: number;
   replaced: number;
   unchanged: number;
+  // eslint-disable-next-line camelcase
   generated_keys?: string[];
   warnings?: string[];
   changes?: Array<ValueChange<T>>;
@@ -299,7 +325,9 @@ export interface WriteResult<T = any> {
 export interface Changes<T = any> extends ValueChange<T> {
   state?: 'initializing' | 'ready'; // 'initializing', 'ready'. cant come together with values
   type?: 'change' | 'add' | 'remove' | 'initial' | 'uninitial' | 'state';
+  // eslint-disable-next-line camelcase
   old_offset?: number;
+  // eslint-disable-next-line camelcase
   new_offset?: number;
 }
 
@@ -327,45 +355,6 @@ export interface MatchResults {
 // #endregion results
 
 // #region operations
-export interface Connection extends EventEmitter {
-  readonly open: boolean;
-  clientPort: number;
-  clientAddress: string;
-  close(options?: { noreplyWait: boolean }): Promise<void>;
-  reconnect(options?: { noreplyWait: boolean }): Promise<Connection>;
-  use(db: string): void;
-  noreplyWait(): Promise<void>;
-  server(): Promise<ServerInfo>;
-}
-
-export interface ConnectionPool extends EventEmitter {
-  readonly isHealthy: boolean;
-
-  drain(emit: boolean): Promise<void>;
-  getLength(): number;
-  getAvailableLength(): number;
-  getConnections(): Connection[];
-}
-
-export interface MasterPool extends EventEmitter {
-  readonly isHealthy: boolean;
-  waitForHealthy(): Promise<this>;
-  drain(options?: { noreplyWait: boolean }): Promise<void>;
-  getLength(): number;
-  getAvailableLength(): number;
-  getPools(): ConnectionPool[];
-  setOptions(options: {
-    discovery?: boolean;
-    buffer?: number;
-    max?: number;
-    timeoutError?: number;
-    timeoutGb?: number;
-    maxExponent?: number;
-    silent?: boolean;
-    log?: (msg: string) => void;
-  }): void;
-}
-
 export interface RServer {
   host: string;
   port: number;
@@ -405,10 +394,12 @@ export interface RQuery<T = unknown> {
   info(): RDatum<{
     value?: string;
     db?: { id: string; name: string; type: string };
+    // eslint-disable-next-line camelcase
     doc_count_estimates?: number[];
     id?: string;
     indexes?: string[];
     name?: string;
+    // eslint-disable-next-line camelcase
     primary_key?: string;
     type: string;
   }>;
@@ -533,7 +524,7 @@ export interface RDatum<T = any> extends RQuery<T> {
       emit?: (
         acc: RDatum<ACC>,
         next: RDatum<ONE>,
-        // tslint:disable-next-line:variable-name
+        // eslint-disable-next-line camelcase
         new_acc: RDatum<ACC>,
       ) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
@@ -807,7 +798,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
     base: any,
     foldFunction: (acc: RDatum<ACC>, next: RDatum<T>) => any, // this any is ACC
     options?: {
-      // tslint:disable-next-line:variable-name
+      // eslint-disable-next-line camelcase
       emit?: (acc: RDatum<ACC>, next: RDatum<T>, new_acc: RDatum<ACC>) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
     },
@@ -1570,7 +1561,7 @@ export interface R {
       emit?: (
         acc: RDatum<ACC>,
         next: RDatum<ONE>,
-        // tslint:disable-next-line:variable-name
+        // eslint-disable-next-line camelcase
         new_acc: RDatum<ACC>,
       ) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
@@ -1581,7 +1572,7 @@ export interface R {
     base: any,
     foldFunction: (acc: RDatum<ACC>, next: RDatum<T>) => any, // this any is ACC
     options: {
-      // tslint:disable-next-line:variable-name
+      // eslint-disable-next-line camelcase
       emit: (acc: RDatum<ACC>, next: RDatum<T>, new_acc: RDatum<ACC>) => any[]; // this any is RES
     },
   ): RFeed<RES>;
@@ -1590,7 +1581,7 @@ export interface R {
     base: any,
     foldFunction: (acc: RDatum<ACC>, next: RDatum<T>) => any, // this any is ACC
     options?: {
-      // tslint:disable-next-line:variable-name
+      // eslint-disable-next-line camelcase
       emit?: (acc: RDatum<ACC>, next: RDatum<T>, new_acc: RDatum<ACC>) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
     },

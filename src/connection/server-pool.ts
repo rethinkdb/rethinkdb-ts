@@ -3,19 +3,20 @@ import { isRethinkDBError, RethinkDBError } from '../error/error';
 import { TermJson } from '../internal-types';
 import { Cursor } from '../response/cursor';
 import {
-  ConnectionPool,
   RConnectionOptions,
   RethinkDBErrorType,
   RServerConnectionOptions,
   RunOptions,
 } from '../types';
-import { RethinkDBConnection } from './connection';
+import {
+  IConnectionLogger,
+  RethinkDBConnection,
+  RethinkdbConnectionParams,
+} from './connection';
 import { RNConnOpts, setConnectionDefaults } from './socket';
 import { delay } from '../util';
 
-export class ServerConnectionPool
-  extends EventEmitter
-  implements ConnectionPool {
+export class ServerConnectionPool extends EventEmitter {
   public readonly server: RNConnOpts;
 
   private draining = false;
@@ -34,9 +35,9 @@ export class ServerConnectionPool
 
   private silent: boolean;
 
-  private log: (message: string) => any;
+  private log?: IConnectionLogger;
 
-  private connParam: any;
+  private connParam: RethinkdbConnectionParams;
 
   private connections: RethinkDBConnection[] = [];
 
@@ -56,7 +57,7 @@ export class ServerConnectionPool
       timeoutGb = 60 * 60 * 1000,
       maxExponent = 6,
       silent = false,
-      log = (message: string) => undefined,
+      log,
     }: RConnectionOptions = {},
   ) {
     super();
@@ -72,7 +73,7 @@ export class ServerConnectionPool
     this.connections = [];
   }
 
-  public eventNames() {
+  public eventNames(): string[] {
     return [
       'draining',
       'queueing',
@@ -85,16 +86,17 @@ export class ServerConnectionPool
 
   public async initConnections(): Promise<void> {
     if (this.connections.length < this.buffer && !this.draining) {
-      return this.createConnection().then(() => this.initConnections());
+      await this.createConnection();
+      await this.initConnections();
     }
   }
 
-  public get isHealthy() {
+  public get isHealthy(): boolean {
     return this.connections.some((conn) => conn.open);
   }
 
-  public waitForHealthy(this: ServerConnectionPool) {
-    return new Promise<ServerConnectionPool>((resolve, reject) => {
+  public waitForHealthy(): Promise<this> {
+    return new Promise<this>((resolve, reject) => {
       if (this.isHealthy) {
         resolve(this);
       } else {
@@ -122,7 +124,7 @@ export class ServerConnectionPool
     timeoutError = this.timeoutError,
     timeoutGb = this.timeoutGb,
     maxExponent = this.maxExponent,
-  }: RConnectionOptions) {
+  }: RConnectionOptions): Promise<void> {
     this.silent = silent;
     this.log = log;
     this.timeoutError = timeoutError;
@@ -136,18 +138,14 @@ export class ServerConnectionPool
     }
     if (this.max > max) {
       const connections = this.getIdleConnections();
-      for (let i = 0; i < this.max - max; i++) {
-        const conn = connections.pop();
-        if (!conn) {
-          break;
-        }
-        await this.closeConnection(conn);
-      }
+      await Promise.all(
+        connections.map((connection) => this.closeConnection(connection)),
+      );
     }
     this.max = max;
   }
 
-  public async drain(emit = true) {
+  public async drain(emit = true): Promise<void> {
     if (emit) {
       this.emit('draining');
       this.setHealthy(undefined);
@@ -158,19 +156,19 @@ export class ServerConnectionPool
     );
   }
 
-  public getConnections() {
+  public getConnections(): RethinkDBConnection[] {
     return this.connections;
   }
 
-  public getLength() {
+  public getLength(): number {
     return this.getOpenConnections().length;
   }
 
-  public getAvailableLength() {
+  public getAvailableLength(): number {
     return this.getIdleConnections().length;
   }
 
-  public getNumOfRunningQueries() {
+  public getNumOfRunningQueries(): number {
     return this.getOpenConnections().reduce(
       (num, next) => next.numOfQueries + num,
       0,
@@ -196,7 +194,7 @@ export class ServerConnectionPool
         acc.numOfQueries <= next.numOfQueries ? acc : next,
     );
     if (this.connections.length < this.max) {
-      this.createConnection();
+      await this.createConnection();
     }
     return minQueriesRunningConnection.query(term, globalArgs);
   }
@@ -310,7 +308,9 @@ export class ServerConnectionPool
       log &&
       (!isRethinkDBError(err) || err.type !== RethinkDBErrorType.CANCEL)
     ) {
-      this.log(err.toString());
+      if (this.log) {
+        this.log(err.toString());
+      }
       if (!this.silent) {
         console.error(err.toString());
       }
