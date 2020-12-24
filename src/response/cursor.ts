@@ -13,7 +13,7 @@ export class Cursor extends Readable implements RCursor {
     return this._profile;
   }
 
-  // tslint:disable-next-line:variable-name
+  // eslint-disable-next-line camelcase
   private _profile: any;
 
   private position = 0;
@@ -30,6 +30,10 @@ export class Cursor extends Readable implements RCursor {
 
   private lastError: Error | undefined;
 
+  private results?: any[];
+
+  private hasNextBatch?: boolean;
+
   constructor(
     private conn: RethinkDBSocket,
     private token: number,
@@ -38,14 +42,14 @@ export class Cursor extends Readable implements RCursor {
       'binaryFormat' | 'groupFormat' | 'timeFormat'
     >,
     private query: QueryJson,
-    private results?: any[],
-    private hasNextBatch?: boolean,
   ) {
     super({ objectMode: true });
   }
 
   public init() {
-    this.resolving = this.resolve().catch((err) => (this.lastError = err));
+    this.resolving = this.resolve().catch((error) => {
+      this.lastError = error;
+    });
   }
 
   public _read() {
@@ -148,8 +152,8 @@ export class Cursor extends Readable implements RCursor {
   }
 
   public async each(
-    callback: (err: RethinkDBError | undefined, row?: any) => boolean,
-    onFinishedCallback?: () => any,
+    cb: (error: RethinkDBError | undefined, row?: any) => boolean,
+    onFinishedCallback?: () => void,
   ) {
     if (this.emitting) {
       throw new RethinkDBError(
@@ -158,7 +162,7 @@ export class Cursor extends Readable implements RCursor {
       );
     }
     if (this.closed) {
-      callback(
+      cb(
         new RethinkDBError(
           'You cannot retrieve data from a cursor that is closed',
           { type: RethinkDBErrorType.CURSOR },
@@ -182,7 +186,7 @@ export class Cursor extends Readable implements RCursor {
       if (err && err.type === RethinkDBErrorType.CURSOR_END) {
         break;
       }
-      resume = callback(err, next);
+      resume = cb(err, next);
     }
     if (onFinishedCallback) {
       onFinishedCallback();
