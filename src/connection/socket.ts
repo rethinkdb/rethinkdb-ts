@@ -359,11 +359,11 @@ export class RethinkDBSocket extends EventEmitter {
     }
   }
 
-  private handleError(err: Error) {
-    this.close(err);
-    this.lastError = err;
+  private handleError(error: Error) {
+    this.close(error);
+    this.lastError = error;
     if (this.listenerCount('error') > 0) {
-      this.emit('error', err);
+      this.emit('error', error);
     }
   }
 }
