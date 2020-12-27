@@ -6,13 +6,13 @@ import {
   createRethinkdbMasterPool,
   isRethinkDBError,
   r,
-  RCursor,
-  RethinkDBErrorType,
 } from '../src';
 import { RethinkDBConnection } from '../src/connection/connection';
 import config from './config';
 import { uuid } from './util/common';
 import { MasterConnectionPool } from '../src/connection/master-pool';
+import { Cursor } from '../src/response/cursor';
+import { RethinkDBErrorType } from '../src/error';
 
 function isAsyncIterable(val: any): boolean {
   if (val === null || val === undefined) {
@@ -29,9 +29,9 @@ describe('cursor', () => {
   let dbName: string;
   let tableName: string;
   let tableName2: string;
-  let cursor: RCursor;
+  let cursor: Cursor;
   let result: any;
-  let feed: RCursor;
+  let feed: Cursor;
   let pool: MasterConnectionPool;
 
   const numDocs = 100; // Number of documents in the "big table" used to test the SUCCESS_PARTIAL

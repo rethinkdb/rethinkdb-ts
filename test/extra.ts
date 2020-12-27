@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r } from '../src';
+import { createRethinkdbMasterPool, r, deserialize, serialize } from '../src';
 import { globals } from '../src/query-builder/globals';
 import config from './config';
 import { uuid } from './util/common';
@@ -55,27 +55,10 @@ describe('extra', () => {
     assert.equal(result, 'r.expr(1)');
   });
 
-  it('serialize and derialize should work', async () => {
-    const result = r.serialize(r.expr(1).add(2));
+  it('serialize and deserialize should work', async () => {
+    const result = serialize(r.expr(1).add(2));
     assert.equal(typeof result, 'string');
-    const three = await pool.run(r.deserialize(result));
+    const three = await pool.run(deserialize(result));
     assert.equal(three, 3);
   });
-
-  // it('await a query should work - 1', async () => {
-  //   let result = await pool.run(r.expr(1);
-  //   assert.equal(result, 1);
-
-  //   result = await pool.run(r.expr(1).add(3);
-  //   assert.equal(result, 4);
-  // });
-
-  // it('await a query should work - 2', async () => {
-  //   try {
-  //     await pool.run(r.expr(1).add('foo');
-  //     assert.fail('should throw');
-  //   } catch (e) {
-  //     assert(e.message.match(/Expected type NUMBER but found STRING/));
-  //   }
-  // });
 });

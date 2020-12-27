@@ -1,5 +1,10 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r } from '../src';
+import {
+  createRethinkdbMasterPool,
+  r,
+  setArrayLimit,
+  setNestingLevel,
+} from '../src';
 import config from './config';
 import { MasterConnectionPool } from '../src/connection/master-pool';
 
@@ -64,11 +69,11 @@ describe('datum', () => {
 
   describe('nesting level', () => {
     afterEach(() => {
-      r.setNestingLevel(20);
+      setNestingLevel(20);
     });
 
     it('`r.expr` should throw when setNestingLevel is too small', async () => {
-      r.setNestingLevel(2);
+      setNestingLevel(2);
       try {
         await pool.run(r.expr({ a: { b: { c: { d: 1 } } } }));
         assert.fail('should throw');
@@ -81,7 +86,7 @@ describe('datum', () => {
     });
 
     it('`r.expr` should work when setNestingLevel set back the value to 100', async () => {
-      r.setNestingLevel(100);
+      setNestingLevel(100);
       const result = await pool.run(r.expr({ a: { b: { c: { d: 1 } } } }));
       assert.deepEqual(result, { a: { b: { c: { d: 1 } } } });
     });
@@ -89,7 +94,7 @@ describe('datum', () => {
 
   describe('array limit', () => {
     afterEach(() => {
-      r.setArrayLimit();
+      setArrayLimit();
     });
 
     it('`r.expr` should throw when ArrayLimit is too small', async () => {
@@ -102,7 +107,7 @@ describe('datum', () => {
     });
 
     it('`r.expr` should throw when ArrayLimit is too small - options in run take precedence', async () => {
-      r.setArrayLimit(100);
+      setArrayLimit(100);
       try {
         await pool.run(r.expr([0, 1, 2, 3, 4, 5, 6, 8, 9]), { arrayLimit: 2 });
         assert.fail('should throw');
@@ -112,7 +117,7 @@ describe('datum', () => {
     });
 
     it('`r.expr` should throw when setArrayLimit is too small', async () => {
-      r.setArrayLimit(2);
+      setArrayLimit(2);
       try {
         await pool.run(r.expr([0, 1, 2, 3, 4, 5, 6, 8, 9]));
         assert.fail('shold throw');
@@ -122,7 +127,7 @@ describe('datum', () => {
     });
 
     it('`r.expr` should work when setArrayLimit set back the value to 100000', async () => {
-      r.setArrayLimit(100000);
+      setArrayLimit(100000);
       const result = await pool.run(r.expr([0, 1, 2, 3, 4, 5, 6, 8, 9]));
       assert.deepEqual(result, [0, 1, 2, 3, 4, 5, 6, 8, 9]);
     });

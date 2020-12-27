@@ -175,6 +175,7 @@ describe('accessing-reql', () => {
 
     const result1 = await connection.run(
       r.db(dbName).table(tableName).insert(largeishObject),
+      { noreply: true },
     );
     assert.equal(result1, undefined);
 
@@ -213,7 +214,7 @@ describe('accessing-reql', () => {
   it('`run` should throw on an unrecognized argument', async () => {
     try {
       // @ts-ignore
-      await pool.run(r.expr(1), { foo: 'bar' });
+      await connection.run(r.expr(1), { foo: 'bar' });
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(
@@ -385,10 +386,11 @@ describe('accessing-reql', () => {
   // tslint:disable-next-line:max-line-length
   it('should not throw an error (since 1.13, the token is now stored outside the query): `connection` should extend events.Emitter and emit an error if the server failed to parse the protobuf message', async () => {
     connection.addListener('error', () => assert.fail('should not throw'));
-    const result = await Array(687)
-      .fill(1)
-      .reduce((acc, curr) => acc.add(curr), r.expr(1))
-      .run(connection);
+    const result = await connection.run(
+      Array(687)
+        .fill(1)
+        .reduce((acc, curr) => acc.add(curr), r.expr(1)),
+    );
     assert.equal(result, 688);
   });
 });

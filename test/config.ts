@@ -1,4 +1,4 @@
-import { RPoolConnectionOptions } from "../src";
+import { RPoolConnectionOptions } from '../src';
 
 const config: RPoolConnectionOptions = {
   host: process.env.WERCKER_RETHINKDB_HOST || 'localhost',
@@ -9,11 +9,11 @@ const config: RPoolConnectionOptions = {
   max: 50,
   fake_server: {
     host: process.env.WERCKER_RETHINKDB_HOST || 'localhost',
-    port: parseInt(process.env.WERCKER_RETHINKDB_PORT || '', 10) + 1 || 28016
+    port: parseInt(process.env.WERCKER_RETHINKDB_PORT || '', 10) + 1 || 28016,
   },
   discovery: false,
   silent: false,
- waitForHealthy: true
+  waitForHealthy: true,
 };
 
 export default config;

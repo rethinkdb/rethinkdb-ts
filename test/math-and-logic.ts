@@ -1,7 +1,7 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r } from "../src";
+import { createRethinkdbMasterPool, r } from '../src';
 import config from './config';
-import { MasterConnectionPool } from "../src/connection/master-pool";
+import { MasterConnectionPool } from '../src/connection/master-pool';
 
 describe('math and logic', () => {
   let pool: MasterConnectionPool;
@@ -15,23 +15,13 @@ describe('math and logic', () => {
   });
 
   it('`add` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .add(1)
-      );
+    let result = await pool.run(r.expr(1).add(1));
     assert.equal(result, 2);
 
-    result = await pool.run(r
-      .expr(1)
-      .add(1)
-      .add(1)
-      );
+    result = await pool.run(r.expr(1).add(1).add(1));
     assert.equal(result, 3);
 
-    result = await pool.run(r
-      .expr(1)
-      .add(1, 1)
-      );
+    result = await pool.run(r.expr(1).add(1, 1));
     assert.equal(result, 3);
 
     result = await pool.run(r.add(1, 1, 1));
@@ -40,15 +30,12 @@ describe('math and logic', () => {
 
   it('`add` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .add()
-        );
+      await pool.run(r.expr(1).add());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`add` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`add` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -61,7 +48,7 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.add` takes at least 2 arguments, 0 provided.'
+        '`r.add` takes at least 2 arguments, 0 provided.',
       );
     }
   });
@@ -73,16 +60,13 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.add` takes at least 2 arguments, 1 provided.'
+        '`r.add` takes at least 2 arguments, 1 provided.',
       );
     }
   });
 
   it('`sub` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .sub(1)
-      );
+    let result = await pool.run(r.expr(1).sub(1));
     assert.equal(result, 0);
 
     result = await pool.run(r.sub(5, 3, 1));
@@ -91,15 +75,12 @@ describe('math and logic', () => {
 
   it('`sub` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .sub()
-        );
+      await pool.run(r.expr(1).sub());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`sub` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`sub` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -112,7 +93,7 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.sub` takes at least 2 arguments, 0 provided.'
+        '`r.sub` takes at least 2 arguments, 0 provided.',
       );
     }
   });
@@ -124,16 +105,13 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.sub` takes at least 2 arguments, 1 provided.'
+        '`r.sub` takes at least 2 arguments, 1 provided.',
       );
     }
   });
 
   it('`mul` should work', async () => {
-    let result = await pool.run(r
-      .expr(2)
-      .mul(3)
-      );
+    let result = await pool.run(r.expr(2).mul(3));
     assert.equal(result, 6);
 
     result = await pool.run(r.mul(2, 3, 4));
@@ -142,15 +120,12 @@ describe('math and logic', () => {
 
   it('`mul` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .mul()
-        );
+      await pool.run(r.expr(1).mul());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`mul` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`mul` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -163,7 +138,7 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.mul` takes at least 2 arguments, 0 provided.'
+        '`r.mul` takes at least 2 arguments, 0 provided.',
       );
     }
   });
@@ -175,16 +150,13 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.mul` takes at least 2 arguments, 1 provided.'
+        '`r.mul` takes at least 2 arguments, 1 provided.',
       );
     }
   });
 
   it('`div` should work', async () => {
-    let result = await pool.run(r
-      .expr(24)
-      .div(2)
-      );
+    let result = await pool.run(r.expr(24).div(2));
     assert.equal(result, 12);
 
     result = await pool.run(r.div(20, 2, 5, 1));
@@ -193,15 +165,12 @@ describe('math and logic', () => {
 
   it('`div` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .div()
-        );
+      await pool.run(r.expr(1).div());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`div` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`div` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -214,7 +183,7 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.div` takes at least 2 arguments, 0 provided.'
+        '`r.div` takes at least 2 arguments, 0 provided.',
       );
     }
   });
@@ -226,16 +195,13 @@ describe('math and logic', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.div` takes at least 2 arguments, 1 provided.'
+        '`r.div` takes at least 2 arguments, 1 provided.',
       );
     }
   });
 
   it('`mod` should work', async () => {
-    let result = await pool.run(r
-      .expr(24)
-      .mod(7)
-      );
+    let result = await pool.run(r.expr(24).mod(7));
     assert.equal(result, 3);
 
     result = await pool.run(r.mod(24, 7));
@@ -244,15 +210,12 @@ describe('math and logic', () => {
 
   it('`mod` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .mod()
-        );
+      await pool.run(r.expr(1).mod());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`mod` takes 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`mod` takes 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -267,16 +230,10 @@ describe('math and logic', () => {
   });
 
   it('`and` should work', async () => {
-    let result = await pool.run(r
-      .expr(true)
-      .and(false)
-      );
+    let result = await pool.run(r.expr(true).and(false));
     assert.equal(result, false);
 
-    result = await pool.run(r
-      .expr(true)
-      .and(true)
-      );
+    result = await pool.run(r.expr(true).and(true));
     assert.equal(result, true);
 
     result = await pool.run(r.and(true, true, true));
@@ -295,16 +252,10 @@ describe('math and logic', () => {
   // });
 
   it('`or` should work', async () => {
-    let result = await pool.run(r
-      .expr(true)
-      .or(false)
-      );
+    let result = await pool.run(r.expr(true).or(false));
     assert.equal(result, true);
 
-    result = await pool.run(r
-      .expr(false)
-      .or(false)
-      );
+    result = await pool.run(r.expr(false).or(false));
     assert.equal(result, false);
 
     result = await pool.run(r.or(true, true, true));
@@ -323,16 +274,10 @@ describe('math and logic', () => {
   // });
 
   it('`eq` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .eq(1)
-      );
+    let result = await pool.run(r.expr(1).eq(1));
     assert.equal(result, true);
 
-    result = await pool.run(r
-      .expr(1)
-      .eq(2)
-      );
+    result = await pool.run(r.expr(1).eq(2));
     assert.equal(result, false);
 
     result = await pool.run(r.eq(1, 1, 1, 1));
@@ -344,15 +289,12 @@ describe('math and logic', () => {
 
   it('`eq` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .eq()
-        );
+      await pool.run(r.expr(1).eq());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`eq` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`eq` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -377,16 +319,10 @@ describe('math and logic', () => {
   });
 
   it('`ne` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .ne(1)
-      );
+    let result = await pool.run(r.expr(1).ne(1));
     assert.equal(result, false);
 
-    result = await pool.run(r
-      .expr(1)
-      .ne(2)
-      );
+    result = await pool.run(r.expr(1).ne(2));
     assert.equal(result, true);
 
     result = await pool.run(r.ne(1, 1, 1, 1));
@@ -398,15 +334,12 @@ describe('math and logic', () => {
 
   it('`ne` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .ne()
-        );
+      await pool.run(r.expr(1).ne());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`ne` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`ne` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -431,20 +364,11 @@ describe('math and logic', () => {
   });
 
   it('`gt` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .gt(2)
-      );
+    let result = await pool.run(r.expr(1).gt(2));
     assert.equal(result, false);
-    result = await pool.run(r
-      .expr(2)
-      .gt(2)
-      );
+    result = await pool.run(r.expr(2).gt(2));
     assert.equal(result, false);
-    result = await pool.run(r
-      .expr(3)
-      .gt(2)
-      );
+    result = await pool.run(r.expr(3).gt(2));
     assert.equal(result, true);
 
     result = await pool.run(r.gt(10, 9, 7, 2));
@@ -456,15 +380,12 @@ describe('math and logic', () => {
 
   it('`gt` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .gt()
-        );
+      await pool.run(r.expr(1).gt());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`gt` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`gt` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -488,20 +409,11 @@ describe('math and logic', () => {
   });
 
   it('`ge` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .ge(2)
-      );
+    let result = await pool.run(r.expr(1).ge(2));
     assert.equal(result, false);
-    result = await pool.run(r
-      .expr(2)
-      .ge(2)
-      );
+    result = await pool.run(r.expr(2).ge(2));
     assert.equal(result, true);
-    result = await pool.run(r
-      .expr(3)
-      .ge(2)
-      );
+    result = await pool.run(r.expr(3).ge(2));
     assert.equal(result, true);
 
     result = await pool.run(r.ge(10, 9, 7, 2));
@@ -516,15 +428,12 @@ describe('math and logic', () => {
 
   it('`ge` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .ge()
-        );
+      await pool.run(r.expr(1).ge());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`ge` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`ge` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -549,20 +458,11 @@ describe('math and logic', () => {
   });
 
   it('`lt` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .lt(2)
-      );
+    let result = await pool.run(r.expr(1).lt(2));
     assert.equal(result, true);
-    result = await pool.run(r
-      .expr(2)
-      .lt(2)
-      );
+    result = await pool.run(r.expr(2).lt(2));
     assert.equal(result, false);
-    result = await pool.run(r
-      .expr(3)
-      .lt(2)
-      );
+    result = await pool.run(r.expr(3).lt(2));
     assert.equal(result, false);
 
     result = await pool.run(r.lt(0, 2, 4, 20));
@@ -577,15 +477,12 @@ describe('math and logic', () => {
 
   it('`lt` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .lt()
-        );
+      await pool.run(r.expr(1).lt());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`lt` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`lt` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -610,20 +507,11 @@ describe('math and logic', () => {
   });
 
   it('`le` should work', async () => {
-    let result = await pool.run(r
-      .expr(1)
-      .le(2)
-      );
+    let result = await pool.run(r.expr(1).le(2));
     assert.equal(result, true);
-    result = await pool.run(r
-      .expr(2)
-      .le(2)
-      );
+    result = await pool.run(r.expr(2).le(2));
     assert.equal(result, true);
-    result = await pool.run(r
-      .expr(3)
-      .le(2)
-      );
+    result = await pool.run(r.expr(3).le(2));
     assert.equal(result, false);
 
     result = await pool.run(r.le(0, 2, 4, 20));
@@ -638,15 +526,12 @@ describe('math and logic', () => {
 
   it('`le` should throw if no argument has been passed', async () => {
     try {
-      await pool.run(r
-        .expr(1)
-        .le()
-        );
+      await pool.run(r.expr(1).le());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`le` takes at least 1 argument, 0 provided after:\nr.expr(1)\n'
+        '`le` takes at least 1 argument, 0 provided after:\nr.expr(1)\n',
       );
     }
   });
@@ -671,15 +556,9 @@ describe('math and logic', () => {
   });
 
   it('`not` should work', async () => {
-    let result = await pool.run(r
-      .expr(true)
-      .not()
-      );
+    let result = await pool.run(r.expr(true).not());
     assert.equal(result, false);
-    result = await pool.run(r
-      .expr(false)
-      .not()
-      );
+    result = await pool.run(r.expr(false).not());
     assert.equal(result, true);
   });
 
@@ -707,51 +586,33 @@ describe('math and logic', () => {
   it('`r.floor` should work', async () => {
     let result = await pool.run(r.floor(1.2));
     assert.equal(result, 1);
-    result = await pool.run(r
-      .expr(1.2)
-      .floor()
-      );
+    result = await pool.run(r.expr(1.2).floor());
     assert.equal(result, 1);
     result = await pool.run(r.floor(1.8));
     assert.equal(result, 1);
-    result = await pool.run(r
-      .expr(1.8)
-      .floor()
-      );
+    result = await pool.run(r.expr(1.8).floor());
     assert.equal(result, 1);
   });
 
   it('`r.ceil` should work', async () => {
     let result = await pool.run(r.ceil(1.2));
     assert.equal(result, 2);
-    result = await pool.run(r
-      .expr(1.2)
-      .ceil()
-      );
+    result = await pool.run(r.expr(1.2).ceil());
     assert.equal(result, 2);
     result = await pool.run(r.ceil(1.8));
     assert.equal(result, 2);
-    result = await pool.run(r
-      .expr(1.8)
-      .ceil()
-      );
+    result = await pool.run(r.expr(1.8).ceil());
     assert.equal(result, 2);
   });
 
   it('`r.round` should work', async () => {
     let result = await pool.run(r.round(1.8));
     assert.equal(result, 2);
-    result = await pool.run(r
-      .expr(1.8)
-      .round()
-      );
+    result = await pool.run(r.expr(1.8).round());
     assert.equal(result, 2);
     result = await pool.run(r.round(1.2));
     assert.equal(result, 1);
-    result = await pool.run(r
-      .expr(1.2)
-      .round()
-      );
+    result = await pool.run(r.expr(1.2).round());
     assert.equal(result, 1);
   });
 });
