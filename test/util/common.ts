@@ -7,9 +7,3 @@ function s4() {
 export function uuid() {
   return s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
 }
-
-export function sleep(timer) {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, timer);
-  });
-}
