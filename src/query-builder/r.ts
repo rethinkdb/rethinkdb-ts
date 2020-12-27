@@ -1,8 +1,7 @@
-import { R, RQuery } from '../types';
+import { R } from '../types';
 import { globals } from './globals';
 import { funcall, rConfig, rConsts, termConfig } from './query-config';
 import { isQuery, termBuilder, parseParam, toQuery } from './query';
-import { validateTerm } from './validate-term';
 
 const expr = (arg: unknown, nestingLevel: number = globals.nestingLevel) => {
   if (isQuery(arg)) {
@@ -12,16 +11,6 @@ const expr = (arg: unknown, nestingLevel: number = globals.nestingLevel) => {
 };
 
 export const r: R = expr as any;
-r.setNestingLevel = (level: number) => {
-  globals.nestingLevel = level;
-};
-r.setArrayLimit = (limit?: number) => {
-  globals.arrayLimit = limit;
-};
-// @ts-ignore
-r.serialize = (termStr: RQuery) => JSON.stringify(termStr.term);
-// @ts-ignore
-r.deserialize = (termStr: string) => toQuery(validateTerm(JSON.parse(termStr)));
 // @ts-ignore
 r.expr = expr;
 // @ts-ignore
