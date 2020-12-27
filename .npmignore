@@ -16,4 +16,4 @@ LICENSE
 .prettierrc.json
 test.ts
 .idea
-.eslingcache
+.eslintcache
