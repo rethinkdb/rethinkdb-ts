@@ -1,7 +1,7 @@
-import { RethinkDBErrorType, RunOptions } from '../types';
-import { RethinkDBError } from '../error/error';
+import { RethinkDBError, RethinkDBErrorType } from '../error';
+import type { RunOptions } from '../types';
 
-export function getNativeTypes(
+export function parseRawResponse(
   obj: any,
   {
     binaryFormat = 'native',
@@ -11,7 +11,7 @@ export function getNativeTypes(
 ): any {
   if (Array.isArray(obj)) {
     return obj.map((item) =>
-      getNativeTypes(item, { binaryFormat, groupFormat, timeFormat }),
+      parseRawResponse(item, { binaryFormat, groupFormat, timeFormat }),
     );
   }
   if (obj === null || typeof obj !== 'object') {
@@ -45,12 +45,12 @@ export function getNativeTypes(
       case 'GROUPED_DATA':
         if (groupFormat === 'native') {
           return obj.data.map(([group, reduction]: any) => ({
-            group: getNativeTypes(group, {
+            group: parseRawResponse(group, {
               binaryFormat,
               groupFormat,
               timeFormat,
             }),
-            reduction: getNativeTypes(reduction, {
+            reduction: parseRawResponse(reduction, {
               binaryFormat,
               groupFormat,
               timeFormat,
@@ -67,7 +67,7 @@ export function getNativeTypes(
     }
   }
   return Object.entries(obj).reduce((acc: any, [key, val]) => {
-    acc[key] = getNativeTypes(val);
+    acc[key] = parseRawResponse(val);
     return acc;
   }, {});
 }

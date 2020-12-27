@@ -1,12 +1,11 @@
 import { EventEmitter } from 'events';
-import { isRethinkDBError, RethinkDBError } from '../error/error';
-import { TermJson } from '../internal-types';
+import { isRethinkDBError, RethinkDBError, RethinkDBErrorType } from '../error';
 import { Cursor } from '../response/cursor';
-import {
+import type {
   RConnectionOptions,
-  RethinkDBErrorType,
   RServerConnectionOptions,
   RunOptions,
+  TermJson,
 } from '../types';
 import {
   IConnectionLogger,
@@ -209,9 +208,9 @@ export class ServerConnectionPool extends EventEmitter {
   }
 
   private async createConnection() {
-    const conn = new RethinkDBConnection(this.server, this.connParam);
-    this.connections = [...this.connections, conn];
-    return this.persistConnection(conn);
+    const connection = new RethinkDBConnection(this.server, this.connParam);
+    this.connections.push(connection);
+    return this.persistConnection(connection);
   }
 
   private subscribeToConnection(conn: RethinkDBConnection) {
@@ -276,16 +275,17 @@ export class ServerConnectionPool extends EventEmitter {
     let exp = 0;
     while (this.connections.includes(conn) && !conn.open && !this.draining) {
       try {
+        // eslint-disable-next-line no-await-in-loop
         await conn.reconnect();
-      } catch (err) {
-        this.reportError(err);
+      } catch (error) {
+        this.reportError(error);
         if (this.connections.length > this.buffer) {
           // if trying to go above buffer and failing just use one of the open connections
           this.closeConnection(conn);
           break;
         }
         if (this.healthy === undefined) {
-          this.setHealthy(false, err);
+          this.setHealthy(false, error);
         }
         await delay(2 ** exp * this.timeoutError);
         exp = Math.min(exp + 1, this.maxExponent);
@@ -300,22 +300,22 @@ export class ServerConnectionPool extends EventEmitter {
     return conn;
   }
 
-  private reportError(err: Error, log = false) {
+  private reportError(error: Error, log = false) {
     if (this.listenerCount('error') > 0) {
-      this.emit('error', err);
+      this.emit('error', error);
     }
     if (
       log &&
-      (!isRethinkDBError(err) || err.type !== RethinkDBErrorType.CANCEL)
+      (!isRethinkDBError(error) || error.type !== RethinkDBErrorType.CANCEL)
     ) {
       if (this.log) {
-        this.log(err.toString());
+        this.log(error.toString());
       }
       if (!this.silent) {
-        console.error(err.toString());
+        console.error(error.toString());
       }
     }
-    return err;
+    return error;
   }
 
   private getOpenConnections() {

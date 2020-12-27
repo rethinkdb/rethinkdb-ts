@@ -1,10 +1,13 @@
-import { TermJson } from '../internal-types';
+import type { TermJson } from '../types';
 import { TermType } from '../proto/enums';
 
 export function hasImplicitVar(term: TermJson | undefined): boolean {
+  if (!term) {
+    return false;
+  }
   if (!Array.isArray(term)) {
-    if (term !== null && typeof term === 'object') {
-      return Object.values(term).some((value) => hasImplicitVar(value));
+    if (term.constructor === Object) {
+      return Object.values(term).some(hasImplicitVar);
     }
     return false;
   }
@@ -13,7 +16,7 @@ export function hasImplicitVar(term: TermJson | undefined): boolean {
   }
   const termParam = term[1];
   if (termParam) {
-    return termParam.some((value) => hasImplicitVar(value));
+    return termParam.some(hasImplicitVar);
   }
   return false;
 }

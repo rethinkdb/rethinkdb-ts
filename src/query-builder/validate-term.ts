@@ -1,6 +1,6 @@
-import { RethinkDBError } from '../error/error';
+import { RethinkDBError } from '../error';
 import { TermType } from '../proto/enums';
-import { TermJson } from '../internal-types';
+import type { TermJson } from '../types';
 
 function validateTerm(term: any): TermJson {
   if (term === undefined) {

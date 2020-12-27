@@ -1,14 +1,33 @@
-import { TermJson, ComplexTermJson } from '../internal-types';
-import { bracket, funcall, TermConfig, termConfig } from './query-config';
-import { RQuery, RethinkDBErrorType } from '../types';
-import { RethinkDBError } from '../error/error';
+import type { ComplexTermJson, RDatum, TermJson } from '../types';
+import { RethinkDBError, RethinkDBErrorType } from '../error';
 import { TermType } from '../proto/enums';
 import { backtraceTerm } from '../error/term-backtrace';
-import { globals } from './globals';
 import { camelToSnake, isDate, isFunction, isObject } from '../util';
+import { globals } from './globals';
 import { hasImplicitVar } from './has-implicit-var';
+import { bracket, funcall, TermConfig, termConfig } from './query-config';
 
-export const querySymbol = Symbol('RethinkDBQuery');
+const querySymbol = Symbol('RethinkDBQuery');
+
+export interface RQuery<T = unknown> {
+  (...args: unknown[]): RQuery<T>;
+  term: TermJson;
+  [querySymbol]: true;
+  do: () => RQuery;
+  typeOf(): RDatum<string>;
+  info(): RDatum<{
+    value?: string;
+    db?: { id: string; name: string; type: string };
+    // eslint-disable-next-line camelcase
+    doc_count_estimates?: number[];
+    id?: string;
+    indexes?: string[];
+    name?: string;
+    // eslint-disable-next-line camelcase
+    primary_key?: string;
+    type: string;
+  }>;
+}
 
 export const isQuery = (query: unknown): query is RQuery =>
   query === Object(query) && Object.hasOwnProperty.call(query, querySymbol);
@@ -28,7 +47,7 @@ export function parseParam(
   }
   if (isQuery(param)) {
     if (param.term === undefined) {
-      throw new RethinkDBError("'r' cannot be an argument", {
+      throw new RethinkDBError('"r" cannot be an argument', {
         type: RethinkDBErrorType.PARSE,
       });
     }
@@ -46,10 +65,12 @@ export function parseParam(
       TermType.MAKE_ARRAY,
       param.map((p) => parseParam(p, nestingLevel - 1)),
     ];
+    // @ts-ignore
     if (hasImplicitVar(arrTerm)) {
+      // @ts-ignore
       return [TermType.FUNC, [[TermType.MAKE_ARRAY, [1]], arrTerm]];
     }
-    return arrTerm;
+    return arrTerm as TermJson;
   }
   if (isDate(param)) {
     return {
@@ -67,6 +88,7 @@ export function parseParam(
     try {
       const funcResult = param(
         ...Array.from({ length: param.length }, (_, i) =>
+          // eslint-disable-next-line no-use-before-define
           toQuery([TermType.VAR, [i + nextVarId]]),
         ),
       );
@@ -91,8 +113,10 @@ export function parseParam(
     }
   }
   if (typeof param === 'object') {
+    // @ts-ignore
     const objTerm = Object.entries(param).reduce<Record<string, TermJson>>(
       (acc, [key, value]) => {
+      // @ts-ignore
         acc[key] = parseParam(value, nestingLevel - 1);
         return acc;
       },
@@ -110,6 +134,7 @@ export function parseParam(
       type: RethinkDBErrorType.PARSE,
     });
   }
+  // @ts-ignore
   return param;
 }
 
@@ -120,15 +145,35 @@ function numToString(num: number) {
     : num.toString();
 }
 
+export function parseOptarg(
+  obj: Record<string, unknown>,
+): Record<string, TermJson> | undefined {
+  if (!isObject(obj) || Array.isArray(obj)) {
+    return undefined;
+  }
+  return Object.entries(obj).reduce<Record<string, TermJson>>(
+    (acc, [key, value]) => {
+      acc[camelToSnake(key)] = parseParam(value);
+      return acc;
+    },
+    {},
+  );
+}
+
 export function termBuilder(
   [termType, termName, minArgs, maxArgs, optargType]: TermConfig,
   currentTerm?: TermJson,
 ): (...args: any[]) => RQuery {
   return (...args: any[]): RQuery => {
-    let optarg: Record<string, unknown> | undefined;
+    let optarg: Record<string, TermJson>;
     const params: TermJson[] = currentTerm !== undefined ? [currentTerm] : [];
     // @ts-ignore
-    if (isQuery(args[0]) && args[0].term[0] === TermType.ARGS) {
+    if (
+      isQuery(args[0]) &&
+      args[0].term &&
+      Array.isArray(args[0].term) &&
+      args[0].term[0] === TermType.ARGS
+    ) {
       params.push(parseParam(args[0]));
       optarg = optargType !== false ? args[1] : undefined;
     } else {
@@ -164,21 +209,32 @@ export function termBuilder(
         );
       }
       switch (optargType) {
-        case 'last':
-          // @ts-ignore
-          optarg = parseOptarg(args[maxArgs - 1]);
+        case 'last': {
+          const parsedOptArg = parseOptarg(args[maxArgs - 1]);
+          if (parsedOptArg) {
+            optarg = parsedOptArg;
+          }
           break;
+        }
         case 'required':
         case 'optional':
-        case 'last-optional':
-          // @ts-ignore
-          optarg = parseOptarg(args[argsLength - 1]);
+        case 'last-optional': {
+          const parsedOptArg = parseOptarg(args[argsLength - 1]);
+          if (parsedOptArg) {
+            optarg = parsedOptArg;
+          }
+          break;
+        }
+        default:
+          break;
       }
       if (
+        // @ts-ignore TODO why?
         !optarg &&
         (optargType === 'required' ||
           (argsLength === maxArgs &&
-            ['last', 'last-optional'].includes(optargType as any)))
+            typeof optargType === 'string' &&
+            ['last', 'last-optional'].includes(optargType)))
       ) {
         throw new RethinkDBError(
           `${numToString(
@@ -197,6 +253,7 @@ export function termBuilder(
     if (params.length > 0) {
       term[1] = params;
     }
+    // @ts-ignore TODO why?
     if (optarg) {
       term[2] = optarg;
     }
@@ -235,22 +292,9 @@ export function toQuery(term: TermJson): RQuery {
 
   for (let i = 0; i < termConfig.length; i += 1) {
     const config = termConfig[i];
+    // @ts-ignore TODO rewrite both termBuilder and toQuery to
+    //  different RTable, RDatabase, etc implementations with strict methods
     query[config[1]] = termBuilder(config, term);
   }
   return query;
-}
-
-export function parseOptarg(
-  obj?: Record<string, unknown>,
-): Record<string, TermJson> | void {
-  if (!isObject(obj) || Array.isArray(obj)) {
-    return undefined;
-  }
-  return Object.entries(obj).reduce<Record<string, TermJson>>(
-    (acc, [key, value]) => {
-      acc[camelToSnake(key)] = parseParam(value);
-      return acc;
-    },
-    {},
-  );
 }

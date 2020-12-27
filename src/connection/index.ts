@@ -1,13 +1,9 @@
-import {
-  RConnectionOptions,
-  RethinkDBErrorType,
-  RPoolConnectionOptions,
-} from '../types';
-import { RethinkDBError } from '../error/error';
+import type { RConnectionOptions, RPoolConnectionOptions } from '../types';
+import { RethinkDBError, RethinkDBErrorType } from '../error';
 import { RethinkDBConnection } from './connection';
 import { MasterConnectionPool } from './master-pool';
 
-async function createRethinkdbConnection(
+export async function createRethinkdbConnection(
   options: RConnectionOptions = {},
 ): Promise<RethinkDBConnection> {
   const { host, port, server = { host, port } } = options;
@@ -22,7 +18,7 @@ async function createRethinkdbConnection(
   return c;
 }
 
-async function createRethinkdbMasterPool(
+export async function createRethinkdbMasterPool(
   options: RPoolConnectionOptions = {},
 ): Promise<MasterConnectionPool> {
   const {
@@ -38,14 +34,14 @@ async function createRethinkdbMasterPool(
         'If `host` or `port` are defined `server` must not be.',
         { type: RethinkDBErrorType.API_FAIL },
       );
-    } else if ((options as any).servers) {
+    } else if (options.servers) {
       throw new RethinkDBError(
         'If `host` or `port` are defined `servers` must not be.',
         { type: RethinkDBErrorType.API_FAIL },
       );
     }
   }
-  if ((options as any).server && (options as any).servers) {
+  if (options.server && options.servers) {
     throw new RethinkDBError('If `server` is defined `servers` must not be.', {
       type: RethinkDBErrorType.API_FAIL,
     });
@@ -56,15 +52,13 @@ async function createRethinkdbMasterPool(
       { type: RethinkDBErrorType.API_FAIL },
     );
   }
-  const cpool = new MasterConnectionPool({
+  const connectionPool = new MasterConnectionPool({
     ...options,
     servers,
-  } as any);
-  cpool.initServers().catch(() => undefined);
+  });
+  connectionPool.initServers().catch(console.error);
   if (waitForHealthy) {
-    await cpool.waitForHealthy();
+    await connectionPool.waitForHealthy();
   }
-  return cpool;
+  return connectionPool;
 }
-
-export { createRethinkdbConnection, createRethinkdbMasterPool };

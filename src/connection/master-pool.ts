@@ -1,22 +1,19 @@
 import { EventEmitter } from 'events';
-import { isIPv6 } from 'net';
-import { RethinkDBError } from '../error/error';
-import { TermJson } from '../internal-types';
+import { RethinkDBError, RethinkDBErrorType } from '../error';
 import { r } from '../query-builder/r';
+import { RQuery } from '../query-builder/query';
 import { Cursor } from '../response/cursor';
-import {
+import type {
   Changes,
-  RCursor,
-  RethinkDBErrorType,
   RPoolConnectionOptions,
-  RQuery,
   RServer,
   RunOptions,
+  TermJson,
 } from '../types';
+import { delay, isIPv6 } from '../util';
 import { RethinkDBConnection } from './connection';
 import { ServerConnectionPool } from './server-pool';
 import { setConnectionDefaults } from './socket';
-import { delay } from '../util';
 
 function flat<T>(acc: T[], next: T[]) {
   return [...acc, ...next];
@@ -107,11 +104,11 @@ export class MasterConnectionPool extends EventEmitter {
 
   private discovery: boolean;
 
-  private discoveryCursor?: RCursor<Changes<ServerStatus>>;
+  private discoveryCursor?: Cursor<Changes<ServerStatus>>;
 
   private servers: RServer[];
 
-  private serverPools: ServerConnectionPool[];
+  private readonly serverPools: ServerConnectionPool[];
 
   private connParam: RPoolConnectionOptions;
 
@@ -183,7 +180,7 @@ export class MasterConnectionPool extends EventEmitter {
     this.setServerPoolsOptions(this.connParam);
   }
 
-  public eventNames() {
+  public eventNames(): string[] {
     return [
       'draining',
       'queueing',
@@ -325,12 +322,12 @@ export class MasterConnectionPool extends EventEmitter {
   }
 
   private async discover(): Promise<void> {
-    this.discoveryCursor = await this.run(
+    this.discoveryCursor = (await this.run(
       r
         .db('rethinkdb')
         .table<ServerStatus>('server_status')
         .changes({ includeInitial: true, includeStates: true }),
-    );
+    )) as Cursor<Changes<ServerStatus>>;
     const newServers: RServer[] = [];
     let state: 'initializing' | 'ready' = 'initializing';
     return (
@@ -421,7 +418,10 @@ export class MasterConnectionPool extends EventEmitter {
               () =>
                 new Promise((resolve) =>
                   // fixme get rid of condition in number
-                  setTimeout(resolve, this.connParam.timeoutError || 1000),
+                  setTimeout(
+                    resolve,
+                    (this.connParam && this.connParam.timeoutError || 1000) || 1000,
+                  ),
                 ),
             )
             .then(() => {
@@ -469,15 +469,10 @@ export class MasterConnectionPool extends EventEmitter {
   }
 
   private getIdleConnections() {
-    return this.getOpenConnections().filter(
-      (conn) => !(conn as RethinkDBConnection).numOfQueries,
-    );
+    return this.getOpenConnections().filter((conn) => !conn.numOfQueries);
   }
 
-  async run<TResult = any>(
-    query: RQuery,
-    options?: RunOptions,
-  ): Promise<TResult> {
+  async run(query: RQuery, options?: RunOptions): Promise<unknown> {
     const { term } = query;
     if (this.draining) {
       throw new RethinkDBError(
@@ -487,26 +482,27 @@ export class MasterConnectionPool extends EventEmitter {
     }
     const cursor = await this.queue(term, options);
     if (!cursor) {
-      return;
+      return undefined;
     }
     const results = await cursor.resolve();
-    if (results) {
-      switch (cursor.getType()) {
-        case 'Atom':
-          return cursor.profile
-            ? { profile: cursor.profile, result: results[0] }
-            : results[0];
-        case 'Cursor':
-          return cursor.profile
-            ? { profile: cursor.profile, result: await cursor.toArray() }
-            : await cursor.toArray();
-        default:
-          return cursor;
-      }
+    switch (cursor.getType()) {
+      case 'Atom':
+        return cursor.profile
+          ? { profile: cursor.profile, result: results[0] }
+          : results[0];
+      case 'Cursor':
+        return cursor.profile
+          ? { profile: cursor.profile, result: await cursor.toArray() }
+          : cursor.toArray();
+      default:
+        return cursor;
     }
   }
 
-  async getCursor(query: RQuery, options?: RunOptions): Promise<RCursor> {
+  public async getCursor<T = unknown>(
+    query: RQuery,
+    options?: RunOptions,
+  ): Promise<Cursor<T>> {
     const { term } = query;
     if (this.draining) {
       throw new RethinkDBError(

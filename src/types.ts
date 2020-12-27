@@ -1,8 +1,49 @@
-import { EventEmitter } from 'events';
 import { TcpNetConnectOpts } from 'net';
 import { ConnectionOptions } from 'tls';
 import { Readable } from 'stream';
-import { DeepPartial, TermJson } from './internal-types';
+import { Cursor } from './response/cursor';
+import { RethinkDBErrorType } from './error';
+import { RQuery } from './query-builder/query';
+import {
+  ErrorType,
+  QueryType,
+  ResponseNote,
+  ResponseType,
+  TermType,
+} from './proto/enums';
+
+export type DeepPartial<T> =
+  | T
+  | {
+      [P in keyof T]?: T[P] extends Array<infer U1>
+        ? Array<DeepPartial<U1>>
+        : T[P] extends ReadonlyArray<infer U2>
+        ? ReadonlyArray<DeepPartial<U2>>
+        : DeepPartial<T[P]>;
+    };
+
+export type OptargsJson = { [key: string]: unknown };
+
+export type TermJson =
+  | [TermType, TermJson[]?, OptargsJson?]
+  | string
+  | number
+  | boolean
+  | Record<string, unknown>
+  | null;
+
+export type ComplexTermJson = [TermType, TermJson[]?, OptargsJson?];
+
+export type QueryJson = [QueryType, TermJson?, OptargsJson?];
+
+export interface ResponseJson<TResponse = any, TProfile = any> {
+  t: ResponseType;
+  r: TResponse[];
+  n: ResponseNote[];
+  e?: ErrorType;
+  p?: TProfile;
+  b?: Array<number | string>;
+}
 
 // #region optargs
 export type Primitives = null | string | boolean | number;
@@ -28,34 +69,6 @@ export type MultiFieldSelector =
   | boolean
   | number;
 export type FieldSelector<T, U = any> = string | Func<T, U>;
-
-export enum RethinkDBErrorType {
-  UNKNOWN,
-  // driver
-  API_FAIL,
-  // query errors
-  CONNECTION,
-  MASTER_POOL_FAIL,
-  POOL_FAIL,
-  CURSOR_END,
-  TIMEOUT,
-  CANCEL,
-  PARSE,
-  ARITY,
-  CURSOR,
-  // connection error
-  AUTH,
-  UNSUPPORTED_PROTOCOL,
-  // reql response errors
-  INTERNAL,
-  RESOURCE_LIMIT,
-  QUERY_LOGIC,
-  NON_EXISTENCE,
-  OP_FAILED,
-  OP_INDETERMINATE,
-  USER,
-  PERMISSION_ERROR,
-}
 
 export interface RethinkDBError extends Error {
   readonly type: RethinkDBErrorType;
@@ -149,7 +162,7 @@ export interface IndexOptions {
   geo?: boolean;
 }
 
-export interface RunOptions {
+export type RunOptions = {
   timeFormat?: Format | 'ISO8601'; // 'native' or 'raw', default 'native'
   groupFormat?: Format; // 'native' or 'raw', default 'native'
   binaryFormat?: Format; // 'native' or 'raw', default 'native'
@@ -166,7 +179,7 @@ export interface RunOptions {
   maxBatchSeconds?: number; // default 0.5
   firstBatchScaledownFactor?: number; // default 4
   readMode?: 'single' | 'majority' | 'outdated';
-}
+};
 
 export interface HttpRequestOptions {
   // General
@@ -299,7 +312,6 @@ export interface TableChangeResult {
   config_changes: Array<ValueChange<TableConfig>>;
 }
 
-
 export interface IndexStatus {
   function: Buffer;
   geo: boolean;
@@ -360,50 +372,6 @@ export interface RServer {
   port: number;
 }
 
-export type RCursorType =
-  | 'Atom'
-  | 'Cursor'
-  | 'Feed'
-  | 'AtomFeed'
-  | 'OrderByLimitFeed'
-  | 'UnionedFeed';
-export interface RCursor<T = any> extends Readable {
-  readonly profile: any;
-  getType(): RCursorType;
-  next(): Promise<T>;
-  toArray(): Promise<T[]>;
-  close(): Promise<void>;
-  each(
-    callback: (err: RethinkDBError | undefined, row: any) => any,
-    onFinishedCallback?: () => any,
-  ): Promise<any>;
-  eachAsync(
-    rowHandler: (row: any, rowFinished?: (error?: any) => any) => any,
-    final?: (error: any) => any,
-  ): Promise<void>;
-}
-
-export const querySymbol = Symbol('RethinkDBQuery');
-
-export interface RQuery<T = unknown> {
-  (...args: unknown[]): RQuery<T>;
-  term: TermJson;
-  [querySymbol]: true;
-  do: () => RQuery;
-  typeOf(): RDatum<string>;
-  info(): RDatum<{
-    value?: string;
-    db?: { id: string; name: string; type: string };
-    // eslint-disable-next-line camelcase
-    doc_count_estimates?: number[];
-    id?: string;
-    indexes?: string[];
-    name?: string;
-    // eslint-disable-next-line camelcase
-    primary_key?: string;
-    type: string;
-  }>;
-}
 export interface RDatum<T = any> extends RQuery<T> {
   do<U>(
     ...args: Array<RDatum | ((arg: RDatum<T>, ...args: RDatum[]) => U)>
@@ -837,7 +805,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
   coerceTo<U = any>(type: 'object'): RDatum<U>;
 }
 
-export interface RFeed<T = any> extends RQuery<RCursor<T>> {
+export interface RFeed<T = any> extends RQuery<Cursor<T>> {
   <U extends keyof T>(attribute: RValue<U>): RFeed<T[U]>;
   getField<U extends keyof T>(fieldName: RValue<U>): RFeed<T[U]>;
 
@@ -912,6 +880,7 @@ export interface RTable<T = any> extends RSelection<T> {
     },
   ): RDatum<{
     granted: number;
+    // eslint-disable-next-line camelcase
     permissions_changes: Array<
       ValueChange<{
         read: boolean;
@@ -994,6 +963,7 @@ export interface RTable<T = any> extends RSelection<T> {
       | null
       | Buffer
       | ((
+          // eslint-disable-next-line camelcase
           context: RDatum<{ primary_key: string; timestamp: Date }>,
           oldVal: RDatum<T>,
           newVal: RDatum<T>,
@@ -1011,6 +981,7 @@ export interface RDatabase {
     },
   ): RDatum<{
     granted: number;
+    // eslint-disable-next-line camelcase
     permissions_changes: Array<
       ValueChange<{
         read: boolean;
@@ -1306,6 +1277,7 @@ export interface R {
       | null
       | Buffer
       | ((
+          // eslint-disable-next-line camelcase
           context: RDatum<{ primary_key: string; timestamp: Date }>,
           oldVal: RDatum<T>,
           newVal: RDatum<T>,
@@ -1864,10 +1836,12 @@ export interface R {
   ): RDatum<{
     value?: string;
     db?: { id: string; name: string; type: string };
+    // eslint-disable-next-line camelcase
     doc_count_estimates?: number[];
     id?: string;
     indexes?: string[];
     name?: string;
+    // eslint-disable-next-line camelcase
     primary_key?: string;
     type: string;
   }>;

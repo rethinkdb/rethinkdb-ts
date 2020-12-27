@@ -1,14 +1,11 @@
 import { EventEmitter } from 'events';
-import { isRethinkDBError, RethinkDBError } from '../error/error';
-import { QueryJson, TermJson } from '../internal-types';
+import { isRethinkDBError, RethinkDBError, RethinkDBErrorType } from '../error';
+import { QueryJson, TermJson } from '../types';
 import { ErrorType, QueryType, ResponseType, TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
-import { parseOptarg } from '../query-builder/query';
+import { parseOptarg, RQuery } from '../query-builder/query';
 import { Cursor } from '../response/cursor';
-import {
-  RCursor,
-  RethinkDBErrorType,
-  RQuery,
+import type {
   RServerConnectionOptions,
   RunOptions,
   ServerInfo,
@@ -35,6 +32,46 @@ export interface RethinkdbConnectionParams {
   pingInterval?: number;
   silent?: boolean;
   log?: IConnectionLogger;
+}
+
+function omitFormatOptions(
+  options: RunOptions,
+): Omit<RunOptions, 'timeFormat' | 'groupFormat' | 'binaryFormat'> {
+  const newOptions = { ...options };
+
+  delete newOptions.binaryFormat;
+  delete newOptions.groupFormat;
+  delete newOptions.timeFormat;
+
+  return newOptions;
+}
+
+function findTableTermAndAddDb(term: TermJson, db: string): void {
+  if (!Array.isArray(term)) {
+    if (term !== null && typeof term === 'object') {
+      // @ts-ignore
+      Object.values(term).forEach((value) => findTableTermAndAddDb(value, db));
+      return;
+    }
+    return;
+  }
+  const termParam = term[1];
+  if (tableQueries.includes(term[0])) {
+    if (!termParam) {
+      // eslint-disable-next-line no-param-reassign
+      term[1] = [[TermType.DB, [db]]];
+      return;
+    }
+    const innerTerm = termParam[0];
+    if (Array.isArray(innerTerm) && innerTerm[0] === TermType.DB) {
+      return;
+    }
+    termParam.unshift([TermType.DB, [db]]);
+    return;
+  }
+  if (termParam) {
+    termParam.forEach((value) => findTableTermAndAddDb(value, db));
+  }
 }
 
 export class RethinkDBConnection extends EventEmitter {
@@ -79,7 +116,7 @@ export class RethinkDBConnection extends EventEmitter {
     this.pingInterval = pingInterval;
     this.silent = silent;
     this.log = log;
-    this.use(db);
+    this.db = db;
 
     this.socket = new RethinkDBSocket({
       connectionOptions: this.options,
@@ -107,9 +144,9 @@ export class RethinkDBConnection extends EventEmitter {
         await this.noreplyWait();
       }
       await this.socket.close();
-    } catch (err) {
+    } catch (error) {
       await this.socket.close();
-      throw err;
+      throw error;
     }
   }
 
@@ -125,8 +162,8 @@ export class RethinkDBConnection extends EventEmitter {
         this.close();
         this.emit('close', error);
       })
-      .on('error', (err) => {
-        this.reportError(err);
+      .on('error', (error) => {
+        this.reportError(error);
       })
       .on('data', (data, token) => this.emit(data, token))
       .on('release', (count) => {
@@ -135,7 +172,12 @@ export class RethinkDBConnection extends EventEmitter {
         }
       });
     try {
-      await Promise.race([delay(this.timeout * 1000), this.socket.connect()]);
+      await Promise.race([
+        delay(this.timeout * 1000).then(() => {
+          throw new Error();
+        }),
+        this.socket.connect(),
+      ]);
     } catch (connectionError) {
       const error = new RethinkDBError(
         'Unable to establish connection, see cause for more info.',
@@ -182,9 +224,9 @@ export class RethinkDBConnection extends EventEmitter {
       if (this.socket.status === 'errored') {
         throw this.socket.lastError;
       }
-      const err = new RethinkDBError('Unexpected return value');
-      this.reportError(err);
-      throw err;
+      const error = new RethinkDBError('Unexpected return value');
+      this.reportError(error);
+      throw error;
     }
   }
 
@@ -195,9 +237,9 @@ export class RethinkDBConnection extends EventEmitter {
       if (this.socket.status === 'errored') {
         throw this.socket.lastError;
       }
-      const err = new RethinkDBError('Unexpected return value');
-      this.reportError(err);
-      throw err;
+      const error = new RethinkDBError('Unexpected return value');
+      this.reportError(error);
+      throw error;
     }
     return result.r[0];
   }
@@ -206,51 +248,22 @@ export class RethinkDBConnection extends EventEmitter {
     term: TermJson,
     options: RunOptions = {},
   ): Promise<Cursor | undefined> {
-    const { timeFormat, groupFormat, binaryFormat, ...rest } = options;
+    const rest = omitFormatOptions(options);
     rest.db = rest.db || this.db;
-    this.findTableTermAndAddDb(term, rest.db);
+    findTableTermAndAddDb(term, rest.db);
     if (globals.arrayLimit !== undefined && rest.arrayLimit === undefined) {
       rest.arrayLimit = globals.arrayLimit;
     }
     const jsonQuery: QueryJson = [QueryType.START, term];
-    // @ts-ignore
-    const optArgs = parseOptarg(rest);
-    if (optArgs) {
-      query.push(optArgs);
+    const optionalArgs = parseOptarg(omitFormatOptions(rest));
+    if (optionalArgs) {
+      jsonQuery.push(optionalArgs);
     }
     const token = this.socket.sendQuery(jsonQuery);
     if (options.noreply) {
       return undefined;
     }
     return new Cursor(this.socket, token, options, jsonQuery);
-  }
-
-  private findTableTermAndAddDb(term: TermJson | undefined, db: string) {
-    if (!Array.isArray(term)) {
-      if (term !== null && typeof term === 'object') {
-        Object.values(term).forEach((value) =>
-          this.findTableTermAndAddDb(value, db),
-        );
-        return;
-      }
-      return;
-    }
-    const termParam = term[1];
-    if (tableQueries.includes(term[0])) {
-      if (!termParam) {
-        term[1] = [[TermType.DB, [db]]];
-        return;
-      }
-      const innerTerm = termParam[0];
-      if (Array.isArray(innerTerm) && innerTerm[0] === TermType.DB) {
-        return;
-      }
-      termParam.unshift([TermType.DB, [db]]);
-      return;
-    }
-    if (termParam) {
-      termParam.forEach((value) => this.findTableTermAndAddDb(value, db));
-    }
   }
 
   private startPinging() {
@@ -290,56 +303,51 @@ export class RethinkDBConnection extends EventEmitter {
     this.pingTimer = undefined;
   }
 
-  private reportError(err: Error) {
+  private reportError(error: Error) {
     if (this.listenerCount('error') > 0) {
-      this.emit('error', err);
+      this.emit('error', error);
     }
-    if (!isRethinkDBError(err) || err.type !== RethinkDBErrorType.CANCEL) {
+    if (!isRethinkDBError(error) || error.type !== RethinkDBErrorType.CANCEL) {
       if (this.log) {
-        this.log(err.toString());
+        this.log(error.toString());
       }
       if (!this.silent) {
-        console.error(err.toString());
+        console.error(error.toString());
       }
     }
   }
 
-  public async run<T = any>(
-    query: RQuery,
-    options?: RunOptions,
-  ): Promise<void | T | { profile: any; result: T }> {
+  public async run(query: RQuery, options?: RunOptions): Promise<any> {
     const { term } = query;
     const cursor = await this.query(term, options);
     if (cursor) {
       const results = await cursor.resolve();
-      if (results) {
-        switch (cursor.getType()) {
-          case 'Atom':
-            if (cursor.profile) {
-              return { profile: cursor.profile, result: results[0] };
-            }
-            return results[0];
+      switch (cursor.getType()) {
+        case 'Atom':
+          if (cursor.profile) {
+            return { profile: cursor.profile, result: results[0] };
+          }
+          return results[0];
 
-          case 'Cursor':
-            if (cursor.profile) {
-              return {
-                profile: cursor.profile,
-                result: await cursor.toArray(),
-              };
-            }
-            return cursor.toArray();
-          default:
-            return cursor;
-        }
+        case 'Cursor':
+          if (cursor.profile) {
+            return {
+              profile: cursor.profile,
+              result: await cursor.toArray(),
+            };
+          }
+          return cursor.toArray();
+        default:
+          return cursor;
       }
     }
     return undefined;
   }
 
-  public async getCursor(
+  public async getCursor<T = unknown>(
     query: RQuery,
     options?: RunOptions,
-  ): Promise<RCursor> {
+  ): Promise<Cursor<T>> {
     const { term } = query;
     const cursor = await this.query(term, options);
     if (!cursor) {
