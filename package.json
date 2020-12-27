@@ -4,14 +4,23 @@
   "description": "RethinkDB TypeScript driver",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "maintainers": [
+    "Ron Zeidman",
+    {
+      "email": "atassikay38@gmail.com",
+      "name": "Taymuraz Kaytmazov",
+      "url": "https://github.com/atassis"
+    }
+  ],
   "directories": {
     "test": "test"
   },
   "scripts": {
+    "prepare": "tsc",
     "build": "tsc",
     "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "lint": "eslint src",
-    "test": "ts-mocha -p ./tsconfig.test.json --check-leaks -t 60000 ./test/*.ts",
+    "test": "ts-mocha -p ./tsconfig.test.json --check-leaks -t 3000 --exit ./test/*.ts",
     "proto": "pbjs -t static-module -w commonjs -o src/proto/ql2.js src/proto/ql2.proto && pbts -o src/proto/ql2.d.ts src/proto/ql2.js && ts-node ./generate-enums",
     "start:dev": "tsc --watch"
   },
@@ -26,18 +35,18 @@
   },
   "homepage": "https://github.com/rethinkdb/rethinkdb-ts#readme",
   "devDependencies": {
-    "@types/mocha": "^8.0.4",
-    "@types/node": "^14.14.10",
+    "@types/mocha": "^8.2.0",
+    "@types/node": "^14.14.16",
     "@types/semver": "^7.3.4",
-    "@typescript-eslint/eslint-plugin": "^4.9.1",
-    "@typescript-eslint/parser": "^4.9.1",
+    "@typescript-eslint/eslint-plugin": "^4.11.0",
+    "@typescript-eslint/parser": "^4.11.0",
     "coveralls": "^3.1.0",
-    "eslint": "^7.15.0",
+    "eslint": "^7.16.0",
     "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-config-prettier": "^7.0.0",
+    "eslint-config-prettier": "^7.1.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-prettier": "^3.2.0",
-    "husky": "^4.3.5",
+    "eslint-plugin-prettier": "^3.3.0",
+    "husky": "^4.3.6",
     "iterall": "^1.3.0",
     "lint-staged": "^10.5.3",
     "mocha": "^8.2.1",
@@ -47,7 +56,7 @@
     "semver": "^7.3.4",
     "ts-mocha": "^8.0.0",
     "ts-node": "^9.1.1",
-    "typescript": "^4.1.2"
+    "typescript": "^4.1.3"
   },
   "publishConfig": {
     "access": "public"
