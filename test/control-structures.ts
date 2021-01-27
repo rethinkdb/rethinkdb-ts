@@ -369,19 +369,19 @@ describe('control structures', () => {
   });
 
   it('`http` should work', async () => {
-    result = await r.http('http://google.com').run();
+    const result = await r.http('http://google.com').run();
     assert.equal(typeof result, 'string');
   });
 
   it('`http` should work with options', async () => {
-    result = await r.http('http://google.com', { timeout: 60 }).run();
+    const result = await r.http('http://google.com', { timeout: 60 }).run();
     assert.equal(typeof result, 'string');
   });
 
   it('`http` should throw with an unrecognized option', async () => {
     try {
       // @ts-ignore
-      result = await r.http('http://google.com', { foo: 60 }).run();
+      await r.http('http://google.com', { foo: 60 }).run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.startsWith('Unrecognized optional argument `foo` in:'));
@@ -389,12 +389,12 @@ describe('control structures', () => {
   });
 
   it('`r.uuid` should work', async () => {
-    result = await r.uuid().run();
+    const result = await r.uuid().run();
     assert.equal(typeof result, 'string');
   });
 
   it('`r.uuid("foo")` should work', async () => {
-    result = await r.uuid('rethinkdbdash').run();
+    const result = await r.uuid('rethinkdbdash').run();
     assert.equal(result, '291a8039-bc4b-5472-9b2a-f133254e3283');
   });
 });

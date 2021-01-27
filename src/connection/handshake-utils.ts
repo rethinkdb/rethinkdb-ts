@@ -10,6 +10,8 @@ const AUTHENTICATION_METHOD = 'SCRAM-SHA-256';
 const KEY_LENGTH = 32; // Because we are currently using SHA 256
 const CACHE_PBKDF2: { [cacheKey: string]: Buffer } = {};
 
+const pbkdf2Async = promisify(pbkdf2);
+
 function xorBuffer(a: Buffer, b: Buffer) {
   const result = [];
   const len = Math.min(a.length, b.length);
@@ -31,10 +33,9 @@ export function buildAuthBuffer(user: string) {
       authentication: `n,,n=${user},r=${randomString}`,
     }),
   );
-  return {
-    randomString,
-    authBuffer: Buffer.concat([versionBuffer, mainBuffer, NULL_BUFFER]),
-  };
+
+  const authBuffer = Buffer.concat([versionBuffer, mainBuffer, NULL_BUFFER]);
+  return { authBuffer, randomString };
 }
 
 type VersionMessage = {
@@ -57,6 +58,28 @@ export function validateVersion(msg: VersionMessage) {
   }
 }
 
+async function getSaltedPassword(
+  password: Buffer,
+  salt: Buffer,
+  iterations: number,
+): Promise<Buffer> {
+  const cacheKey = `${password.toString('base64')},${salt.toString(
+    'base64',
+  )},${iterations}`;
+  if (CACHE_PBKDF2[cacheKey]) {
+    return CACHE_PBKDF2[cacheKey];
+  }
+  const saltedPassword = await pbkdf2Async(
+    password,
+    salt,
+    iterations,
+    KEY_LENGTH,
+    'sha256',
+  );
+  CACHE_PBKDF2[cacheKey] = saltedPassword;
+  return Buffer.from(saltedPassword);
+}
+
 export async function computeSaltedPassword(
   authentication: string,
   randomString: string,
@@ -67,19 +90,17 @@ export async function computeSaltedPassword(
     .split(',')
     .map((part) => part.substring(2));
   const salt = Buffer.from(s, 'base64');
-  const iterations = parseInt(i, 10);
   if (randomNonce.substring(0, randomString.length) !== randomString) {
     throw new RethinkDBError('Invalid nonce from server', {
       type: RethinkDBErrorType.AUTH,
     });
   }
-  const cacheKey = `${password.toString('base64')},${salt.toString(
-    'base64',
-  )},${iterations}`;
-  const saltedPassword =
-    CACHE_PBKDF2[cacheKey] ||
-    (await promisify(pbkdf2)(password, salt, iterations, KEY_LENGTH, 'sha256'));
-  CACHE_PBKDF2[cacheKey] = saltedPassword;
+
+  const saltedPassword = await getSaltedPassword(
+    password,
+    salt,
+    Number.parseInt(i, 10),
+  );
 
   const clientFinalMessageWithoutProof = `c=biws,r=${randomNonce}`;
   const clientKey = createHmac('sha256', saltedPassword)

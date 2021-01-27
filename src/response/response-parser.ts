@@ -1,4 +1,5 @@
-import { RunOptions } from '../types';
+import { RethinkDBErrorType, RunOptions } from '../types';
+import { RethinkDBError } from '../error/error';
 
 export function getNativeTypes(
   obj: any,
@@ -57,10 +58,16 @@ export function getNativeTypes(
           }));
         }
         break;
+      case 'GEOMETRY':
+        break;
+      default:
+        throw new RethinkDBError('Unexpected value of $reql_type', {
+          type: RethinkDBErrorType.PARSE,
+        });
     }
   }
-  return Object.entries(obj).reduce(
-    (acc, [key, val]) => ({ ...acc, [key]: getNativeTypes(val) }),
-    {},
-  );
+  return Object.entries(obj).reduce((acc: any, [key, val]) => {
+    acc[key] = getNativeTypes(val);
+    return acc;
+  }, {});
 }

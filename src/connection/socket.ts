@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
 import { connect as netConnect, Socket, TcpNetConnectOpts } from 'net';
 import { connect as tlsConnect } from 'tls';
-import { types } from 'util';
 import { RethinkDBErrorType, RServerConnectionOptions } from '../types';
 import { RethinkDBError } from '../error/error';
 import { QueryJson, ResponseJson } from '../internal-types';
@@ -14,11 +13,22 @@ import {
   NULL_BUFFER,
   validateVersion,
 } from './handshake-utils';
+import { isNativeError } from '../util';
 
 export type RNConnOpts = RServerConnectionOptions & {
   host: string;
   port: number;
 };
+
+export function setConnectionDefaults(
+  connectionOptions: RServerConnectionOptions,
+): RNConnOpts {
+  return {
+    ...connectionOptions,
+    host: connectionOptions.host || 'localhost',
+    port: connectionOptions.port || 28015,
+  };
+}
 
 export class RethinkDBSocket extends EventEmitter {
   public connectionOptions: RNConnOpts;
@@ -75,10 +85,6 @@ export class RethinkDBSocket extends EventEmitter {
     this.password = password ? Buffer.from(password) : NULL_BUFFER;
   }
 
-  public eventNames() {
-    return ['connect', 'query', 'data', 'release', 'error', 'close'];
-  }
-
   public async connect() {
     if (this.socket) {
       throw new RethinkDBError('Socket already connected', {
@@ -115,7 +121,7 @@ export class RethinkDBSocket extends EventEmitter {
         });
       socket.setKeepAlive(true);
       this.socket = socket;
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         socket.once('connect', resolve);
         socket.once('error', reject);
         if (socket.destroyed) {
@@ -193,14 +199,14 @@ export class RethinkDBSocket extends EventEmitter {
 
   public stopQuery(token: number) {
     if (this.runningQueries.has(token)) {
-      return this.sendQuery([QueryType.STOP], token);
+      this.sendQuery([QueryType.STOP], token);
     }
   }
 
   public continueQuery(token: number) {
     if (this.runningQueries.has(token)) {
       // console.log('CONTINUING ' + token);
-      return this.sendQuery([QueryType.CONTINUE], token);
+      this.sendQuery([QueryType.CONTINUE], token);
     }
   }
 
@@ -230,7 +236,7 @@ export class RethinkDBSocket extends EventEmitter {
     // console.log('WAITING ' + token);
     const res = await data.dequeue();
     // console.log('RESULT ' + token);
-    if (types.isNativeError(res)) {
+    if (isNativeError(res)) {
       data.destroy(res);
       this.runningQueries.delete(token);
       throw res;
@@ -307,7 +313,7 @@ export class RethinkDBSocket extends EventEmitter {
     while ((index = this.buffer.indexOf(0)) >= 0) {
       const strMsg = this.buffer.slice(0, index).toString('utf8');
       const { data = null } = this.runningQueries.get(this.nextToken++) || {};
-      let err: RethinkDBError | undefined;
+      let error: RethinkDBError | undefined;
       try {
         const jsonMsg = JSON.parse(strMsg);
         if (jsonMsg.success) {
@@ -315,21 +321,21 @@ export class RethinkDBSocket extends EventEmitter {
             data.enqueue(jsonMsg as any);
           }
         } else {
-          err = new RethinkDBError(jsonMsg.error, {
+          error = new RethinkDBError(jsonMsg.error, {
             errorCode: jsonMsg.error_code,
           });
         }
       } catch (cause) {
-        err = new RethinkDBError(strMsg, {
+        error = new RethinkDBError(strMsg, {
           cause,
           type: RethinkDBErrorType.AUTH,
         });
       }
-      if (err) {
+      if (error) {
         if (data) {
-          data.destroy(err);
+          data.destroy(error);
         }
-        this.handleError(err);
+        this.handleError(error);
       }
       this.buffer = this.buffer.slice(index + 1);
       index = this.buffer.indexOf(0);
@@ -367,12 +373,4 @@ export class RethinkDBSocket extends EventEmitter {
       this.emit('error', err);
     }
   }
-}
-
-export function setConnectionDefaults(
-  connectionOptions: RServerConnectionOptions,
-): RNConnOpts {
-  connectionOptions.host = connectionOptions.host || 'localhost';
-  connectionOptions.port = connectionOptions.port || 28015;
-  return connectionOptions as any;
 }

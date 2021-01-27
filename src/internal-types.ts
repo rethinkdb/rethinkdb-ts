@@ -23,18 +23,14 @@ export type TermJson =
   | boolean
   | object
   | null;
-export type OptargsJson = { [key: string]: any } | undefined;
+export type OptargsJson = Record<string, unknown> | undefined;
 export interface ComplexTermJson
   extends Array<TermType | TermJson[] | OptargsJson> {
   0: TermType;
   1?: TermJson[];
   2?: OptargsJson;
 }
-export interface QueryJson extends Array<QueryType | TermJson | OptargsJson> {
-  0: QueryType;
-  1?: TermJson;
-  2?: OptargsJson;
-}
+export type QueryJson = [QueryType, TermJson?, OptargsJson?];
 export interface ResponseJson {
   t: ResponseType;
   r: any[];

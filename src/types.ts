@@ -28,6 +28,42 @@ export type MultiFieldSelector =
   | number;
 export type FieldSelector<T, U = any> = string | Func<T, U>;
 
+export enum RethinkDBErrorType {
+  UNKNOWN,
+  // driver
+  API_FAIL,
+  // query errors
+  CONNECTION,
+  MASTER_POOL_FAIL,
+  POOL_FAIL,
+  CURSOR_END,
+  TIMEOUT,
+  CANCEL,
+  PARSE,
+  ARITY,
+  CURSOR,
+  // connection error
+  AUTH,
+  UNSUPPORTED_PROTOCOL,
+  // reql response errors
+  INTERNAL,
+  RESOURCE_LIMIT,
+  QUERY_LOGIC,
+  NON_EXISTENCE,
+  OP_FAILED,
+  OP_INDETERMINATE,
+  USER,
+  PERMISSION_ERROR,
+}
+
+export interface RethinkDBError extends Error {
+  readonly type: RethinkDBErrorType;
+}
+
+export interface FilterOperatorOptions {
+  default: boolean | RethinkDBError;
+}
+
 export interface ServerInfo {
   id: string;
   name: string;
@@ -301,6 +337,15 @@ export interface Connection extends EventEmitter {
   server(): Promise<ServerInfo>;
 }
 
+export interface ConnectionPool extends EventEmitter {
+  readonly isHealthy: boolean;
+
+  drain(emit: boolean): Promise<void>;
+  getLength(): number;
+  getAvailableLength(): number;
+  getConnections(): Connection[];
+}
+
 export interface MasterPool extends EventEmitter {
   readonly isHealthy: boolean;
   waitForHealthy(): Promise<this>;
@@ -319,14 +364,6 @@ export interface MasterPool extends EventEmitter {
     log?: (msg: string) => void;
   }): void;
 }
-export interface ConnectionPool extends EventEmitter {
-  readonly isHealthy: boolean;
-
-  drain(options?: { noreplyWait: boolean }): Promise<void>;
-  getLength(): number;
-  getAvailableLength(): number;
-  getConnections(): Connection[];
-}
 
 export interface RServer {
   host: string;
@@ -340,7 +377,7 @@ export type RCursorType =
   | 'AtomFeed'
   | 'OrderByLimitFeed'
   | 'UnionedFeed';
-export interface RCursor<T = any> extends NodeJS.ReadableStream {
+export interface RCursor<T = any> extends ReadableStream {
   readonly profile: any;
   getType(): RCursorType;
   next(): Promise<T>;
@@ -354,38 +391,6 @@ export interface RCursor<T = any> extends NodeJS.ReadableStream {
     rowHandler: (row: any, rowFinished?: (error?: any) => any) => any,
     final?: (error: any) => any,
   ): Promise<void>;
-}
-
-export interface RethinkDBError extends Error {
-  readonly type: RethinkDBErrorType;
-}
-
-export enum RethinkDBErrorType {
-  UNKNOWN,
-  // driver
-  API_FAIL,
-  // query errors
-  CONNECTION,
-  MASTER_POOL_FAIL,
-  POOL_FAIL,
-  CURSOR_END,
-  TIMEOUT,
-  CANCEL,
-  PARSE,
-  ARITY,
-  CURSOR,
-  // connection error
-  AUTH,
-  UNSUPPORTED_PROTOCOL,
-  // reql response errors
-  INTERNAL,
-  RESOURCE_LIMIT,
-  QUERY_LOGIC,
-  NON_EXISTENCE,
-  OP_FAILED,
-  OP_INDETERMINATE,
-  USER,
-  PERMISSION_ERROR,
 }
 
 export interface RQuery<T = any> {
@@ -420,7 +425,7 @@ export interface RQuery<T = any> {
   ): T extends Array<infer T1>
     ? Promise<RCursor<T1>>
     : T extends RCursor<infer T2>
-    ? Promise<T>
+    ? Promise<T2>
     : Promise<RCursor<T>>;
 }
 export interface RDatum<T = any> extends RQuery<T> {
@@ -488,8 +493,8 @@ export interface RDatum<T = any> extends RQuery<T> {
     ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<Array<Partial<T1>>> : never;
   filter<U = T extends Array<infer T1> ? T1 : never>(
-    predicate: DeepPartial<U> | ((doc: RDatum<U>) => RValue<boolean>),
-    options?: { default: boolean },
+    predicate: DeepPartial<U> | ((doc: RDatum<U>) => RValue),
+    options?: FilterOperatorOptions,
   ): this;
   includes(geometry: RDatum): T extends Array<infer T1> ? RDatum<T> : never;
   intersects(geometry: RDatum): T extends Array<infer T1> ? RDatum<T> : never;
@@ -776,8 +781,8 @@ export interface RStream<T = any> extends RQuery<T[]> {
   withFields(...fields: MultiFieldSelector[]): RStream<Partial<T>>;
   hasFields(...fields: MultiFieldSelector[]): RStream<T>;
   filter(
-    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue<boolean>),
-    options?: { default: boolean },
+    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue),
+    options?: FilterOperatorOptions,
   ): this;
   includes(geometry: RDatum): RStream<T>;
   intersects(geometry: RDatum): RStream<T>;
@@ -877,8 +882,8 @@ export interface RFeed<T = any> extends RQuery<RCursor<T>> {
   withFields(...fields: MultiFieldSelector[]): RFeed<Partial<T>>;
   hasFields(...fields: MultiFieldSelector[]): RFeed<T>;
   filter(
-    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue<boolean>),
-    options?: { default: boolean },
+    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue),
+    options?: FilterOperatorOptions,
   ): this;
   includes(geometry: RDatum): RFeed<T>;
   intersects(geometry: RDatum): RFeed<T>;
@@ -1467,18 +1472,18 @@ export interface R {
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
   filter<T>(
     feed: RFeed<T>,
-    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue<boolean>),
-    options?: { default: boolean },
+    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue),
+    options?: FilterOperatorOptions,
   ): RFeed<T>;
   filter<T>(
     stream: RStream<T>,
-    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue<boolean>),
-    options?: { default: boolean },
+    predicate: DeepPartial<T> | ((doc: RDatum<T>) => RValue),
+    options?: FilterOperatorOptions,
   ): RStream<T>;
   filter<T, U = T extends Array<infer T1> ? T1 : never>(
     datum: RDatum<T>,
-    predicate: DeepPartial<T> | ((doc: RDatum<U>) => RValue<boolean>),
-    options?: { default: boolean },
+    predicate: DeepPartial<T> | ((doc: RDatum<U>) => RValue),
+    options?: FilterOperatorOptions,
   ): RDatum<T>;
   includes<T>(
     datum: RDatum<T>,
