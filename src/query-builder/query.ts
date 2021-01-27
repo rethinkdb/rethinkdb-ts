@@ -16,7 +16,7 @@ export type RunnableRQuery = RQuery & {
   do: () => any;
 };
 
-export const isQuery = (query: any): query is RunnableRQuery =>
+export const isQuery = (query: unknown): query is RunnableRQuery =>
   query === Object(query) && Object.hasOwnProperty.call(query, querySymbol);
 
 const numToStringArr = ['', 'First', 'Second', 'Third', 'Fourth', 'Fifth'];
@@ -34,6 +34,7 @@ export function termBuilder(
   return (...args: any[]) => {
     let optarg: Record<string, unknown> | undefined;
     const params: TermJson[] = currentTerm !== undefined ? [currentTerm] : [];
+    // @ts-ignore
     if (isQuery(args[0]) && args[0].term[0] === TermType.ARGS) {
       params.push(parseParam(args[0]));
       optarg = optargType !== false ? args[1] : undefined;
@@ -71,11 +72,13 @@ export function termBuilder(
       }
       switch (optargType) {
         case 'last':
+          // @ts-ignore
           optarg = parseOptarg(args[maxArgs - 1]);
           break;
         case 'required':
         case 'optional':
         case 'last-optional':
+          // @ts-ignore
           optarg = parseOptarg(args[argsLength - 1]);
       }
       if (

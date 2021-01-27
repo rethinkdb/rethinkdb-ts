@@ -86,10 +86,13 @@ export function parseParam(
     }
   }
   if (typeof param === 'object') {
-    const objTerm = Object.entries(param).reduce((acc, [key, value]) => {
-      acc[key] = parseParam(value, nestingLevel - 1);
-      return acc;
-    }, {});
+    const objTerm = Object.entries(param).reduce<Record<string, TermJson>>(
+      (acc, [key, value]) => {
+        acc[key] = parseParam(value, nestingLevel - 1);
+        return acc;
+      },
+      {},
+    );
     return hasImplicitVar(objTerm)
       ? [TermType.FUNC, [[TermType.MAKE_ARRAY, [1]], objTerm]]
       : objTerm;

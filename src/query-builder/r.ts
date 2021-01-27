@@ -95,9 +95,13 @@ r.setNestingLevel = (level: number) => {
 r.setArrayLimit = (limit?: number) => {
   globals.arrayLimit = limit;
 };
+// @ts-ignore
 r.serialize = (termStr: RQuery) => JSON.stringify(termStr.term);
+// @ts-ignore
 r.deserialize = (termStr: string) => toQuery(validateTerm(JSON.parse(termStr)));
+// @ts-ignore
 r.expr = expr;
+// @ts-ignore
 r.do = (...args: any[]) => {
   const last = args.pop();
   return termBuilder(funcall, toQuery)(last, ...args);

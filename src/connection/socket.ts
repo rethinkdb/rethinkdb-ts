@@ -121,7 +121,7 @@ export class RethinkDBSocket extends EventEmitter {
         });
       socket.setKeepAlive(true);
       this.socket = socket;
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         socket.once('connect', resolve);
         socket.once('error', reject);
         if (socket.destroyed) {

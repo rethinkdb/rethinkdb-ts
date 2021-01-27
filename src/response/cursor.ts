@@ -12,8 +12,10 @@ function isPromise(obj: any): obj is Promise<any> {
   );
 }
 
+// @ts-ignore
 export class Cursor extends Readable implements RCursor {
   public get profile() {
+    // eslint-disable-next-line no-underscore-dangle
     return this._profile;
   }
 
@@ -214,7 +216,7 @@ export class Cursor extends Readable implements RCursor {
       while (!this.closed) {
         nextRow = await this.next();
         if (rowHandler.length > 1) {
-          await new Promise((resolve, reject) => {
+          await new Promise<void>((resolve, reject) => {
             rowHandler(nextRow, (err) =>
               err
                 ? reject(

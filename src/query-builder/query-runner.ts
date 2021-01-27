@@ -68,6 +68,7 @@ const getCursorQueryFunc = (term: TermJson) => {
     const cursor = c ? await c.query(term, opt) : await cpool.queue(term, opt);
     if (cursor) {
       cursor.init();
+      // @ts-ignore
       return cursor;
     }
   };

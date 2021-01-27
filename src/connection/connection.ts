@@ -192,7 +192,12 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
     if (globals.arrayLimit !== undefined && gargs.arrayLimit === undefined) {
       gargs.arrayLimit = globals.arrayLimit;
     }
-    const query: QueryJson = [QueryType.START, term, parseOptarg(gargs)];
+    const query: QueryJson = [QueryType.START, term];
+    // @ts-ignore
+    const optArgs = parseOptarg(gargs);
+    if (optArgs) {
+      query.push(optArgs);
+    }
     const token = this.socket.sendQuery(query);
     if (options.noreply) {
       return undefined;
@@ -200,7 +205,7 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
     return new Cursor(this.socket, token, options, query);
   }
 
-  private findTableTermAndAddDb(term: TermJson | undefined, db: any) {
+  private findTableTermAndAddDb(term: TermJson | undefined, db: string) {
     if (!Array.isArray(term)) {
       if (term !== null && typeof term === 'object') {
         Object.values(term).forEach((value) =>

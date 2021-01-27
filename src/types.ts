@@ -337,6 +337,15 @@ export interface Connection extends EventEmitter {
   server(): Promise<ServerInfo>;
 }
 
+export interface ConnectionPool extends EventEmitter {
+  readonly isHealthy: boolean;
+
+  drain(emit: boolean): Promise<void>;
+  getLength(): number;
+  getAvailableLength(): number;
+  getConnections(): Connection[];
+}
+
 export interface MasterPool extends EventEmitter {
   readonly isHealthy: boolean;
   waitForHealthy(): Promise<this>;
@@ -354,14 +363,6 @@ export interface MasterPool extends EventEmitter {
     silent?: boolean;
     log?: (msg: string) => void;
   }): void;
-}
-export interface ConnectionPool extends EventEmitter {
-  readonly isHealthy: boolean;
-
-  drain(options?: { noreplyWait: boolean }): Promise<void>;
-  getLength(): number;
-  getAvailableLength(): number;
-  getConnections(): Connection[];
 }
 
 export interface RServer {

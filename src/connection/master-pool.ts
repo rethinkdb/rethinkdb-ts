@@ -228,6 +228,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     );
   }
 
+  // @ts-ignore
   public getPools() {
     return this.serverPools;
   }
@@ -341,7 +342,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
           }
         })
         // handle disconnections
-        .catch(() => delay(20000))
+        .catch(() => delay(20_000))
         .then(() => (this.discovery ? this.discover() : undefined))
     );
   }

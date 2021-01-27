@@ -50,69 +50,6 @@ const isNativeError = (arg: unknown): arg is Error =>
   isObject(arg) &&
   (objectToString(arg) === '[object Error]' || arg instanceof Error);
 
-function promisify(original: unknown) {
-  if (typeof original !== 'function')
-    throw new TypeError('The "original" argument must be of type Function');
-
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  let fn: Function;
-  if (kCustomPromisifiedSymbol && original[kCustomPromisifiedSymbol]) {
-    fn = original[kCustomPromisifiedSymbol];
-    if (typeof fn !== 'function') {
-      throw new TypeError(
-        'The "util.promisify.custom" argument must be of type Function',
-      );
-    }
-    Object.defineProperty(fn, kCustomPromisifiedSymbol, {
-      value: fn,
-      enumerable: false,
-      writable: false,
-      configurable: true,
-    });
-    return fn;
-  }
-
-  fn = () => {
-    let promiseResolve;
-    let promiseReject;
-    const promise = new Promise(function (resolve, reject) {
-      promiseResolve = resolve;
-      promiseReject = reject;
-    });
-
-    const args = [];
-    for (let i = 0; i < arguments.length; i += 1) {
-      args.push(arguments[i]);
-    }
-    args.push(function (err, value) {
-      if (err) {
-        promiseReject(err);
-      } else {
-        promiseResolve(value);
-      }
-    });
-
-    try {
-      original.apply(this, args);
-    } catch (err) {
-      promiseReject(err);
-    }
-
-    return promise;
-  };
-
-  Object.setPrototypeOf(fn, Object.getPrototypeOf(original));
-
-  if (kCustomPromisifiedSymbol)
-    Object.defineProperty(fn, kCustomPromisifiedSymbol, {
-      value: fn,
-      enumerable: false,
-      writable: false,
-      configurable: true,
-    });
-  return Object.defineProperties(fn, getOwnPropertyDescriptors(original));
-}
-
 export {
   camelToSnake,
   delay,
