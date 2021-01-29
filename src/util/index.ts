@@ -1,22 +1,8 @@
-const kCustomPromisifiedSymbol =
-  typeof Symbol !== 'undefined' ? Symbol('util.promisify.custom') : undefined;
-
-const getOwnPropertyDescriptors =
-  Object.getOwnPropertyDescriptors ||
-  function getOwnPropertyDescriptors(obj) {
-    const keys = Object.keys(obj);
-    const descriptors: Record<string, PropertyDescriptor | undefined> = {};
-    for (let i = 0; i < keys.length; i += 1) {
-      descriptors[keys[i]] = Object.getOwnPropertyDescriptor(obj, keys[i]);
-    }
-    return descriptors;
-  };
-
 /**
  * Returns true if the given object is a Function. Otherwise, returns false.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-const isFunction = (value: any): value is Function =>
+const isFunction = (value: unknown): value is Function =>
   typeof value === 'function';
 
 const objectToString = (o: unknown): string =>
@@ -26,7 +12,7 @@ const objectToString = (o: unknown): string =>
  * (even though functions are objects in JavaScript). Otherwise, returns false.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-const isObject = (value: any): value is Object =>
+const isObject = (value: unknown): value is Object =>
   value !== null && typeof value === 'object';
 
 function delay(timeInMs: number): Promise<void> {
@@ -39,7 +25,7 @@ function snakeToCamel(name: string): string {
   return name.replace(/(_[a-z])/g, (x) => x.charAt(1).toUpperCase());
 }
 
-function camelToSnake(name: string) {
+function camelToSnake(name: string): string {
   return name.replace(/([A-Z])/g, (x) => `_${x.toLowerCase()}`);
 }
 
@@ -50,6 +36,12 @@ const isNativeError = (arg: unknown): arg is Error =>
   isObject(arg) &&
   (objectToString(arg) === '[object Error]' || arg instanceof Error);
 
+function isPromise(obj: any): obj is Promise<unknown> {
+  return (
+    obj !== null && typeof obj === 'object' && typeof obj.then === 'function'
+  );
+}
+
 export {
   camelToSnake,
   delay,
@@ -57,5 +49,6 @@ export {
   isFunction,
   isNativeError,
   isObject,
+  isPromise,
   snakeToCamel,
 };

@@ -3,16 +3,15 @@ import { RethinkDBSocket } from '../connection/socket';
 import { isRethinkDBError, RethinkDBError } from '../error/error';
 import { QueryJson, ResponseJson } from '../internal-types';
 import { ResponseNote, ResponseType } from '../proto/enums';
-import { RCursor, RCursorType, RethinkDBErrorType, RunOptions } from '../types';
+import type {
+  RCursor,
+  RCursorType,
+  RethinkDBErrorType,
+  RunOptions,
+} from '../types';
+import { isPromise } from '../util';
 import { getNativeTypes } from './response-parser';
 
-function isPromise(obj: any): obj is Promise<any> {
-  return (
-    obj !== null && typeof obj === 'object' && typeof obj.then === 'function'
-  );
-}
-
-// @ts-ignore
 export class Cursor extends Readable implements RCursor {
   public get profile() {
     // eslint-disable-next-line no-underscore-dangle

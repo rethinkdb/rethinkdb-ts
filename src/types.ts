@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { TcpNetConnectOpts } from 'net';
 import { ConnectionOptions } from 'tls';
+import { Readable } from 'stream';
 import { DeepPartial } from './internal-types';
 
 // #region optargs
@@ -377,7 +378,7 @@ export type RCursorType =
   | 'AtomFeed'
   | 'OrderByLimitFeed'
   | 'UnionedFeed';
-export interface RCursor<T = any> extends ReadableStream {
+export interface RCursor<T = any> extends Readable {
   readonly profile: any;
   getType(): RCursorType;
   next(): Promise<T>;
