@@ -3,12 +3,7 @@ import { RethinkDBSocket } from '../connection/socket';
 import { isRethinkDBError, RethinkDBError } from '../error/error';
 import { QueryJson, ResponseJson } from '../internal-types';
 import { ResponseNote, ResponseType } from '../proto/enums';
-import type {
-  RCursor,
-  RCursorType,
-  RethinkDBErrorType,
-  RunOptions,
-} from '../types';
+import { RCursor, RCursorType, RethinkDBErrorType, RunOptions } from '../types';
 import { isPromise } from '../util';
 import { getNativeTypes } from './response-parser';
 
