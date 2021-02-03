@@ -2,30 +2,40 @@ name: Redis Service Example
 on: push
 
 jobs:
-  # Label of the container job
-  runner-job:
-    # You must use a Linux environment when using service containers or container jobs
+  test:
     runs-on: ubuntu-20.04
+
+    services:
+      rethinkdb:
+        image: rethinkdb
+        ports:
+          - 28015:28015
 
     strategy:
       matrix:
         node-version: [ 12.x, 14.x, 15.x ]
-    # Service containers to run with `runner-job`
-    services:
-      # Label used to access the service container
-      redis:
-        # Docker Hub image
-        image: rethinkdb
-        #
-        ports:
-          # Opens tcp port 6379 on the host and service container
-          - 28015:28015
+
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+  publish:
+    runs-on: ubuntu-20.04
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
