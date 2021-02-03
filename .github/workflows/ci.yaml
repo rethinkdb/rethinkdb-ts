@@ -1,4 +1,4 @@
-name: Redis Service Example
+name: Test and Publish
 on: push
 
 jobs:
