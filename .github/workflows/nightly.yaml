@@ -17,7 +17,6 @@ jobs:
         with:
           node-version: 14
           registry-url: https://registry.npmjs.org/
-      - name: Setup and publish nightly
       - run: npm ci
       - run: npm run build --if-present
       - run: npm version --no-git-tag-version prepatch
