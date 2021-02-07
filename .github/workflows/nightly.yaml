@@ -1,8 +1,9 @@
 name: Publish Nightly
 
 on:
-  schedule:
-    - cron:  '0 7 * * *'
+  push:
+    branches:
+      - main
   # enable users to manually trigger with workflow_dispatch
   workflow_dispatch: {}
 
