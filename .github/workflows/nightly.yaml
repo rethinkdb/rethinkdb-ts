@@ -1,0 +1,27 @@
+name: Publish Nightly
+
+on:
+  schedule:
+    - cron:  '0 7 * * *'
+  # enable users to manually trigger with workflow_dispatch
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use node version 12
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          registry-url: https://registry.npmjs.org/
+      - name: Setup and publish nightly
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm version --no-git-tag-version prepatch
+      - run: npm publish --tag next
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          CI: true
