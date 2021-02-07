@@ -1,6 +1,7 @@
 name: Publish Nightly
 
-on: push
+on:
+  push:
   # enable users to manually trigger with workflow_dispatch
   workflow_dispatch: {}
 
