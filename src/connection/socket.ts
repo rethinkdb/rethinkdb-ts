@@ -107,10 +107,15 @@ export class RethinkDBSocket extends EventEmitter {
         .on('data', (data) => {
           try {
             this.buffer = Buffer.concat([this.buffer, data]);
-            if (this.mode === 'handshake') {
-              this.handleHandshakeData();
-            } else {
-              this.handleData();
+            switch (this.mode) {
+              case 'handshake':
+                this.handleHandshakeData();
+                break;
+              case 'response':
+                this.handleData();
+                break;
+              default:
+                break;
             }
           } catch (error) {
             this.handleError(error);
