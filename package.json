@@ -20,7 +20,7 @@
     "build": "tsc",
     "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "lint": "eslint src",
-    "test": "ts-mocha -p ./tsconfig.test.json --check-leaks -t 6000 --exit ./test/*.ts",
+    "test": "ts-mocha -p ./tsconfig.test.json --check-leaks -t 10000 --exit ./test/*.ts",
     "proto": "pbjs -t static-module -w commonjs -o src/proto/ql2.js src/proto/ql2.proto && pbts -o src/proto/ql2.d.ts src/proto/ql2.js && ts-node ./generate-enums",
     "start:dev": "tsc --watch"
   },
