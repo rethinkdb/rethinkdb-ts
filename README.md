@@ -73,5 +73,5 @@ If you want an SSL/TLS, add `tls: true` and the options described [here](https:/
     - `.run()` as many times as you want (promises run only once and return the same value without running other times)
     - be stored for future evaluation (promises run as you create them)
 - Support browsers (Unless it's the only demand of making this driver used instead of rethinkdbdash)
-- Support write streams (Does anyone uses it? Will add it if its a popular demand)
+- Support write streams (Does anyone use it? Will add it if its a popular demand)
 - Multiple connection pools (if someone has a good usecase I'll support it)
