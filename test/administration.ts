@@ -9,8 +9,7 @@ describe('administration', () => {
   let result: any;
 
   before(async () => {
-    const pool = await r.connectPool(config);
-    console.log(pool.isHealthy);
+    await r.connectPool(config);
 
     dbName = uuid();
     tableName = uuid();
