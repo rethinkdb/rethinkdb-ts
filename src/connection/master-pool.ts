@@ -400,7 +400,8 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
             .then(
               () =>
                 new Promise((resolve) =>
-                  setTimeout(resolve, this.connParam.timeoutError),
+                  // fixme get rid of condition in number
+                  setTimeout(resolve, this.connParam.timeoutError || 1000),
                 ),
             )
             .then(() => {
