@@ -1,5 +1,4 @@
 import assert from 'assert';
-import * as iterall from 'iterall';
 import { satisfies } from 'semver';
 import {
   Changes,
@@ -12,6 +11,16 @@ import {
 import { RethinkDBConnection } from '../src/connection/connection';
 import config from './config';
 import { uuid } from './util/common';
+
+function isAsyncIterable(val: any): boolean {
+  if (val === null || val === undefined) {
+    return false;
+  }
+  const isIterable = typeof val[Symbol.iterator] === "function";
+  const isAsync = typeof val[Symbol.asyncIterator] === "function";
+
+  return isAsync || isIterable;
+}
 
 describe('cursor', () => {
   let connection: Connection;
@@ -1029,7 +1038,7 @@ describe('cursor', () => {
       assert(feed1);
 
       const iterator = feed1;
-      assert(iterall.isAsyncIterable(iterator));
+      assert(isAsyncIterable(iterator));
       // Kill the TCP connection
       const { socket } = (connection as RethinkDBConnection).socket;
       if (socket) {
