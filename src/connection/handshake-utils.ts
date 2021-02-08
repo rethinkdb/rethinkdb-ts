@@ -66,27 +66,25 @@ async function getSaltedPassword(
   const cacheKey = `${password.toString('base64')},${salt.toString(
     'base64',
   )},${iterations}`;
-  if (CACHE_PBKDF2[cacheKey]) {
-    return CACHE_PBKDF2[cacheKey];
+  if (!CACHE_PBKDF2[cacheKey]) {
+    CACHE_PBKDF2[cacheKey] = await pbkdf2Async(
+      password,
+      salt,
+      iterations,
+      KEY_LENGTH,
+      'sha256',
+    );
   }
-  const saltedPassword = await pbkdf2Async(
-    password,
-    salt,
-    iterations,
-    KEY_LENGTH,
-    'sha256',
-  );
-  CACHE_PBKDF2[cacheKey] = saltedPassword;
-  return Buffer.from(saltedPassword);
+  return CACHE_PBKDF2[cacheKey];
 }
 
 export async function computeSaltedPassword(
-  authentication: string,
+  authString: string,
   randomString: string,
   user: string,
   password: Buffer,
-) {
-  const [randomNonce, s, i] = authentication
+): Promise<{ serverSignature: string; proof: Buffer }> {
+  const [randomNonce, s, i] = authString
     .split(',')
     .map((part) => part.substring(2));
   const salt = Buffer.from(s, 'base64');
@@ -108,37 +106,36 @@ export async function computeSaltedPassword(
     .digest();
   const storedKey = createHash('sha256').update(clientKey).digest();
 
-  const authMessage = `n=${user},r=${randomString},${authentication},${clientFinalMessageWithoutProof}`;
+  const authMessage = `n=${user},r=${randomString},${authString},${clientFinalMessageWithoutProof}`;
 
   const clientSignature = createHmac('sha256', storedKey)
     .update(authMessage)
     .digest();
-  const clientProof = xorBuffer(clientKey, clientSignature);
 
   const serverKey = createHmac('sha256', saltedPassword)
     .update('Server Key')
     .digest();
+
   const serverSignature = createHmac('sha256', serverKey)
     .update(authMessage)
     .digest()
     .toString('base64');
 
+  const clientProof = xorBuffer(clientKey, clientSignature).toString('base64');
+  const authentication = `${clientFinalMessageWithoutProof},p=${clientProof}`;
   return {
     serverSignature,
     proof: Buffer.concat([
-      Buffer.from(
-        JSON.stringify({
-          authentication: `${clientFinalMessageWithoutProof},p=${clientProof.toString(
-            'base64',
-          )}`,
-        }),
-      ),
+      Buffer.from(JSON.stringify({ authentication })),
       NULL_BUFFER,
     ]),
   };
 }
 
-export function compareDigest(authentication: string, serverSignature: string) {
+export function compareDigest(
+  authentication: string,
+  serverSignature: string,
+): void {
   if (
     authentication.substring(authentication.indexOf('=') + 1) !==
     serverSignature

@@ -2,7 +2,7 @@ import { RethinkDBError } from '../error/error';
 import { TermType } from '../proto/enums';
 import { TermJson } from '../internal-types';
 
-function validateTerm(term: any): term is TermJson {
+function validateTerm(term: any): TermJson {
   if (term === undefined) {
     throw new RethinkDBError(`Invalid term:\n${JSON.stringify(term)}\n`);
   }

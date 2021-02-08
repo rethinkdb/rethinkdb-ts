@@ -114,6 +114,8 @@ export class RethinkDBSocket extends EventEmitter {
               case 'response':
                 this.handleData();
                 break;
+              default:
+                break;
             }
           } catch (error) {
             this.handleError(error);
@@ -153,7 +155,7 @@ export class RethinkDBSocket extends EventEmitter {
     const encoded = JSON.stringify(newQuery);
     const querySize = Buffer.byteLength(encoded);
     const buffer = Buffer.alloc(8 + 4 + querySize);
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     buffer.writeUInt32LE(token & 0xffffffff, 0);
     buffer.writeUInt32LE(Math.floor(token / 0xffffffff), 4);
     buffer.writeUInt32LE(querySize, 8);
@@ -184,13 +186,10 @@ export class RethinkDBSocket extends EventEmitter {
       return token;
     }
     if (!data) {
-      // console.log('START ' + token);
       this.runningQueries.set(token, {
         data: new DataQueue(),
         query,
       });
-      // } else {
-      // console.log('CONTINUE ' + token);
     }
     this.socket.write(buffer);
     this.emit('query', token);
@@ -205,7 +204,6 @@ export class RethinkDBSocket extends EventEmitter {
 
   public continueQuery(token: number) {
     if (this.runningQueries.has(token)) {
-      // console.log('CONTINUING ' + token);
       this.sendQuery([QueryType.CONTINUE], token);
     }
   }
@@ -233,9 +231,7 @@ export class RethinkDBSocket extends EventEmitter {
         type: RethinkDBErrorType.CURSOR,
       });
     }
-    // console.log('WAITING ' + token);
     const res = await data.dequeue();
-    // console.log('RESULT ' + token);
     if (isNativeError(res)) {
       data.destroy(res);
       this.runningQueries.delete(token);
@@ -246,7 +242,6 @@ export class RethinkDBSocket extends EventEmitter {
       this.runningQueries.delete(token);
       this.emit('release', this.runningQueries.size);
     }
-    // console.log('RETURNING ' + token);
     return res as any;
   }
 
@@ -358,8 +353,6 @@ export class RethinkDBSocket extends EventEmitter {
       );
       this.buffer = this.buffer.slice(12 + responseLength);
       const { data = null } = this.runningQueries.get(token) || {};
-      // console.dir(response, { depth: null });
-      // console.log('GOT ' + token);
       if (data) {
         data.enqueue(response);
       }

@@ -138,28 +138,16 @@ export function backtraceTerm(
       const params = (args as any)[0][1].map((i: number) =>
         getMarked(`var_${i}`, nextBacktrace(i, paramsBacktrace)),
       );
-      if (globals.backtraceType === 'lambda') {
-        return getMarked(
-          combineMarks`(${params.reduce(joinMultiArray, [
-            '',
-            '',
-          ])}) => ${backtraceTerm(
-            (args as any)[1],
-            false,
-            nextBacktrace(1, backtrace),
-          )}`,
-          backtrace,
-        );
-      }
+      const funcHead = params.reduce(joinMultiArray, ['', '']);
+      const body = backtraceTerm(
+        (args as any)[1],
+        false,
+        nextBacktrace(1, backtrace),
+      );
       return getMarked(
-        combineMarks`function(${params.reduce(joinMultiArray, [
-          '',
-          '',
-        ])}) { return ${backtraceTerm(
-          (args as any)[1],
-          false,
-          nextBacktrace(1, backtrace),
-        )} }`,
+        globals.backtraceType === 'lambda'
+          ? combineMarks`(${funcHead}) => ${body}`
+          : combineMarks`function(${funcHead}) { return ${body} }`,
         backtrace,
       );
     }
