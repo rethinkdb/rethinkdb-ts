@@ -42,7 +42,7 @@ export class Cursor<T = any> extends Readable {
   private hasNextBatch?: boolean;
 
   constructor(
-    private conn: RethinkDBSocket,
+    private socket: RethinkDBSocket,
     private token: number,
     private runOptions: Pick<
       RunOptions,
@@ -118,8 +118,8 @@ export class Cursor<T = any> extends Readable {
 
   public async close(): Promise<void> {
     if (!this.closed) {
-      if (this.conn.status === 'open') {
-        this.conn.stopQuery(this.token);
+      if (this.socket.status === 'open') {
+        this.socket.stopQuery(this.token);
       }
       this.emitting = false;
       this.closed = true;
@@ -274,7 +274,7 @@ export class Cursor<T = any> extends Readable {
 
   public async resolve(): Promise<any[]> {
     try {
-      const response = await this.conn.readNext(this.token);
+      const response = await this.socket.readNext(this.token);
       const { n: notes, t: type, r: results, p: profile } = response;
       // eslint-disable-next-line no-underscore-dangle
       this._profile = profile;
@@ -335,7 +335,7 @@ export class Cursor<T = any> extends Readable {
       while (next === undefined && this.hasNextBatch) {
         if (!this.resolving) {
           this.resolving = this.resolve();
-          this.conn.continueQuery(this.token);
+          this.socket.continueQuery(this.token);
         }
         // eslint-disable-next-line no-await-in-loop
         await this.resolving;
