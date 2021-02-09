@@ -27,7 +27,7 @@ describe('pool legacy', () => {
   };
 
   it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool(options);
     assert.ok(pool, 'expected an instance of pool master');
     assert.equal(pool.getPools().length, 1, 'expected number of pools is 1');
   });
@@ -142,41 +142,20 @@ describe('pool legacy', () => {
   });
 
   it('If the pool cannot create a connection, it should reject queries', async () => {
-    await createRethinkdbMasterPool({
-      servers: [{ host: 'notarealhost' }],
-      buffer: 1,
-      max: 2,
-      silent: true,
-    }).catch(() => undefined);
     try {
-      await pool.run(r.expr(1));
+      const notARealPool = await createRethinkdbMasterPool({
+        servers: [{ host: 'notarealhost' }],
+        buffer: 1,
+        max: 2,
+        silent: true,
+      });
+      await notARealPool.run(r.expr(1));
+      if (notARealPool) {
+        await notARealPool.drain();
+      }
       assert.fail('should throw');
     } catch (e) {
-      assert.equal(
-        e.message,
-        'None of the pools have an opened connection and failed to open a new one.',
-      );
-    }
-    await pool.drain();
-  });
-
-  it('If the driver cannot create a connection, it should reject queries - timeout', async () => {
-    await createRethinkdbMasterPool({
-      servers: [{ host: 'notarealhost' }],
-      buffer: 1,
-      max: 2,
-      silent: true,
-    }).catch(() => undefined);
-    try {
-      await pool.run(r.expr(1));
-      assert.fail('should throw');
-    } catch (e) {
-      assert.equal(
-        e.message,
-        'None of the pools have an opened connection and failed to open a new one.',
-      );
-    } finally {
-      await pool.drain();
+      assert.match(e.message, /Error initializing master pool/);
     }
   });
 
@@ -244,20 +223,20 @@ describe('pool legacy', () => {
   // });
 
   it('The pool should remove a connection if it errored', async () => {
-    await createRethinkdbMasterPool({
+    const localPool = await createRethinkdbMasterPool({
       buffer: 1,
       max: 2,
       silent: true,
       port: config.port,
       host: config.host,
     });
-    pool.setOptions({ timeoutGb: 60 * 60 * 1000 });
+    localPool.setOptions({ timeoutGb: 60 * 60 * 1000 });
 
     try {
       const result1 = await Promise.all(
         Array(options.max)
           .fill(r.expr(1))
-          .map((expr) => pool.run(expr)),
+          .map((expr) => localPool.run(expr)),
       );
       assert.deepEqual(result1, Array(options.max).fill(1));
     } catch (e) {
@@ -269,25 +248,26 @@ describe('pool legacy', () => {
       );
 
       // We expect the connection that errored to get closed in the next second
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         setTimeout(() => {
-          assert.equal(pool.getAvailableLength(), options.max - 1);
-          assert.equal(pool.getLength(), options.max - 1);
+          assert.equal(localPool.getAvailableLength(), options.max - 1);
+          assert.equal(localPool.getLength(), options.max - 1);
           resolve();
         }, 1000);
       });
     } finally {
-      await pool.drain();
+      await localPool.drain();
     }
   });
 
   describe('cursor', () => {
     let dbName: string;
     let tableName: string;
+    // eslint-disable-next-line no-shadow
     let pool: MasterConnectionPool;
 
     before(async () => {
-      pool = await createRethinkdbMasterPool(config);
+      pool = await createRethinkdbMasterPool(options);
       dbName = uuid();
       tableName = uuid();
 
@@ -329,7 +309,7 @@ describe('pool legacy', () => {
 
     it('The pool should release a connection only when the cursor has fetch everything or get closed', async () => {
       const result: RCursor[] = [];
-      for (let i = 0; i < options.max; i++) {
+      for (let i = 0; i < options.max; i += 1) {
         result.push(await pool.getCursor(r.db(dbName).table(tableName)));
         await new Promise((resolve) => setTimeout(resolve, 50));
       }

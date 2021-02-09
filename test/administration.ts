@@ -11,7 +11,7 @@ describe('administration', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    await r.connectPool(config);
+    pool = await createRethinkdbMasterPool(config);
 
     dbName = uuid();
     tableName = uuid();
