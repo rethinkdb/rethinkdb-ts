@@ -16,8 +16,8 @@
     "test": "test"
   },
   "scripts": {
-    "prepare": "tsc",
-    "build": "tsc",
+    "prepare": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "lint": "eslint src",
     "test": "ts-mocha --check-leaks -t 10000 --exit ./test/*.ts",

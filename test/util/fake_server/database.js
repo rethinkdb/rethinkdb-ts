@@ -1,21 +1,21 @@
-var Table = require(__dirname+"/table.js");
+var Table = require(__dirname + '/table.js');
 
 function Database(name) {
-    this.name = name;
-    this.tables = {};
+  this.name = name;
+  this.tables = {};
 }
 
 Database.prototype.table = (name) => {
-    return this.tables[name];
-}
+  return this.tables[name];
+};
 Database.prototype.tableDrop = (name) => {
-    delete this.tables[name];
-}
+  delete this.tables[name];
+};
 Database.prototype.tableCreate = (name) => {
-    this.tables[name] = new Table(name)
-}
+  this.tables[name] = new Table(name);
+};
 Database.prototype.typeOf = () => {
-    return "DB";
-}
+  return 'DB';
+};
 
 module.exports = Database;
