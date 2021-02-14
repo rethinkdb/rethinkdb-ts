@@ -8,7 +8,7 @@ export class DataQueue<T> {
 
   private waiting: Array<WaitItem<T>> = [];
 
-  public enqueue(data: T, op?: () => void) {
+  public enqueue(data: T, op?: () => void): void {
     if (this.waiting.length > 0) {
       const waiter = this.waiting.shift();
       if (waiter) {
@@ -22,10 +22,11 @@ export class DataQueue<T> {
     }
   }
 
-  public destroy(data: T) {
-    let waiter: WaitItem<T> | undefined;
-    while ((waiter = this.waiting.shift())) {
+  public destroy(data: T): void {
+    let waiter: WaitItem<T> | undefined = this.waiting.shift();
+    while (waiter) {
       waiter.resolve(data);
+      waiter = this.waiting.shift();
     }
   }
 

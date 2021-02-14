@@ -19,8 +19,8 @@
     "node": ">=12.x <=17.x"
   },
   "scripts": {
-    "prepare": "husky install && tsc",
-    "build": "tsc",
+    "prepare": "husky install && tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint src",
     "test": "ts-mocha --check-leaks -t 10000 --exit ./test/*.ts",
     "proto": "pbjs -t static-module -w commonjs -o src/proto/ql2.js src/proto/ql2.proto && pbts -o src/proto/ql2.d.ts src/proto/ql2.js && ts-node ./generate-enums",

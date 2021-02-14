@@ -10,24 +10,24 @@ describe('client backtraces', () => {
   let dbName, tableName, result
 
   before(async () => {
-    await r.connectPool(config)
+    await pool.run(r.connectPool(config)
 
     dbName = uuid()
     tableName = uuid()
 
-    result = await r.dbCreate(dbName).run()
+    result = await pool.run(r.dbCreate(dbName))
     assert.equal(result.dbs_created, 1)
 
-    result = await r.db(dbName).tableCreate(tableName).run()
+    result = await pool.run(r.db(dbName).tableCreate(tableName))
     assert.equal(result.tables_created, 1)
 
-    result = await r.db(dbName).table(tableName).insert(Array(100).fill({})).run()
+    result = await pool.run(r.db(dbName).table(tableName).insert(Array(100).fill({})))
     assert.equal(result.inserted, 100)
     assert.equal(result.generated_keys.length, 100)
   })
 
   after(async () => {
-    await r.getPoolMaster().drain()
+    await pool.run(r.getPoolMaster().drain()
   })
 
   /*
@@ -45,7 +45,7 @@ r.db("af552fefa372998f05c1dff2fa4c293c").table("89865145147d850616fcbe93011b1d5e
   it('Test backtrace for r.db(dbName).table(tableName).map((doc) => { return doc("key").add(NaN)})', async () => {
     try {
       r.nextVarId = 1
-      await r.db(dbName).table(tableName).map(function (doc) { return doc('key').add(NaN) }).run()
+      await pool.run(r.db(dbName).table(tableName).map(function (doc) { return doc('key').add(NaN) }))
       assert.fail('should throw')
     } catch (e) {
       assert(e.message === 'Cannot convert `NaN` to JSON in:\nr.db("' + dbName + '").table("' + tableName + '")\n    .map((var_1) => {\n        return var_1("key").add(NaN)\n                                ^^^ \n    })\n')
@@ -67,7 +67,7 @@ r.db("dd054a14db348f5bcb99bbf14615955c").table("2f66694bbfa2a7bd2f0b0ef0460e7178
   it('Test backtrace for r.db(dbName).table(tableName).map((doc) => { return doc("key").add(Infinity)})', async () => {
     try {
       r.nextVarId = 1
-      await r.db(dbName).table(tableName).map(function (doc) { return doc('key').add(Infinity) }).run()
+      await pool.run(r.db(dbName).table(tableName).map(function (doc) { return doc('key').add(Infinity) }))
       assert.fail('should throw')
     } catch (e) {
       assert(e.message === 'Cannot convert `Infinity` to JSON in:\nr.db("' + dbName + '").table("' + tableName + '")\n    .map((var_1) => {\n        return var_1("key").add(Infinity)\n                                ^^^^^^^^ \n    })\n')
@@ -89,7 +89,7 @@ r.db("28f1684f7a5927ce592bc1641bc0f9ac").table("55e82a8517599394fd96d8fb1acfcdef
   it('Test backtrace for r.db(dbName).table(tableName).map((doc) => { return doc("key").add(undefined)})', async () => {
     try {
       r.nextVarId = 1
-      await r.db(dbName).table(tableName).map(function (doc) { return doc('key').add(undefined) }).run()
+      await pool.run(r.db(dbName).table(tableName).map(function (doc) { return doc('key').add(undefined) }))
       assert.fail('should throw')
     } catch (e) {
       assert(e.message === 'Cannot convert `undefined` with r.expr() in:\nr.db("' + dbName + '").table("' + tableName + '")\n    .map((var_1) => {\n        return var_1("key").add(undefined)\n                                ^^^^^^^^^ \n    })\n')
@@ -115,7 +115,7 @@ r.db("aa802b7a7ec470632ddb3c515e7ab30b").table("fe82af2d2203e8fbed96e0cbbc29e936
   it('Test backtrace for r.db(dbName).table(tableName).merge((user) => { return r.branch( user("location").eq("US"), { adult: user("age").gt(NaN) }, {radult: user("age").gt(18) }) })', async () => {
     try {
       r.nextVarId = 1
-      await r.db(dbName).table(tableName).merge(function (user) { return r.branch(user('location').eq('US'), { adult: user('age').gt(NaN) }, { radult: user('age').gt(18) }) }).run()
+      await pool.run(r.db(dbName).table(tableName).merge(function (user) { return r.branch(user('location').eq('US'), { adult: user('age').gt(NaN) }, { radult: user('age').gt(18) }) }))
       assert.fail('should throw')
     } catch (e) {
       assert(e.message === 'Cannot convert `NaN` to JSON in:\nr.db("' + dbName + '").table("' + tableName + '")\n    .merge((var_1) => {\n        return r.branch(var_1("location").eq("US"), {\n            adult: var_1("age").gt(NaN)\n                                   ^^^ \n        }, {\n            radult: var_1("age").gt(18)\n        })\n    })\n')
