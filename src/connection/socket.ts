@@ -2,11 +2,8 @@ import { EventEmitter } from 'events';
 import { connect as netConnect, Socket } from 'net';
 import { connect as tlsConnect } from 'tls';
 import { RethinkDBError, RethinkDBErrorType } from '../error';
-import type {
-  QueryJson,
-  ResponseJson,
-  RServerConnectionOptions,
-} from '../types';
+import type { QueryJson, ResponseJson } from '../types';
+import type { RethinkDBServerConnectionOptions } from './types';
 import { QueryType, ResponseType } from '../proto/enums';
 import { DataQueue } from './data-queue';
 import {
@@ -18,14 +15,9 @@ import {
 } from './handshake-utils';
 import { isNativeError } from '../util';
 
-export type RNConnOpts = RServerConnectionOptions & {
-  host: string;
-  port: number;
-};
-
 export function setConnectionDefaults(
-  connectionOptions: RServerConnectionOptions,
-): RNConnOpts {
+  connectionOptions: RethinkDBServerConnectionOptions,
+): RethinkDBServerConnectionOptions {
   return {
     ...connectionOptions,
     host: connectionOptions.host || 'localhost',
@@ -39,7 +31,7 @@ export type RethinkDBSocketStatuses =
   | 'open';
 
 export class RethinkDBSocket extends EventEmitter {
-  public connectionOptions: RNConnOpts;
+  public connectionOptions: RethinkDBServerConnectionOptions;
 
   public readonly user: string;
 
@@ -83,7 +75,7 @@ export class RethinkDBSocket extends EventEmitter {
     user = 'admin',
     password = '',
   }: {
-    connectionOptions: RNConnOpts;
+    connectionOptions: RethinkDBServerConnectionOptions;
     user?: string;
     password?: string;
   }) {

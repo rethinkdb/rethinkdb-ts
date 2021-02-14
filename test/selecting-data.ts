@@ -11,7 +11,7 @@ describe('pool legacy', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
 
     dbName = uuid();
     tableName = uuid();
@@ -95,11 +95,7 @@ describe('pool legacy', () => {
       assert(e instanceof Error);
       assert.equal(
         e.message,
-        '`get` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`get\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -225,11 +221,7 @@ describe('pool legacy', () => {
       assert(e instanceof Error);
       assert.equal(
         e.message,
-        '`between` takes at least 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`between\` takes at least 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -325,11 +317,7 @@ describe('pool legacy', () => {
       assert(e instanceof Error);
       assert.equal(
         e.message,
-        '`filter` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`filter\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });

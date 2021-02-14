@@ -4,12 +4,11 @@ import { r } from '../query-builder/r';
 import { RQuery } from '../query-builder/query';
 import { Cursor } from '../response/cursor';
 import type {
-  Changes,
-  RPoolConnectionOptions,
-  RServer,
+  RethinkDBPoolConnectionOptions,
+  RethinkDBServerConnectionOptions,
   RunOptions,
-  TermJson,
-} from '../types';
+} from './types';
+import type { Changes, RServer, TermJson } from '../types';
 import { delay, isIPv6 } from '../util';
 import { RethinkDBConnection } from './connection';
 import { ServerConnectionPool } from './server-pool';
@@ -110,25 +109,28 @@ export class MasterConnectionPool extends EventEmitter {
 
   private readonly serverPools: ServerConnectionPool[];
 
-  private connParam: RPoolConnectionOptions;
+  private connParam: RethinkDBPoolConnectionOptions;
 
-  constructor({
-    db = 'test',
-    user = 'admin',
-    password = '',
-    discovery = false,
-    servers = [{ host: 'localhost', port: 28015 }],
-    buffer = servers.length,
-    max = servers.length,
-    timeout = 20,
-    pingInterval = -1,
-    timeoutError = 1000,
-    timeoutGb = 60 * 60 * 1000,
-    maxExponent = 6,
-    silent = false,
-    log = () => undefined,
-  }: RPoolConnectionOptions = {}) {
+  constructor(
+    servers: RethinkDBServerConnectionOptions[],
+    options: RethinkDBPoolConnectionOptions,
+  ) {
     super();
+    const {
+      db = 'test',
+      user = 'admin',
+      password = '',
+      discovery = false,
+      buffer = servers.length,
+      max = servers.length,
+      timeout = 20,
+      pingInterval = -1,
+      timeoutError = 1000,
+      timeoutGb = 60 * 60 * 1000,
+      maxExponent = 6,
+      silent = false,
+      log = () => undefined,
+    } = options;
     // min one per server but wont redistribute conn from failed servers
     this.discovery = discovery;
     this.connParam = {
@@ -244,7 +246,6 @@ export class MasterConnectionPool extends EventEmitter {
     );
   }
 
-  // @ts-ignore
   public getPools(): ServerConnectionPool[] {
     return this.serverPools;
   }
@@ -290,7 +291,7 @@ export class MasterConnectionPool extends EventEmitter {
     return pool.waitForHealthy();
   }
 
-  private setServerPoolsOptions(params: RPoolConnectionOptions) {
+  private setServerPoolsOptions(params: RethinkDBPoolConnectionOptions) {
     const { buffer = 1, max = 1, ...otherParams } = params;
     const pools = this.getPools();
     const healthyLength = pools.filter((pool) => pool.isHealthy).length;
@@ -420,7 +421,9 @@ export class MasterConnectionPool extends EventEmitter {
                   // fixme get rid of condition in number
                   setTimeout(
                     resolve,
-                    (this.connParam && this.connParam.timeoutError || 1000) || 1000,
+                    (this.connParam && this.connParam.timeoutError) ||
+                      1000 ||
+                      1000,
                   ),
                 ),
             )

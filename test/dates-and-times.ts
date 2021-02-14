@@ -6,7 +6,7 @@ import { MasterConnectionPool } from '../src/connection/master-pool';
 describe('dates and times', () => {
   let pool: MasterConnectionPool;
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
   });
 
   after(async () => {

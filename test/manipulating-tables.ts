@@ -9,7 +9,7 @@ describe('manipulating tables', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     // delete all but the system dbs
     await pool.run(
       r
@@ -113,9 +113,7 @@ describe('manipulating tables', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`tableCreate` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '")\n',
+        `\`tableCreate\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}")\n`,
       );
     }
   });
@@ -158,9 +156,7 @@ describe('manipulating tables', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`tableDrop` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '")\n',
+        `\`tableDrop\` takes 1 argument, 0 provided after:\nr.db("${dbName}")\n`,
       );
     }
   });
@@ -374,11 +370,7 @@ describe('manipulating tables', () => {
       } catch (e) {
         assert.equal(
           e.message,
-          '`indexCreate` takes at least 1 argument, 0 provided after:\nr.db("' +
-            dbName1 +
-            '").table("' +
-            tableName1 +
-            '")\n',
+          `\`indexCreate\` takes at least 1 argument, 0 provided after:\nr.db("${dbName1}").table("${tableName1}")\n`,
         );
       }
     });
@@ -391,11 +383,7 @@ describe('manipulating tables', () => {
       } catch (e) {
         assert.equal(
           e.message,
-          '`indexDrop` takes 1 argument, 0 provided after:\nr.db("' +
-            dbName1 +
-            '").table("' +
-            tableName1 +
-            '")\n',
+          `\`indexDrop\` takes 1 argument, 0 provided after:\nr.db("${dbName1}").table("${tableName1}")\n`,
         );
       }
     });

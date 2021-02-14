@@ -6,11 +6,13 @@ import { globals } from '../query-builder/globals';
 import { parseOptarg, RQuery } from '../query-builder/query';
 import { Cursor } from '../response/cursor';
 import type {
-  RServerConnectionOptions,
+  IConnectionLogger,
+  RethinkdbConnectionParams,
+  RethinkDBServerConnectionOptions,
   RunOptions,
   ServerInfo,
-} from '../types';
-import { RethinkDBSocket, RNConnOpts, setConnectionDefaults } from './socket';
+} from './types';
+import { RethinkDBSocket, setConnectionDefaults } from './socket';
 import { delay } from '../util';
 
 const tableQueries = [
@@ -19,20 +21,6 @@ const tableQueries = [
   TermType.TABLE_LIST,
   TermType.TABLE,
 ];
-
-export interface IConnectionLogger {
-  (message: string): void;
-}
-
-export interface RethinkdbConnectionParams {
-  db?: string;
-  user?: string;
-  password?: string;
-  timeout?: number;
-  pingInterval?: number;
-  silent?: boolean;
-  log?: IConnectionLogger;
-}
 
 function omitFormatOptions(
   options: RunOptions,
@@ -81,7 +69,7 @@ export class RethinkDBConnection extends EventEmitter {
 
   public readonly socket: RethinkDBSocket;
 
-  private options: RNConnOpts;
+  private options: RethinkDBServerConnectionOptions;
 
   private timeout: number;
 
@@ -93,15 +81,15 @@ export class RethinkDBConnection extends EventEmitter {
 
   private pingTimer?: NodeJS.Timer;
 
-  private db = 'test';
+  private db: string;
 
   constructor(
-    private connectionOptions: RServerConnectionOptions,
-    options: RethinkdbConnectionParams = {},
+    private serverOptions: RethinkDBServerConnectionOptions,
+    options: RethinkdbConnectionParams,
   ) {
     super();
     const {
-      db = 'test',
+      db,
       user = 'admin',
       password = '',
       timeout = 20,
@@ -109,7 +97,7 @@ export class RethinkDBConnection extends EventEmitter {
       silent = false,
       log,
     } = options;
-    this.options = setConnectionDefaults(connectionOptions);
+    this.options = setConnectionDefaults(serverOptions);
     this.clientPort = this.options.port || 28015;
     this.clientAddress = this.options.host || 'localhost';
     this.timeout = timeout;
@@ -133,7 +121,7 @@ export class RethinkDBConnection extends EventEmitter {
     return this.socket.status === 'open';
   }
 
-  public get numOfQueries() {
+  public get numOfQueries(): number {
     return this.socket.runningQueries.size;
   }
 

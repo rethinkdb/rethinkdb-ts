@@ -1,22 +1,20 @@
 import { EventEmitter } from 'events';
 import { isRethinkDBError, RethinkDBError, RethinkDBErrorType } from '../error';
 import { Cursor } from '../response/cursor';
+import type { TermJson } from '../types';
 import type {
-  RConnectionOptions,
-  RServerConnectionOptions,
-  RunOptions,
-  TermJson,
-} from '../types';
-import {
   IConnectionLogger,
-  RethinkDBConnection,
+  RethinkDBConnectionOptions,
   RethinkdbConnectionParams,
-} from './connection';
-import { RNConnOpts, setConnectionDefaults } from './socket';
+  RethinkDBServerConnectionOptions,
+  RunOptions,
+} from './types';
+import { RethinkDBConnection } from './connection';
+import { setConnectionDefaults } from './socket';
 import { delay } from '../util';
 
 export class ServerConnectionPool extends EventEmitter {
-  public readonly server: RNConnOpts;
+  public readonly server: RethinkDBServerConnectionOptions;
 
   private draining = false;
 
@@ -43,9 +41,9 @@ export class ServerConnectionPool extends EventEmitter {
   private timers = new Map<RethinkDBConnection, NodeJS.Timer>();
 
   constructor(
-    connectionOptions: RServerConnectionOptions,
+    connectionOptions: RethinkDBServerConnectionOptions,
     {
-      db = 'test',
+      db,
       user = 'admin',
       password = '',
       buffer = 1,
@@ -57,7 +55,7 @@ export class ServerConnectionPool extends EventEmitter {
       maxExponent = 6,
       silent = false,
       log,
-    }: RConnectionOptions = {},
+    }: RethinkDBConnectionOptions,
   ) {
     super();
     this.buffer = Math.max(buffer, 1);
@@ -123,7 +121,7 @@ export class ServerConnectionPool extends EventEmitter {
     timeoutError = this.timeoutError,
     timeoutGb = this.timeoutGb,
     maxExponent = this.maxExponent,
-  }: RConnectionOptions): Promise<void> {
+  }: RethinkDBConnectionOptions): Promise<void> {
     this.silent = silent;
     this.log = log;
     this.timeoutError = timeoutError;

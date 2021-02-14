@@ -18,8 +18,8 @@ function isAsyncIterable(val: any): boolean {
   if (val === null || val === undefined) {
     return false;
   }
-  const isIterable = typeof val[Symbol.iterator] === "function";
-  const isAsync = typeof val[Symbol.asyncIterator] === "function";
+  const isIterable = typeof val[Symbol.iterator] === 'function';
+  const isAsync = typeof val[Symbol.asyncIterator] === 'function';
 
   return isAsync || isIterable;
 }
@@ -38,7 +38,7 @@ describe('cursor', () => {
   const smallNumDocs = 5; // Number of documents in the "small table"
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
 
     dbName = uuid();
     tableName = uuid(); // Big table to test partial sequence
@@ -209,7 +209,7 @@ describe('cursor', () => {
             assert.deepEqual(history, expected);
           }
           if (count > numDocs) {
-            reject(new Error('eachAsync exceeded ' + numDocs + ' iterations'));
+            reject(new Error(`eachAsync exceeded ${numDocs} iterations`));
           } else {
             resolve();
           }
@@ -347,12 +347,7 @@ describe('cursor', () => {
   });
 
   it('`toArray` with multiple batches - testing empty SUCCESS_COMPLETE', async () => {
-    connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection.open);
 
     cursor = await connection.getCursor(r.db(dbName).table(tableName), {
@@ -369,12 +364,7 @@ describe('cursor', () => {
   });
 
   it('Automatic coercion from cursor to table with multiple batches', async () => {
-    connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection.open);
 
     result = await connection.run(r.db(dbName).table(tableName), {
@@ -387,12 +377,7 @@ describe('cursor', () => {
   });
 
   it('`next` with multiple batches', async () => {
-    connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection.open);
 
     cursor = await connection.getCursor(r.db(dbName).table(tableName), {
@@ -417,12 +402,7 @@ describe('cursor', () => {
   });
 
   it('`next` should error when hitting an error -- not on the first batch', async () => {
-    connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection);
 
     cursor = await connection.getCursor(
@@ -786,12 +766,7 @@ describe('cursor', () => {
   });
 
   it('`each` should return an error if the connection dies', async () => {
-    connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection);
 
     const feed1 = await connection.run(r.db(dbName).table(tableName).changes());
@@ -812,12 +787,7 @@ describe('cursor', () => {
   });
 
   it('`eachAsync` should return an error if the connection dies', async () => {
-    connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection);
 
     const feed1 = await connection.run(r.db(dbName).table(tableName).changes());
@@ -840,12 +810,10 @@ describe('cursor', () => {
 
   if (satisfies(process.version, '>=10')) {
     it('cursor should be an async iterator', async () => {
-      connection = await createRethinkdbConnection({
-        host: config.host,
-        port: config.port,
-        user: config.user,
-        password: config.password,
-      });
+      connection = await createRethinkdbConnection(
+        config.server,
+        config.options,
+      );
       assert(connection.open);
 
       const feed1 = await connection.run(

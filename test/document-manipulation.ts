@@ -10,7 +10,7 @@ describe('document manipulation', () => {
 
   let pool: MasterConnectionPool;
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid();
 
@@ -133,11 +133,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`pluck` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`pluck\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -163,11 +159,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`without` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`without\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -248,11 +240,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`merge` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`merge\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -282,11 +270,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`append` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`append\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -309,11 +293,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`prepend` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`prepend\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -336,11 +316,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`difference` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`difference\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -366,11 +342,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setInsert` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`setInsert\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -393,11 +365,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setUnion` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`setUnion\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -420,11 +388,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setIntersection` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`setIntersection\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -447,11 +411,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setDifference` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`setDifference\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -475,11 +435,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`(...)` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`(...)\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -492,11 +448,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`getField` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`getField\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -524,11 +476,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`hasFields` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`hasFields\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -554,11 +502,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`insertAt` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`insertAt\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -581,11 +525,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`spliceAt` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`spliceAt\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -611,11 +551,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`deleteAt` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`deleteAt\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -633,11 +569,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`deleteAt` takes at most 2 arguments, 4 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`deleteAt\` takes at most 2 arguments, 4 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -660,11 +592,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`changeAt` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`changeAt\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });

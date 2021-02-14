@@ -10,7 +10,7 @@ describe('writing data', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid();
 
@@ -121,11 +121,7 @@ describe('writing data', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`insert` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`insert\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -244,11 +240,7 @@ describe('writing data', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`replace` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`replace\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -459,11 +451,7 @@ describe('writing data', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`update` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`update\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });

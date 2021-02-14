@@ -9,7 +9,7 @@ describe('control structures', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
   });
 
   after(async () => {

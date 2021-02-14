@@ -19,7 +19,7 @@ describe('stream', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid(); // Big table to test partial sequence
     tableName2 = uuid(); // small table to test success sequence
@@ -75,10 +75,10 @@ describe('stream', () => {
     assert(stream);
     assert(stream instanceof Readable);
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       let count = 0;
       stream.on('data', () => {
-        count++;
+        count += 1;
         if (count === data.length) {
           resolve();
         }
@@ -102,11 +102,11 @@ describe('stream', () => {
     );
     assert(stream);
     assert(stream instanceof Readable);
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<void>((resolve) => {
       let count = 0;
       stream.on('data', (d) => {
-        if (!!d.new_val.n) {
-          count++;
+        if (d.new_val.n) {
+          count += 1;
           if (count === data.length) {
             resolve();
             stream.close();
@@ -128,10 +128,10 @@ describe('stream', () => {
     assert(stream);
     assert(stream instanceof Readable);
 
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<void>((resolve) => {
       let count = 0;
       stream.on('data', () => {
-        count++;
+        count += 1;
         if (count === 3) {
           resolve();
           stream.close();
@@ -146,12 +146,10 @@ describe('stream', () => {
   });
 
   it('`table` should return a stream - testing empty SUCCESS_COMPLETE', async () => {
-    const connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    const connection = await createRethinkdbConnection(
+      config.server,
+      config.options,
+    );
     assert(connection);
 
     const stream = await connection.getCursor(r.db(dbName).table(tableName), {
@@ -164,12 +162,10 @@ describe('stream', () => {
   });
 
   it('Test flowing - event data', async () => {
-    const connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    const connection = await createRethinkdbConnection(
+      config.server,
+      config.options,
+    );
     assert(connection);
 
     const stream = await connection.getCursor(r.db(dbName).table(tableName), {
@@ -189,12 +185,10 @@ describe('stream', () => {
   });
 
   it('Test read', async () => {
-    const connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    const connection = await createRethinkdbConnection(
+      config.server,
+      config.options,
+    );
     assert(connection);
 
     const stream = await connection.getCursor(r.db(dbName).table(tableName), {
@@ -224,12 +218,10 @@ describe('stream', () => {
   });
 
   it('Test flowing - event data', async () => {
-    const connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    const connection = await createRethinkdbConnection(
+      config.server,
+      config.options,
+    );
     assert(connection);
 
     const stream = await connection.getCursor(r.db(dbName).table(tableName), {
@@ -254,12 +246,10 @@ describe('stream', () => {
   });
 
   it('Test read with null value', async () => {
-    const connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    const connection = await createRethinkdbConnection(
+      config.server,
+      config.options,
+    );
     assert(connection);
 
     const stream = await connection.getCursor(
@@ -289,12 +279,10 @@ describe('stream', () => {
   });
 
   it('Test read', async () => {
-    const connection = await createRethinkdbConnection({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    const connection = await createRethinkdbConnection(
+      config.server,
+      config.options,
+    );
     assert(connection);
 
     const stream = await connection.getCursor(r.db(dbName).table(tableName), {

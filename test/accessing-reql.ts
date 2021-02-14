@@ -15,13 +15,16 @@ describe('accessing-reql', () => {
   let tableName: string;
 
   beforeEach(async () => {
-    connection = await createRethinkdbConnection(config);
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection.open);
   });
 
   afterEach(async () => {
     if (!connection.open) {
-      connection = await createRethinkdbConnection(config);
+      connection = await createRethinkdbConnection(
+        config.server,
+        config.options,
+      );
       assert(connection.open);
     }
     // remove any dbs created between each test case
@@ -95,13 +98,17 @@ describe('accessing-reql', () => {
     await connection.close();
     assert(!connection.open);
 
-    connection = await createRethinkdbConnection({
-      db: dbName,
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(
+      {
+        host: config.server.host,
+        port: config.server.port,
+      },
+      {
+        db: dbName,
+        user: config.options.user,
+        password: config.options.password,
+      },
+    );
     assert(connection);
 
     const result = await connection.run(r.tableList());
@@ -151,16 +158,6 @@ describe('accessing-reql', () => {
 
     const result3 = await connection.run(r.expr(1));
     assert.equal(result3, 1);
-  });
-
-  it('`noReplyWait` should throw', async () => {
-    try {
-      // @ts-ignore
-      await connection.noReplyWait();
-      assert.fail('should throw an error');
-    } catch (e) {
-      assert.equal(e.message, 'connection.noReplyWait is not a function');
-    }
   });
 
   it('`noreplyWait` should work', async () => {
@@ -299,23 +296,23 @@ describe('accessing-reql', () => {
 
   it('`timeout` option should work', async () => {
     let server: net.Server;
-    let port: number;
+    const port = Math.floor(Math.random() * (65535 - 1025) + 1025);
     try {
-      port = Math.floor(Math.random() * (65535 - 1025) + 1025);
-
       server = net.createServer().listen(port);
 
-      connection = await createRethinkdbConnection({
-        port,
-        timeout: 1,
-      });
+      connection = await createRethinkdbConnection(
+        { port },
+        { db: 'test', timeout: 1 },
+      );
       assert.fail('should throw an error');
     } catch (err) {
-      await server.close();
+      if (server) {
+        await server.close();
+      }
 
       assert.equal(
         err.message,
-        'Failed to connect to localhost:' + port + ' in less than 1s.',
+        `Failed to connect to localhost:${port} in less than 1s.`,
       );
     }
   });
@@ -371,9 +368,7 @@ describe('accessing-reql', () => {
 
   it('If `servers` is specified, it cannot be empty', async () => {
     try {
-      await createRethinkdbMasterPool({
-        servers: [],
-      });
+      await createRethinkdbMasterPool([], config.options);
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(

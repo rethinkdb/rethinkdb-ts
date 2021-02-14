@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r, RCursor } from '../src';
+import { createRethinkdbMasterPool, r, Cursor } from '../src';
 import config from './config';
 import { uuid } from './util/common';
 import { MasterConnectionPool } from '../src/connection/master-pool';
@@ -11,23 +11,24 @@ describe('pool legacy', () => {
     await pool.drain();
   });
 
+  const servers = [
+    {
+      host: config.server.host,
+      port: config.server.port,
+    },
+  ];
   const options = {
+    db: 'test',
     max: 10,
     buffer: 2,
-    servers: [
-      {
-        host: config.host,
-        port: config.port,
-      },
-    ],
-    user: config.user,
-    password: config.password,
+    user: config.options.user,
+    password: config.options.password,
     discovery: false,
     silent: true,
   };
 
   it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
-    pool = await createRethinkdbMasterPool(options);
+    pool = await createRethinkdbMasterPool(servers, options);
     assert.ok(pool, 'expected an instance of pool master');
     assert.equal(pool.getPools().length, 1, 'expected number of pools is 1');
   });
@@ -143,12 +144,15 @@ describe('pool legacy', () => {
 
   it('If the pool cannot create a connection, it should reject queries', async () => {
     try {
-      const notARealPool = await createRethinkdbMasterPool({
-        servers: [{ host: 'notarealhost' }],
-        buffer: 1,
-        max: 2,
-        silent: true,
-      });
+      const notARealPool = await createRethinkdbMasterPool(
+        [{ host: 'notarealhost' }],
+        {
+          db: 'test',
+          buffer: 1,
+          max: 2,
+          silent: true,
+        },
+      );
       await notARealPool.run(r.expr(1));
       if (notARealPool) {
         await notARealPool.drain();
@@ -160,12 +164,19 @@ describe('pool legacy', () => {
   });
 
   it('If the pool is drained, it should reject queries', async () => {
-    await createRethinkdbMasterPool({
-      buffer: 1,
-      max: 2,
-      port: config.port,
-      host: config.host,
-    }).catch(() => undefined);
+    await createRethinkdbMasterPool(
+      [
+        {
+          port: config.server.port,
+          host: config.server.host,
+        },
+      ],
+      {
+        db: 'test',
+        buffer: 1,
+        max: 2,
+      },
+    ).catch(() => undefined);
     await pool.drain();
     try {
       await pool.run(r.expr(1));
@@ -182,13 +193,20 @@ describe('pool legacy', () => {
   });
 
   it('If the pool is draining, it should reject queries', async () => {
-    await createRethinkdbMasterPool({
-      buffer: 1,
-      max: 2,
-      silent: true,
-      port: config.port,
-      host: config.host,
-    });
+    await createRethinkdbMasterPool(
+      [
+        {
+          port: config.server.port,
+          host: config.server.host,
+        },
+      ],
+      {
+        db: 'test',
+        buffer: 1,
+        max: 2,
+        silent: true,
+      },
+    );
     pool.drain();
     try {
       await pool.run(r.expr(1));
@@ -223,13 +241,20 @@ describe('pool legacy', () => {
   // });
 
   it('The pool should remove a connection if it errored', async () => {
-    const localPool = await createRethinkdbMasterPool({
-      buffer: 1,
-      max: 2,
-      silent: true,
-      port: config.port,
-      host: config.host,
-    });
+    const localPool = await createRethinkdbMasterPool(
+      [
+        {
+          port: config.server.port,
+          host: config.server.host,
+        },
+      ],
+      {
+        db: 'test',
+        buffer: 1,
+        max: 2,
+        silent: true,
+      },
+    );
     localPool.setOptions({ timeoutGb: 60 * 60 * 1000 });
 
     try {
@@ -267,7 +292,7 @@ describe('pool legacy', () => {
     let pool: MasterConnectionPool;
 
     before(async () => {
-      pool = await createRethinkdbMasterPool(options);
+      pool = await createRethinkdbMasterPool(servers, options);
       dbName = uuid();
       tableName = uuid();
 
@@ -308,7 +333,7 @@ describe('pool legacy', () => {
     });
 
     it('The pool should release a connection only when the cursor has fetch everything or get closed', async () => {
-      const result: RCursor[] = [];
+      const result: Cursor[] = [];
       for (let i = 0; i < options.max; i += 1) {
         result.push(await pool.getCursor(r.db(dbName).table(tableName)));
         await new Promise((resolve) => setTimeout(resolve, 50));

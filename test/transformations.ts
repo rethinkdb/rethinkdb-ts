@@ -10,7 +10,7 @@ describe('transformations', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid();
     const numDocs = 100;

@@ -12,7 +12,7 @@ describe('extra', () => {
 
   before(async () => {
     globals.backtraceType = 'function';
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid(); // Big table to test partial sequence
 

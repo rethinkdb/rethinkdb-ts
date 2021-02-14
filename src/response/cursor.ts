@@ -2,7 +2,8 @@ import { Readable } from 'stream';
 import { RethinkDBSocket } from '../connection/socket';
 import { isRethinkDBError, RethinkDBError, RethinkDBErrorType } from '../error';
 import { ResponseNote, ResponseType } from '../proto/enums';
-import type { QueryJson, ResponseJson, RunOptions } from '../types';
+import type { QueryJson, ResponseJson } from '../types';
+import type { RunOptions } from '../connection/types';
 import { isPromise } from '../util';
 import { parseRawResponse } from './response-parser';
 

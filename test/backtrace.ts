@@ -14,7 +14,7 @@ describe('backtraces', () => {
   before(async () => {
     globals.backtraceType = 'function';
     globals.pretty = true;
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid();
 
@@ -166,15 +166,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.' +
-            tableName +
-            '` already exists in:\nr.db("' +
-            dbName +
-            '").tableCreate("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n',
+          `Table \`${dbName}.${tableName}\` already exists in:\nr.db("${dbName}").tableCreate("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n`,
       );
     }
   });
@@ -197,11 +189,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").tableDrop("nonExistingTable")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").tableDrop("nonExistingTable")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n`,
       );
     }
   });
@@ -231,9 +219,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type ARRAY but found STRING in:\nr.db("' +
-            dbName +
-            '").tableList().do(function(var_1) {\n    return var_1.add("a")\n           ^^^^^^^^^^^^^^\n})\n',
+          `Expected type ARRAY but found STRING in:\nr.db("${dbName}").tableList().do(function(var_1) {\n    return var_1.add("a")\n           ^^^^^^^^^^^^^^\n})\n`,
       );
     }
   });
@@ -263,15 +249,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Index `zoo` already exists on table `' +
-            dbName +
-            '.' +
-            tableName +
-            '` in:\nr.expr(["zoo", "zoo"]).forEach(function(var_1) {\n    return r.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        .indexCreate(var_1)\n        ^^^^^^^^^^^^^^^^^^^\n})\n',
+          `Index \`zoo\` already exists on table \`${dbName}.${tableName}\` in:\nr.expr(["zoo", "zoo"]).forEach(function(var_1) {\n    return r.db("${dbName}").table("${tableName}")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        .indexCreate(var_1)\n        ^^^^^^^^^^^^^^^^^^^\n})\n`,
       );
     }
   });
@@ -298,15 +276,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Index `nonExistingIndex` does not exist on table `' +
-            dbName +
-            '.' +
-            tableName +
-            '` in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .indexDrop("nonExistingIndex")\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n',
+          `Index \`nonExistingIndex\` does not exist on table \`${dbName}.${tableName}\` in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .indexDrop("nonExistingIndex")\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n`,
       );
     }
   });
@@ -340,11 +310,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type ARRAY but found STRING in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n    .indexList().do(function(var_1) {\n        return var_1.add("a")\n               ^^^^^^^^^^^^^^\n    })\n',
+          `Expected type ARRAY but found STRING in:\nr.db("${dbName}").table("${tableName}")\n    .indexList().do(function(var_1) {\n        return var_1.add("a")\n               ^^^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -378,11 +344,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type ARRAY but found STRING in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n    .indexWait().do(function(var_1) {\n        return var_1.add("a")\n               ^^^^^^^^^^^^^^\n    })\n',
+          `Expected type ARRAY but found STRING in:\nr.db("${dbName}").table("${tableName}")\n    .indexWait().do(function(var_1) {\n        return var_1.add("a")\n               ^^^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -431,11 +393,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type NUMBER but found STRING in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n    .indexStatus().and(r.expr(1).add("a"))\n                       ^^^^^^^^^^^^^^^^^^ \n',
+          `Expected type NUMBER but found STRING in:\nr.db("${dbName}").table("${tableName}")\n    .indexStatus().and(r.expr(1).add("a"))\n                       ^^^^^^^^^^^^^^^^^^ \n`,
       );
     }
   });
@@ -469,15 +427,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Index `bar` was not found on table `' +
-            dbName +
-            '.' +
-            tableName +
-            '` in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .indexStatus("foo", "bar").do(function(var_1) {\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^                     \n        return var_1.add("a")\n    })\n',
+          `Index \`bar\` was not found on table \`${dbName}.${tableName}\` in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .indexStatus("foo", "bar").do(function(var_1) {\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^                     \n        return var_1.add("a")\n    })\n`,
       );
     }
   });
@@ -503,11 +453,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").table("nonExistingTable").update({\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         \n    foo: "bar"\n})\n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").table("nonExistingTable").update({\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         \n    foo: "bar"\n})\n`,
       );
     }
   });
@@ -538,11 +484,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").table("nonExistingTable").update(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                         \n    return var_1("foo")\n})\n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").table("nonExistingTable").update(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                         \n    return var_1("foo")\n})\n`,
       );
     }
   });
@@ -569,11 +511,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").table("nonExistingTable").replace({\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^          \n    foo: "bar"\n})\n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").table("nonExistingTable").replace({\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^          \n    foo: "bar"\n})\n`,
       );
     }
   });
@@ -605,11 +543,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").table("nonExistingTable").replace(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                          \n    return var_1("foo")\n})\n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").table("nonExistingTable").replace(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                          \n    return var_1("foo")\n})\n`,
       );
     }
   });
@@ -632,11 +566,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").table("nonExistingTable").delete()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         \n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").table("nonExistingTable").delete()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         \n`,
       );
     }
   });
@@ -659,11 +589,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").table("nonExistingTable").sync()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^       \n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").table("nonExistingTable").sync()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^       \n`,
       );
     }
   });
@@ -708,11 +634,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Table `' +
-            dbName +
-            '.nonExistingTable` does not exist in:\nr.db("' +
-            dbName +
-            '").table("nonExistingTable")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n',
+          `Table \`${dbName}.nonExistingTable\` does not exist in:\nr.db("${dbName}").table("nonExistingTable")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n`,
       );
     }
   });
@@ -745,11 +667,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type NUMBER but found NULL in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n    .get(1).do(function(var_1) {\n        return var_1.add(3)\n               ^^^^^^^^^^^^\n    })\n',
+          `Expected type NUMBER but found NULL in:\nr.db("${dbName}").table("${tableName}")\n    .get(1).do(function(var_1) {\n        return var_1.add(3)\n               ^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -784,13 +702,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .getAll(1, 2, 3).do(function(var_1) {\n    ^^^^^^^^^^^^^^^^                     \n        return var_1.add(3)\n    })\n',
+          `Expected type DATUM but found SELECTION:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .getAll(1, 2, 3).do(function(var_1) {\n    ^^^^^^^^^^^^^^^^                     \n        return var_1.add(3)\n    })\n`,
       );
     }
   });
@@ -829,13 +741,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .getAll(1, 2, 3, {\n    ^^^^^^^^^^^^^^^^^^\n        index: "foo"\n        ^^^^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(3)\n    })\n',
+          `Expected type DATUM but found SELECTION:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .getAll(1, 2, 3, {\n    ^^^^^^^^^^^^^^^^^^\n        index: "foo"\n        ^^^^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(3)\n    })\n`,
       );
     }
   });
@@ -874,13 +780,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .between(2, 3, {\n    ^^^^^^^^^^^^^^^^\n        index: "foo"\n        ^^^^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(3)\n    })\n',
+          `Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .between(2, 3, {\n    ^^^^^^^^^^^^^^^^\n        index: "foo"\n        ^^^^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(3)\n    })\n`,
       );
     }
   });
@@ -919,13 +819,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .filter({\n    ^^^^^^^^^\n        foo: "bar"\n        ^^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(3)\n    })\n',
+          `Expected type DATUM but found SELECTION:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .filter({\n    ^^^^^^^^^\n        foo: "bar"\n        ^^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(3)\n    })\n`,
       );
     }
   });
@@ -956,11 +850,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).innerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '"))\n^                                                                                     \n',
+          `Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).innerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("${dbName}").table("${tableName}"))\n^                                                                                     \n`,
       );
     }
   });
@@ -1024,11 +914,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).outerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '"))\n^                                                                                     \n',
+          `Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).outerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("${dbName}").table("${tableName}"))\n^                                                                                     \n`,
       );
     }
   });
@@ -1053,11 +939,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Cannot perform get_field on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).eqJoin("id", r.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '"))\n                         ^^^^                                                                                     \n    .add(1)\n',
+        `Cannot perform get_field on a non-object non-sequence \`1\` in:\nr.expr([1, 2, 3]).eqJoin("id", r.db("${dbName}").table("${tableName}"))\n                         ^^^^                                                                                     \n    .add(1)\n`,
       );
     }
   });
@@ -1088,11 +970,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Cannot perform get_field on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).eqJoin("id", r.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '"))\n                         ^^^^                                                                                     \n    .zip().add(1)\n',
+          `Cannot perform get_field on a non-object non-sequence \`1\` in:\nr.expr([1, 2, 3]).eqJoin("id", r.db("${dbName}").table("${tableName}"))\n                         ^^^^                                                                                     \n    .zip().add(1)\n`,
       );
     }
   });
@@ -2887,11 +2765,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Durability option `softt` unrecognized (options are "hard" and "soft") in:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n    .replace({\n        a: 1\n    }, {\n        durability: "softt"\n                    ^^^^^^^\n    })\n',
+        `Durability option \`softt\` unrecognized (options are "hard" and "soft") in:\nr.db("${dbName}").table("${tableName}")\n    .replace({\n        a: 1\n    }, {\n        durability: "softt"\n                    ^^^^^^^\n    })\n`,
       );
     }
   });
@@ -3083,11 +2957,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .replace({\n    ^^^^^^^^^^\n        a: 1\n        ^^^^\n    }, {\n    ^^^^\n        durability: "soft"\n        ^^^^^^^^^^^^^^^^^^\n    }).add(2)\n    ^^^^^^^^^\n',
+          `Expected type NUMBER but found OBJECT in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .replace({\n    ^^^^^^^^^^\n        a: 1\n        ^^^^\n    }, {\n    ^^^^\n        durability: "soft"\n        ^^^^^^^^^^^^^^^^^^\n    }).add(2)\n    ^^^^^^^^^\n`,
       );
     }
   });
@@ -3121,11 +2991,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Expected type NUMBER but found STRING in:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n    .replace({\n        a: 1\n    }, {\n        durability: r.expr(1).add("heloo")\n                    ^^^^^^^^^^^^^^^^^^^^^^\n    })\n',
+        `Expected type NUMBER but found STRING in:\nr.db("${dbName}").table("${tableName}")\n    .replace({\n        a: 1\n    }, {\n        durability: r.expr(1).add("heloo")\n                    ^^^^^^^^^^^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -3159,11 +3025,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Expected type NUMBER but found STRING in:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n    .replace({\n        a: 1\n    }, {\n        durability: r.expr(1).add("heloo")\n                    ^^^^^^^^^^^^^^^^^^^^^^\n    })\n',
+        `Expected type NUMBER but found STRING in:\nr.db("${dbName}").table("${tableName}")\n    .replace({\n        a: 1\n    }, {\n        durability: r.expr(1).add("heloo")\n                    ^^^^^^^^^^^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -3588,11 +3450,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .changes().add(2)\n    ^^^^^^^^^^       \n',
+          `Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .changes().add(2)\n    ^^^^^^^^^^       \n`,
       );
     }
   });
@@ -3703,13 +3561,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .between("foo", "bar", {\n    ^^^^^^^^^^^^^^^^^^^^^^^^\n        index: "id"\n        ^^^^^^^^^^^\n    }).add(1)\n    ^^       \n',
+          `Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .between("foo", "bar", {\n    ^^^^^^^^^^^^^^^^^^^^^^^^\n        index: "id"\n        ^^^^^^^^^^^\n    }).add(1)\n    ^^       \n`,
       );
     }
   });
@@ -3741,13 +3593,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .orderBy({\n    ^^^^^^^^^^\n        index: "id"\n        ^^^^^^^^^^^\n    }).add(1)\n    ^^       \n',
+          `Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .orderBy({\n    ^^^^^^^^^^\n        index: "id"\n        ^^^^^^^^^^^\n    }).add(1)\n    ^^       \n`,
       );
     }
   });
@@ -4019,11 +3865,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Second argument of `getIntersecting` must be an object in:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `Second argument of \`getIntersecting\` must be an object in:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -4048,11 +3890,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Second argument of `getNearest` must be an object in:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `Second argument of \`getNearest\` must be an object in:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -4163,13 +4001,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .orderBy(r.desc("foo")).add(1)\n    ^^^^^^^^^^^^^^^^^^^^^^^       \n',
+          `Expected type DATUM but found SELECTION:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .orderBy(r.desc("foo")).add(1)\n    ^^^^^^^^^^^^^^^^^^^^^^^       \n`,
       );
     }
   });
@@ -4196,13 +4028,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .orderBy(r.asc("foo")).add(1)\n    ^^^^^^^^^^^^^^^^^^^^^^       \n',
+          `Expected type DATUM but found SELECTION:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .orderBy(r.asc("foo")).add(1)\n    ^^^^^^^^^^^^^^^^^^^^^^       \n`,
       );
     }
   });
@@ -4318,11 +4144,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n    .config().do(function(var_1) {\n        return var_1.add(4)\n               ^^^^^^^^^^^^\n    })\n',
+          `Expected type NUMBER but found OBJECT in:\nr.db("${dbName}").table("${tableName}")\n    .config().do(function(var_1) {\n        return var_1.add(4)\n               ^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -4355,11 +4177,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n    .status().do(function(var_1) {\n        return var_1.add(4)\n               ^^^^^^^^^^^^\n    })\n',
+          `Expected type NUMBER but found OBJECT in:\nr.db("${dbName}").table("${tableName}")\n    .status().do(function(var_1) {\n        return var_1.add(4)\n               ^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -4392,11 +4210,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n    .wait().do(function(var_1) {\n        return var_1.add(4)\n               ^^^^^^^^^^^^\n    })\n',
+          `Expected type NUMBER but found OBJECT in:\nr.db("${dbName}").table("${tableName}")\n    .wait().do(function(var_1) {\n        return var_1.add(4)\n               ^^^^^^^^^^^^\n    })\n`,
       );
     }
   });
@@ -4434,11 +4248,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Missing required argument `replicas` in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .reconfigure({\n    ^^^^^^^^^^^^^^\n        shards: 1\n        ^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(4)\n    })\n',
+          `Missing required argument \`replicas\` in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .reconfigure({\n    ^^^^^^^^^^^^^^\n        shards: 1\n        ^^^^^^^^^\n    }).do(function(var_1) {\n    ^^                     \n        return var_1.add(4)\n    })\n`,
       );
     }
   });
@@ -4476,11 +4286,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr(1).add("foo").add(r.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^                                                                                       \n    .rebalance().do(function(var_1) {\n        return var_1.add(4)\n    }))\n',
+          `Expected type NUMBER but found STRING in:\nr.expr(1).add("foo").add(r.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^                                                                                       \n    .rebalance().do(function(var_1) {\n        return var_1.add(4)\n    }))\n`,
       );
     }
   });
@@ -4700,13 +4506,7 @@ describe('backtraces', () => {
     } catch (e) {
       assert(
         e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
-            tableName +
-            ') in:\nr.db("' +
-            dbName +
-            '").table("' +
-            tableName +
-            '")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .between(r.minval, r.maxval, {\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        index: "foo"\n        ^^^^^^^^^^^^\n    }).add(1)\n    ^^       \n',
+          `Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(${tableName}) in:\nr.db("${dbName}").table("${tableName}")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    .between(r.minval, r.maxval, {\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        index: "foo"\n        ^^^^^^^^^^^^\n    }).add(1)\n    ^^       \n`,
       );
     }
   });

@@ -1,5 +1,5 @@
 import { RethinkDBError, RethinkDBErrorType } from '../error';
-import type { RunOptions } from '../types';
+import type { RunOptions } from '../connection/types';
 
 export function parseRawResponse(
   obj: any,

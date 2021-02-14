@@ -11,7 +11,7 @@ describe('aggregation', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
 
     dbName = uuid();
     tableName = uuid();
@@ -43,11 +43,7 @@ describe('aggregation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`reduce` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`reduce\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -373,11 +369,7 @@ describe('aggregation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`contains` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`contains\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });

@@ -1,6 +1,3 @@
-import { TcpNetConnectOpts } from 'net';
-import { ConnectionOptions } from 'tls';
-import { Readable } from 'stream';
 import { Cursor } from './response/cursor';
 import { RethinkDBErrorType } from './error';
 import { RQuery } from './query-builder/query';
@@ -78,41 +75,6 @@ export interface FilterOperatorOptions {
   default: boolean | RethinkDBError;
 }
 
-export interface ServerInfo {
-  id: string;
-  name: string;
-  proxy: boolean;
-}
-
-export type RServerConnectionOptions =
-  | (Partial<ConnectionOptions> & { tls: boolean })
-  | (Partial<TcpNetConnectOpts> & { tls?: false });
-
-export interface RBaseConnectionOptions {
-  db?: string; // default 'test'
-  user?: string; // default 'admin'
-  password?: string; // default ''
-  discovery?: boolean; // default false
-  pool?: boolean; // default true
-  buffer?: number; // default = number of servers
-  max?: number; // default = number of servers
-  timeout?: number; // default = 20
-  pingInterval?: number; // default -1
-  timeoutError?: number; // default = 1000
-  timeoutGb?: number; // default = 60*60*1000
-  maxExponent?: number; // default 6
-  silent?: boolean; // default = false
-  log?: (message: string) => any; // default undefined;
-  [other: string]: any;
-}
-
-export type RConnectionOptions = RBaseConnectionOptions &
-  ({ server: RServerConnectionOptions } | { host?: string; port?: number });
-
-export type RPoolConnectionOptions = RConnectionOptions & {
-  servers?: RServerConnectionOptions[];
-  waitForHealthy?: boolean; // default true
-};
 export interface TableCreateOptions {
   primaryKey?: string; // default: "id"
   shards?: number; // 1-32
@@ -161,25 +123,6 @@ export interface IndexOptions {
   multi?: boolean;
   geo?: boolean;
 }
-
-export type RunOptions = {
-  timeFormat?: Format | 'ISO8601'; // 'native' or 'raw', default 'native'
-  groupFormat?: Format; // 'native' or 'raw', default 'native'
-  binaryFormat?: Format; // 'native' or 'raw', default 'native'
-  useOutdated?: boolean; // default false
-  profile?: boolean; // default false
-  durability?: Durability; // 'hard' or 'soft'
-  noreply?: boolean; // default false
-  db?: string;
-  arrayLimit?: number; // default 100,000
-  minBatchRows?: number; // default 8
-  maxBatchRows?: number;
-  maxBatchRow?: number; // default unlimited
-  maxBatchBytes?: number; // default 1MB
-  maxBatchSeconds?: number; // default 0.5
-  firstBatchScaledownFactor?: number; // default 4
-  readMode?: 'single' | 'majority' | 'outdated';
-};
 
 export interface HttpRequestOptions {
   // General

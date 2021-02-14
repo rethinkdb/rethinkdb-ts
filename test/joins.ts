@@ -11,7 +11,7 @@ describe('joins', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid();
 
@@ -95,11 +95,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`innerJoin` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`innerJoin\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -117,11 +113,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`innerJoin` takes 2 arguments, 1 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`innerJoin\` takes 2 arguments, 1 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -201,11 +193,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`outerJoin` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`outerJoin\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -223,11 +211,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`outerJoin` takes 2 arguments, 1 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`outerJoin\` takes 2 arguments, 1 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -281,11 +265,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`eqJoin` takes at least 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`eqJoin\` takes at least 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -316,11 +296,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`eqJoin` takes at least 2 arguments, 1 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`eqJoin\` takes at least 2 arguments, 1 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -333,11 +309,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`eqJoin` takes at most 3 arguments, 5 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n',
+        `\`eqJoin\` takes at most 3 arguments, 5 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
