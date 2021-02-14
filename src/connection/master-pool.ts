@@ -1,26 +1,32 @@
 import { EventEmitter } from 'events';
-import { isIPv6 } from 'net';
-import { RethinkDBError } from '../error/error';
-import { TermJson } from '../internal-types';
+import { RethinkDBError, RethinkDBErrorType } from '../error';
 import { r } from '../query-builder/r';
+import { RQuery } from '../query-builder/query';
 import { Cursor } from '../response/cursor';
-import {
-  Changes,
-  Connection,
-  MasterPool,
-  RCursor,
-  RethinkDBErrorType,
-  RPoolConnectionOptions,
-  RServer,
+import type {
+  RethinkDBPoolConnectionOptions,
+  RethinkDBServerConnectionOptions,
   RunOptions,
-} from '../types';
+} from './types';
+import type { Changes, RServer, TermJson } from '../types';
+import { delay, isIPv6 } from '../util';
 import { RethinkDBConnection } from './connection';
 import { ServerConnectionPool } from './server-pool';
 import { setConnectionDefaults } from './socket';
-import { delay } from '../util';
 
 function flat<T>(acc: T[], next: T[]) {
   return [...acc, ...next];
+}
+
+export interface MasterPoolOptions {
+  discovery?: boolean;
+  buffer?: number;
+  max?: number;
+  timeoutError?: number;
+  timeoutGb?: number;
+  maxExponent?: number;
+  silent?: boolean;
+  log?: (msg: string) => void;
 }
 
 // Try to extract the most global address
@@ -62,58 +68,69 @@ interface ServerStatus {
   id: string;
   name: string;
   network: {
+    // eslint-disable-next-line camelcase
     canonical_addresses: Array<{
       host: string;
       port: number;
     }>;
+    // eslint-disable-next-line camelcase
     cluster_port: number;
+    // eslint-disable-next-line camelcase
     connected_to: Record<string, unknown>;
     hostname: string;
+    // eslint-disable-next-line camelcase
     http_admin_port: number;
+    // eslint-disable-next-line camelcase
     reql_port: number;
+    // eslint-disable-next-line camelcase
     time_connected: Date;
   };
   process: {
     argv: string[];
+    // eslint-disable-next-line camelcase
     cache_size_mb: number;
     pid: number;
+    // eslint-disable-next-line camelcase
     time_started: Date;
     version: string;
   };
 }
 
-export class MasterConnectionPool extends EventEmitter implements MasterPool {
+export class MasterConnectionPool extends EventEmitter {
   public draining = false;
 
   private healthy: boolean | undefined = undefined;
 
   private discovery: boolean;
 
-  private discoveryCursor?: RCursor<Changes<ServerStatus>>;
+  private discoveryCursor?: Cursor<Changes<ServerStatus>>;
 
   private servers: RServer[];
 
-  private serverPools: ServerConnectionPool[];
+  private readonly serverPools: ServerConnectionPool[];
 
-  private connParam: RPoolConnectionOptions;
+  private connParam: RethinkDBPoolConnectionOptions;
 
-  constructor({
-    db = 'test',
-    user = 'admin',
-    password = '',
-    discovery = false,
-    servers = [{ host: 'localhost', port: 28015 }],
-    buffer = servers.length,
-    max = servers.length,
-    timeout = 20,
-    pingInterval = -1,
-    timeoutError = 1000,
-    timeoutGb = 60 * 60 * 1000,
-    maxExponent = 6,
-    silent = false,
-    log = (message: string) => undefined,
-  }: RPoolConnectionOptions = {}) {
+  constructor(
+    servers: RethinkDBServerConnectionOptions[],
+    options: RethinkDBPoolConnectionOptions,
+  ) {
     super();
+    const {
+      db = 'test',
+      user = 'admin',
+      password = '',
+      discovery = false,
+      buffer = servers.length,
+      max = servers.length,
+      timeout = 20,
+      pingInterval = -1,
+      timeoutError = 1000,
+      timeoutGb = 60 * 60 * 1000,
+      maxExponent = 6,
+      silent = false,
+      log = () => undefined,
+    } = options;
     // min one per server but wont redistribute conn from failed servers
     this.discovery = discovery;
     this.connParam = {
@@ -143,7 +160,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     maxExponent = this.connParam.maxExponent,
     silent = this.connParam.silent,
     log = this.connParam.log,
-  }) {
+  }: MasterPoolOptions): void {
     if (this.discovery !== discovery) {
       this.discovery = discovery;
       if (discovery) {
@@ -165,7 +182,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     this.setServerPoolsOptions(this.connParam);
   }
 
-  public eventNames() {
+  public eventNames(): string[] {
     return [
       'draining',
       'queueing',
@@ -188,13 +205,14 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     if (!this.draining) {
       this.setServerPoolsOptions(this.connParam);
     }
+    return undefined;
   }
 
-  public get isHealthy() {
+  public get isHealthy(): boolean {
     return this.serverPools.some((pool) => pool.isHealthy);
   }
 
-  public waitForHealthy() {
+  public waitForHealthy(): Promise<this> {
     return new Promise<this>((resolve, reject) => {
       if (this.isHealthy) {
         resolve(this);
@@ -215,7 +233,7 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     });
   }
 
-  public async drain() {
+  public async drain(): Promise<void> {
     this.emit('draining');
     this.draining = true;
     this.discovery = false;
@@ -228,22 +246,21 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     );
   }
 
-  // @ts-ignore
-  public getPools() {
+  public getPools(): ServerConnectionPool[] {
     return this.serverPools;
   }
 
-  public getConnections(): Connection[] {
+  public getConnections(): RethinkDBConnection[] {
     return this.serverPools
       .map((pool) => pool.getConnections())
       .reduce(flat, []);
   }
 
-  public getLength() {
+  public getLength(): number {
     return this.getOpenConnections().length;
   }
 
-  public getAvailableLength() {
+  public getAvailableLength(): number {
     return this.getIdleConnections().length;
   }
 
@@ -274,11 +291,11 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
     return pool.waitForHealthy();
   }
 
-  private setServerPoolsOptions(params: RPoolConnectionOptions) {
+  private setServerPoolsOptions(params: RethinkDBPoolConnectionOptions) {
     const { buffer = 1, max = 1, ...otherParams } = params;
     const pools = this.getPools();
     const healthyLength = pools.filter((pool) => pool.isHealthy).length;
-    for (let i = 0; i < pools.length; i++) {
+    for (let i = 0; i < pools.length; i += 1) {
       const pool = pools[i];
       pool
         .setOptions(
@@ -306,11 +323,12 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   }
 
   private async discover(): Promise<void> {
-    this.discoveryCursor = await r
-      .db('rethinkdb')
-      .table<ServerStatus>('server_status')
-      .changes({ includeInitial: true, includeStates: true })
-      .run();
+    this.discoveryCursor = (await this.run(
+      r
+        .db('rethinkdb')
+        .table<ServerStatus>('server_status')
+        .changes({ includeInitial: true, includeStates: true }),
+    )) as Cursor<Changes<ServerStatus>>;
     const newServers: RServer[] = [];
     let state: 'initializing' | 'ready' = 'initializing';
     return (
@@ -369,7 +387,9 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       this.servers = this.servers.filter((s) => s !== server);
     }
     const pool = this.serverPools.find(
-      (p) => server.host === p.server.host && server.port === p.server.port,
+      (p) =>
+        server.host === p.serverOptions.host &&
+        server.port === p.serverOptions.port,
     );
     if (pool) {
       await this.closeServerPool(pool);
@@ -395,18 +415,23 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
       })
       .on('healthy', (healthy?: boolean, error?: Error) => {
         if (!healthy) {
-          const { server } = pool;
+          const { serverOptions } = pool;
           this.closeServerPool(pool)
             .then(
               () =>
                 new Promise((resolve) =>
                   // fixme get rid of condition in number
-                  setTimeout(resolve, this.connParam.timeoutError || 1000),
+                  setTimeout(
+                    resolve,
+                    (this.connParam && this.connParam.timeoutError) ||
+                      1000 ||
+                      1000,
+                  ),
                 ),
             )
             .then(() => {
               if (!this.draining) {
-                this.createServerPool(server).catch(() => undefined);
+                this.createServerPool(serverOptions).catch(() => undefined);
               }
             });
         }
@@ -449,8 +474,54 @@ export class MasterConnectionPool extends EventEmitter implements MasterPool {
   }
 
   private getIdleConnections() {
-    return this.getOpenConnections().filter(
-      (conn) => !(conn as RethinkDBConnection).numOfQueries,
-    );
+    return this.getOpenConnections().filter((conn) => !conn.numOfQueries);
+  }
+
+  async run(query: RQuery, options?: RunOptions): Promise<unknown> {
+    const { term } = query;
+    if (this.draining) {
+      throw new RethinkDBError(
+        '`run` was called without a connection and no pool has been created after:',
+        { term, type: RethinkDBErrorType.API_FAIL },
+      );
+    }
+    const cursor = await this.queue(term, options);
+    if (!cursor) {
+      return undefined;
+    }
+    const results = await cursor.resolve();
+    switch (cursor.getType()) {
+      case 'Atom':
+        return cursor.profile
+          ? { profile: cursor.profile, result: results[0] }
+          : results[0];
+      case 'Cursor':
+        return cursor.profile
+          ? { profile: cursor.profile, result: await cursor.toArray() }
+          : cursor.toArray();
+      default:
+        return cursor;
+    }
+  }
+
+  public async getCursor<T = unknown>(
+    query: RQuery,
+    options?: RunOptions,
+  ): Promise<Cursor<T>> {
+    const { term } = query;
+    if (this.draining) {
+      throw new RethinkDBError(
+        '`run` was called without a connection and no pool has been created after:',
+        { term, type: RethinkDBErrorType.API_FAIL },
+      );
+    }
+    const cursor = await this.queue(term, options);
+    if (!cursor) {
+      throw new RethinkDBError(
+        'cursor was not returned! maybe you provided "noreply" option?',
+      );
+    }
+    cursor.init();
+    return cursor;
   }
 }

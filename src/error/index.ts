@@ -1,8 +1,35 @@
-import { RethinkDBErrorType } from '../types';
-import { QueryJson, TermJson } from '../internal-types';
+import type { QueryJson, TermJson } from '../types';
 import { ErrorType, ResponseType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
 import { backtraceTerm } from './term-backtrace';
+
+export enum RethinkDBErrorType {
+  UNKNOWN,
+  // driver
+  API_FAIL,
+  // query errors
+  CONNECTION,
+  MASTER_POOL_FAIL,
+  POOL_FAIL,
+  CURSOR_END,
+  TIMEOUT,
+  CANCEL,
+  PARSE,
+  ARITY,
+  CURSOR,
+  // connection error
+  AUTH,
+  UNSUPPORTED_PROTOCOL,
+  // reql response errors
+  INTERNAL,
+  RESOURCE_LIMIT,
+  QUERY_LOGIC,
+  NON_EXISTENCE,
+  OP_FAILED,
+  OP_INDETERMINATE,
+  USER,
+  PERMISSION_ERROR,
+}
 
 function pretty(query: string, mark: string) {
   let result = '';

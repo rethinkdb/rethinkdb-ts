@@ -1,14 +1,18 @@
-import { TermJson } from '../internal-types';
+import type { TermJson } from '../types';
 import { TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
 import { hasImplicitVar } from '../query-builder/has-implicit-var';
 import { rConfig, rConsts, termConfig } from '../query-builder/query-config';
 import { snakeToCamel } from '../util';
 
-function nextBacktrace(i: number, backtrace?: Array<number | string>) {
+function nextBacktrace(
+  i: number,
+  backtrace?: Array<number | string>,
+): Array<number | string> | undefined {
   if (backtrace && backtrace[0] === i) {
     return backtrace.slice(1);
   }
+  return undefined;
 }
 
 function joinMultiArray(acc: string[], next: string[]): [string, string] {
@@ -35,7 +39,7 @@ function combineMarks(
   let result = '';
   let mark = '';
 
-  for (let i = 0; i < placeholders.length; i++) {
+  for (let i = 0; i < placeholders.length; i += 1) {
     result += literals[i];
     mark += ' '.repeat(literals[i].length);
     if (!Array.isArray(placeholders[i])) {

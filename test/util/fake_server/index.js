@@ -202,7 +202,7 @@ Connection.prototype.read = () => {
                     }
                     else {
                         var query = JSON.parse(queryStr);
-                        var response = new Query(self.server, query).run();
+                        var response = new Query(self.server, query));
                     }
                     function sendResult() {
                         var tokenBuffer = new Buffer(8);

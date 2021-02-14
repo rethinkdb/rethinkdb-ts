@@ -1,8 +1,46 @@
-import { EventEmitter } from 'events';
-import { TcpNetConnectOpts } from 'net';
-import { ConnectionOptions } from 'tls';
-import { Readable } from 'stream';
-import { DeepPartial } from './internal-types';
+import { Cursor } from './response/cursor';
+import { RethinkDBErrorType } from './error';
+import { RQuery } from './query-builder/query';
+import {
+  ErrorType,
+  QueryType,
+  ResponseNote,
+  ResponseType,
+  TermType,
+} from './proto/enums';
+
+export type DeepPartial<T> =
+  | T
+  | {
+      [P in keyof T]?: T[P] extends Array<infer U1>
+        ? Array<DeepPartial<U1>>
+        : T[P] extends ReadonlyArray<infer U2>
+        ? ReadonlyArray<DeepPartial<U2>>
+        : DeepPartial<T[P]>;
+    };
+
+export type OptargsJson = { [key: string]: unknown };
+
+export type TermJson =
+  | [TermType, TermJson[]?, OptargsJson?]
+  | string
+  | number
+  | boolean
+  | Record<string, unknown>
+  | null;
+
+export type ComplexTermJson = [TermType, TermJson[]?, OptargsJson?];
+
+export type QueryJson = [QueryType, TermJson?, OptargsJson?];
+
+export interface ResponseJson<TResponse = any, TProfile = any> {
+  t: ResponseType;
+  r: TResponse[];
+  n: ResponseNote[];
+  e?: ErrorType;
+  p?: TProfile;
+  b?: Array<number | string>;
+}
 
 // #region optargs
 export type Primitives = null | string | boolean | number;
@@ -30,34 +68,6 @@ export type MultiFieldSelector =
   | number;
 export type FieldSelector<T, U = any> = string | Func<T, U>;
 
-export enum RethinkDBErrorType {
-  UNKNOWN,
-  // driver
-  API_FAIL,
-  // query errors
-  CONNECTION,
-  MASTER_POOL_FAIL,
-  POOL_FAIL,
-  CURSOR_END,
-  TIMEOUT,
-  CANCEL,
-  PARSE,
-  ARITY,
-  CURSOR,
-  // connection error
-  AUTH,
-  UNSUPPORTED_PROTOCOL,
-  // reql response errors
-  INTERNAL,
-  RESOURCE_LIMIT,
-  QUERY_LOGIC,
-  NON_EXISTENCE,
-  OP_FAILED,
-  OP_INDETERMINATE,
-  USER,
-  PERMISSION_ERROR,
-}
-
 export interface RethinkDBError extends Error {
   readonly type: RethinkDBErrorType;
 }
@@ -66,41 +76,6 @@ export interface FilterOperatorOptions {
   default: boolean | RethinkDBError;
 }
 
-export interface ServerInfo {
-  id: string;
-  name: string;
-  proxy: boolean;
-}
-
-export type RServerConnectionOptions =
-  | (Partial<ConnectionOptions> & { tls: boolean })
-  | (Partial<TcpNetConnectOpts> & { tls?: false });
-
-export interface RBaseConnectionOptions {
-  db?: string; // default 'test'
-  user?: string; // default 'admin'
-  password?: string; // default ''
-  discovery?: boolean; // default false
-  pool?: boolean; // default true
-  buffer?: number; // default = number of servers
-  max?: number; // default = number of servers
-  timeout?: number; // default = 20
-  pingInterval?: number; // default -1
-  timeoutError?: number; // default = 1000
-  timeoutGb?: number; // default = 60*60*1000
-  maxExponent?: number; // default 6
-  silent?: boolean; // default = false
-  log?: (message: string) => any; // default undefined;
-  [other: string]: any;
-}
-
-export type RConnectionOptions = RBaseConnectionOptions &
-  ({ server: RServerConnectionOptions } | { host?: string; port?: number });
-
-export type RPoolConnectionOptions = RConnectionOptions & {
-  servers?: RServerConnectionOptions[];
-  waitForHealthy?: boolean; // default true
-};
 export interface TableCreateOptions {
   primaryKey?: string; // default: "id"
   shards?: number; // 1-32
@@ -150,25 +125,6 @@ export interface IndexOptions {
   geo?: boolean;
 }
 
-export interface RunOptions {
-  timeFormat?: Format | 'ISO8601'; // 'native' or 'raw', default 'native'
-  groupFormat?: Format; // 'native' or 'raw', default 'native'
-  binaryFormat?: Format; // 'native' or 'raw', default 'native'
-  useOutdated?: boolean; // default false
-  profile?: boolean; // default false
-  durability?: Durability; // 'hard' or 'soft'
-  noreply?: boolean; // default false
-  db?: string;
-  arrayLimit?: number; // default 100,000
-  minBatchRows?: number; // default 8
-  maxBatchRows?: number;
-  maxBatchRow?: number; // default unlimited
-  maxBatchBytes?: number; // default 1MB
-  maxBatchSeconds?: number; // default 0.5
-  firstBatchScaledownFactor?: number; // default 4
-  readMode?: 'single' | 'majority' | 'outdated';
-}
-
 export interface HttpRequestOptions {
   // General
   timeout?: number; // default 30
@@ -216,7 +172,9 @@ export interface ChangesOptions {
 // #region results
 export interface ValueChange<T = any> {
   error?: string;
+  // eslint-disable-next-line camelcase
   old_val?: T;
+  // eslint-disable-next-line camelcase
   new_val?: T;
 }
 export interface DBConfig {
@@ -224,9 +182,13 @@ export interface DBConfig {
   name: string;
 }
 export interface DBChangeResult {
+  // eslint-disable-next-line camelcase
   config_changes: Array<ValueChange<DBConfig>>;
+  // eslint-disable-next-line camelcase
   tables_dropped: number;
+  // eslint-disable-next-line camelcase
   dbs_created: number;
+  // eslint-disable-next-line camelcase
   dbs_dropped: number;
 }
 export interface IndexChangeResult {
@@ -234,24 +196,11 @@ export interface IndexChangeResult {
   renamed?: number;
   dropped?: number;
 }
-export interface RebalanceResult {
-  reconfigured: number;
-  config_changes: Array<ValueChange<TableConfig>>;
-  status_changes: Array<ValueChange<TableStatus>>;
-}
-export interface ReconfigureResult {
-  rebalanced: number;
-  status_changes: Array<ValueChange<TableConfig>>;
-}
-export interface TableChangeResult {
-  tables_created?: number;
-  tables_dropped?: number;
-  config_changes: Array<ValueChange<TableConfig>>;
-}
-
 export interface TableShard {
+  // eslint-disable-next-line camelcase
   primary_replica: string;
   replicas: string[];
+  // eslint-disable-next-line camelcase
   nonvoting_replicas: string[];
 }
 
@@ -259,9 +208,11 @@ export interface TableConfig {
   id: string;
   name: string;
   db: string;
+  // eslint-disable-next-line camelcase
   primary_key: string; // default: "id"
   shards: TableShard[];
   indexes: string[];
+  // eslint-disable-next-line camelcase
   write_acks: string;
   durability: Durability; // "soft" or "hard" default: "hard"
 }
@@ -270,13 +221,41 @@ export interface TableStatus {
   name: string;
   db: string;
   status: {
+    // eslint-disable-next-line camelcase
     all_replicas_ready: boolean;
+    // eslint-disable-next-line camelcase
     ready_for_outdated_reads: boolean;
+    // eslint-disable-next-line camelcase
     ready_for_reads: boolean;
+    // eslint-disable-next-line camelcase
     ready_for_writes: boolean;
   };
   shards: TableShard[];
 }
+
+export interface RebalanceResult {
+  reconfigured: number;
+  // eslint-disable-next-line camelcase
+  config_changes: Array<ValueChange<TableConfig>>;
+  // eslint-disable-next-line camelcase
+  status_changes: Array<ValueChange<TableStatus>>;
+}
+
+export interface ReconfigureResult {
+  rebalanced: number;
+  // eslint-disable-next-line camelcase
+  status_changes: Array<ValueChange<TableConfig>>;
+}
+
+export interface TableChangeResult {
+  // eslint-disable-next-line camelcase
+  tables_created?: number;
+  // eslint-disable-next-line camelcase
+  tables_dropped?: number;
+  // eslint-disable-next-line camelcase
+  config_changes: Array<ValueChange<TableConfig>>;
+}
+
 export interface IndexStatus {
   function: Buffer;
   geo: boolean;
@@ -289,10 +268,12 @@ export interface WriteResult<T = any> {
   deleted: number;
   skipped: number;
   errors: number;
+  // eslint-disable-next-line camelcase
   first_error?: string;
   inserted: number;
   replaced: number;
   unchanged: number;
+  // eslint-disable-next-line camelcase
   generated_keys?: string[];
   warnings?: string[];
   changes?: Array<ValueChange<T>>;
@@ -300,7 +281,9 @@ export interface WriteResult<T = any> {
 export interface Changes<T = any> extends ValueChange<T> {
   state?: 'initializing' | 'ready'; // 'initializing', 'ready'. cant come together with values
   type?: 'change' | 'add' | 'remove' | 'initial' | 'uninitial' | 'state';
+  // eslint-disable-next-line camelcase
   old_offset?: number;
+  // eslint-disable-next-line camelcase
   new_offset?: number;
 }
 
@@ -328,108 +311,11 @@ export interface MatchResults {
 // #endregion results
 
 // #region operations
-export interface Connection extends EventEmitter {
-  readonly open: boolean;
-  clientPort: number;
-  clientAddress: string;
-  close(options?: { noreplyWait: boolean }): Promise<void>;
-  reconnect(options?: { noreplyWait: boolean }): Promise<Connection>;
-  use(db: string): void;
-  noreplyWait(): Promise<void>;
-  server(): Promise<ServerInfo>;
-}
-
-export interface ConnectionPool extends EventEmitter {
-  readonly isHealthy: boolean;
-
-  drain(emit: boolean): Promise<void>;
-  getLength(): number;
-  getAvailableLength(): number;
-  getConnections(): Connection[];
-}
-
-export interface MasterPool extends EventEmitter {
-  readonly isHealthy: boolean;
-  waitForHealthy(): Promise<this>;
-  drain(options?: { noreplyWait: boolean }): Promise<void>;
-  getLength(): number;
-  getAvailableLength(): number;
-  getPools(): ConnectionPool[];
-  setOptions(options: {
-    discovery?: boolean;
-    buffer?: number;
-    max?: number;
-    timeoutError?: number;
-    timeoutGb?: number;
-    maxExponent?: number;
-    silent?: boolean;
-    log?: (msg: string) => void;
-  }): void;
-}
-
 export interface RServer {
   host: string;
   port: number;
 }
 
-export type RCursorType =
-  | 'Atom'
-  | 'Cursor'
-  | 'Feed'
-  | 'AtomFeed'
-  | 'OrderByLimitFeed'
-  | 'UnionedFeed';
-export interface RCursor<T = any> extends Readable {
-  readonly profile: any;
-  getType(): RCursorType;
-  next(): Promise<T>;
-  toArray(): Promise<T[]>;
-  close(): Promise<void>;
-  each(
-    callback: (err: RethinkDBError | undefined, row: any) => any,
-    onFinishedCallback?: () => any,
-  ): Promise<any>;
-  eachAsync(
-    rowHandler: (row: any, rowFinished?: (error?: any) => any) => any,
-    final?: (error: any) => any,
-  ): Promise<void>;
-}
-
-export interface RQuery<T = any> {
-  typeOf(): RDatum<string>;
-  info(): RDatum<{
-    value?: string;
-    db?: { id: string; name: string; type: string };
-    doc_count_estimates?: number[];
-    id?: string;
-    indexes?: string[];
-    name?: string;
-    primary_key?: string;
-    type: string;
-  }>;
-
-  run(options: RunOptions & { noreply: true }): Promise<undefined>;
-  run(
-    connection: Connection,
-    options: RunOptions & { noreply: true },
-  ): Promise<undefined>;
-  run(
-    options: RunOptions & { profile: true },
-  ): Promise<{ profile: any; result: T }>;
-  run(
-    connection: Connection,
-    options: RunOptions & { profile: true },
-  ): Promise<{ profile: any; result: T }>;
-  run(connection?: Connection | RunOptions, options?: RunOptions): Promise<T>;
-  getCursor(
-    connection?: Connection | RunOptions,
-    options?: RunOptions,
-  ): T extends Array<infer T1>
-    ? Promise<RCursor<T1>>
-    : T extends RCursor<infer T2>
-    ? Promise<T2>
-    : Promise<RCursor<T>>;
-}
 export interface RDatum<T = any> extends RQuery<T> {
   do<U>(
     ...args: Array<RDatum | ((arg: RDatum<T>, ...args: RDatum[]) => U)>
@@ -550,7 +436,7 @@ export interface RDatum<T = any> extends RQuery<T> {
       emit?: (
         acc: RDatum<ACC>,
         next: RDatum<ONE>,
-        // tslint:disable-next-line:variable-name
+        // eslint-disable-next-line camelcase
         new_acc: RDatum<ACC>,
       ) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
@@ -824,7 +710,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
     base: any,
     foldFunction: (acc: RDatum<ACC>, next: RDatum<T>) => any, // this any is ACC
     options?: {
-      // tslint:disable-next-line:variable-name
+      // eslint-disable-next-line camelcase
       emit?: (acc: RDatum<ACC>, next: RDatum<T>, new_acc: RDatum<ACC>) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
     },
@@ -863,7 +749,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
   coerceTo<U = any>(type: 'object'): RDatum<U>;
 }
 
-export interface RFeed<T = any> extends RQuery<RCursor<T>> {
+export interface RFeed<T = any> extends RQuery<Cursor<T>> {
   <U extends keyof T>(attribute: RValue<U>): RFeed<T[U]>;
   getField<U extends keyof T>(fieldName: RValue<U>): RFeed<T[U]>;
 
@@ -938,6 +824,7 @@ export interface RTable<T = any> extends RSelection<T> {
     },
   ): RDatum<{
     granted: number;
+    // eslint-disable-next-line camelcase
     permissions_changes: Array<
       ValueChange<{
         read: boolean;
@@ -1020,6 +907,7 @@ export interface RTable<T = any> extends RSelection<T> {
       | null
       | Buffer
       | ((
+          // eslint-disable-next-line camelcase
           context: RDatum<{ primary_key: string; timestamp: Date }>,
           oldVal: RDatum<T>,
           newVal: RDatum<T>,
@@ -1037,6 +925,7 @@ export interface RDatabase {
     },
   ): RDatum<{
     granted: number;
+    // eslint-disable-next-line camelcase
     permissions_changes: Array<
       ValueChange<{
         read: boolean;
@@ -1089,10 +978,6 @@ export interface R {
   november: RValue;
   december: RValue;
   // Global
-  connect(options: RConnectionOptions): Promise<Connection>;
-  connectPool(options?: RPoolConnectionOptions): Promise<MasterPool>;
-  getPoolMaster(): MasterPool | undefined;
-  waitForHealthy(): Promise<MasterPool>;
   setNestingLevel(level: number): void;
   setArrayLimit(limit?: number): void;
   serialize(query: RQuery): string;
@@ -1336,6 +1221,7 @@ export interface R {
       | null
       | Buffer
       | ((
+          // eslint-disable-next-line camelcase
           context: RDatum<{ primary_key: string; timestamp: Date }>,
           oldVal: RDatum<T>,
           newVal: RDatum<T>,
@@ -1591,7 +1477,7 @@ export interface R {
       emit?: (
         acc: RDatum<ACC>,
         next: RDatum<ONE>,
-        // tslint:disable-next-line:variable-name
+        // eslint-disable-next-line camelcase
         new_acc: RDatum<ACC>,
       ) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
@@ -1602,7 +1488,7 @@ export interface R {
     base: any,
     foldFunction: (acc: RDatum<ACC>, next: RDatum<T>) => any, // this any is ACC
     options: {
-      // tslint:disable-next-line:variable-name
+      // eslint-disable-next-line camelcase
       emit: (acc: RDatum<ACC>, next: RDatum<T>, new_acc: RDatum<ACC>) => any[]; // this any is RES
     },
   ): RFeed<RES>;
@@ -1611,7 +1497,7 @@ export interface R {
     base: any,
     foldFunction: (acc: RDatum<ACC>, next: RDatum<T>) => any, // this any is ACC
     options?: {
-      // tslint:disable-next-line:variable-name
+      // eslint-disable-next-line camelcase
       emit?: (acc: RDatum<ACC>, next: RDatum<T>, new_acc: RDatum<ACC>) => any[]; // this any is RES
       finalEmit?: (acc: RStream) => any[]; // this any is also RES
     },
@@ -1894,10 +1780,12 @@ export interface R {
   ): RDatum<{
     value?: string;
     db?: { id: string; name: string; type: string };
+    // eslint-disable-next-line camelcase
     doc_count_estimates?: number[];
     id?: string;
     indexes?: string[];
     name?: string;
+    // eslint-disable-next-line camelcase
     primary_key?: string;
     type: string;
   }>;
