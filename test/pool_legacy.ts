@@ -27,8 +27,11 @@ describe('pool legacy', () => {
     silent: true,
   };
 
-  it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
+  before(async () => {
     pool = await createRethinkdbMasterPool(servers, options);
+  });
+
+  it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
     assert.ok(pool, 'expected an instance of pool master');
     assert.equal(pool.getPools().length, 1, 'expected number of pools is 1');
   });
@@ -70,7 +73,8 @@ describe('pool legacy', () => {
     );
   });
 
-  it('A noreply query should release the connection', async () => {
+  it('A noreply query should release the connection kek', async () => {
+    pool = await createRethinkdbMasterPool(servers, options);
     const numConnections = pool.getLength();
     await pool.run(r.expr(1), { noreply: true });
     assert.equal(
