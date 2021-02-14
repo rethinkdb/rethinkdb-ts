@@ -1,20 +1,28 @@
 import { Readable } from 'stream';
 import { RethinkDBSocket } from '../connection/socket';
-import { isRethinkDBError, RethinkDBError } from '../error/error';
-import { QueryJson, ResponseJson } from '../internal-types';
+import { isRethinkDBError, RethinkDBError, RethinkDBErrorType } from '../error';
 import { ResponseNote, ResponseType } from '../proto/enums';
-import { RCursor, RCursorType, RethinkDBErrorType, RunOptions } from '../types';
+import type { QueryJson, ResponseJson } from '../types';
+import type { RunOptions } from '../connection/types';
 import { isPromise } from '../util';
-import { getNativeTypes } from './response-parser';
+import { parseRawResponse } from './response-parser';
 
-export class Cursor extends Readable implements RCursor {
-  public get profile() {
+export type RCursorType =
+  | 'Atom'
+  | 'Cursor'
+  | 'Feed'
+  | 'AtomFeed'
+  | 'OrderByLimitFeed'
+  | 'UnionedFeed';
+
+export class Cursor<T = any> extends Readable {
+  public get profile(): unknown {
     // eslint-disable-next-line no-underscore-dangle
     return this._profile;
   }
 
   // eslint-disable-next-line camelcase
-  private _profile: any;
+  private _profile: unknown;
 
   private position = 0;
 
@@ -33,7 +41,7 @@ export class Cursor extends Readable implements RCursor {
   private hasNextBatch?: boolean;
 
   constructor(
-    private conn: RethinkDBSocket,
+    private socket: RethinkDBSocket,
     private token: number,
     private runOptions: Pick<
       RunOptions,
@@ -44,44 +52,48 @@ export class Cursor extends Readable implements RCursor {
     super({ objectMode: true });
   }
 
-  public init() {
+  public init(): void {
     this.resolving = this.resolve().catch((error) => {
       this.lastError = error;
     });
   }
 
-  public _read() {
+  // eslint-disable-next-line no-underscore-dangle
+  public _read(): void {
     this.emitting = true;
     const push = (row: any): any => {
       if (row === null) {
+        // eslint-disable-next-line no-underscore-dangle
         this._next().then(push);
       } else {
         this.push(row);
       }
     };
+    // eslint-disable-next-line no-underscore-dangle
     this._next()
       .then(push)
-      .catch((err) => {
+      .catch((error) => {
         if (
-          (!isRethinkDBError(err) ||
+          (!isRethinkDBError(error) ||
             ![
               RethinkDBErrorType.CURSOR_END,
               RethinkDBErrorType.CANCEL,
-            ].includes(err.type)) &&
+            ].includes(error.type)) &&
           this.listenerCount('error') > 0
         ) {
-          this.emit('error', err);
+          this.emit('error', error);
         }
         this.push(null);
       });
   }
 
-  public pause() {
+  public pause(): this {
     this.emitting = false;
     return super.pause();
   }
 
-  public resume() {
+  public resume(): this {
+    // eslint-disable-next-line no-underscore-dangle
     this._read();
     return super.resume();
   }
@@ -90,32 +102,33 @@ export class Cursor extends Readable implements RCursor {
     return super.destroy(error);
   }
 
-  public _destroy() {
+  // eslint-disable-next-line no-underscore-dangle
+  public _destroy(): void {
     this.close();
     process.nextTick(() => {
       this.emit('end');
     });
   }
 
-  public toString() {
+  public toString(): string {
     return `[object ${this.type}]`;
   }
 
-  public getType() {
+  public getType(): RCursorType {
     return this.type;
   }
 
-  public async close() {
+  public async close(): Promise<void> {
     if (!this.destroyed) {
-      if (this.conn.status === 'open') {
-        this.conn.stopQuery(this.token);
+      if (this.socket.status === 'open') {
+        this.socket.stopQuery(this.token);
       }
       this.emitting = false;
       this.destroy();
     }
   }
 
-  public async next() {
+  public async next(): Promise<T> {
     if (this.emitting) {
       throw new RethinkDBError(
         'You cannot call `next` once you have bound listeners on the Feed.',
@@ -128,10 +141,11 @@ export class Cursor extends Readable implements RCursor {
         { type: RethinkDBErrorType.CURSOR },
       );
     }
+    // eslint-disable-next-line no-underscore-dangle
     return this._next();
   }
 
-  public async toArray() {
+  public async toArray(): Promise<T[]> {
     if (this.emitting) {
       throw new RethinkDBError(
         'You cannot call `toArray` once you have bound listeners on the Feed.',
@@ -139,15 +153,18 @@ export class Cursor extends Readable implements RCursor {
       );
     }
     if (this.type.endsWith('Feed')) {
-      throw new RethinkDBError('You cannot call `toArray` on a change Feed.', {
-        type: RethinkDBErrorType.CURSOR,
-      });
+      throw new RethinkDBError(
+        'You cannot call `toArray` on a change Feed.',
+        {
+          type: RethinkDBErrorType.CURSOR,
+        },
+      );
     }
-
-    const all: any[] = [];
-    return this.eachAsync(async (row) => {
+    const all: T[] = [];
+    await this.eachAsync(async (row) => {
       all.push(row);
-    }).then(() => all);
+    });
+    return all;
   }
 
   public async each(
@@ -178,6 +195,7 @@ export class Cursor extends Readable implements RCursor {
     while (resume !== false && !this.destroyed) {
       err = undefined;
       try {
+        // eslint-disable-next-line no-await-in-loop
         next = await this.next();
       } catch (error: any) {
         err = error;
@@ -193,8 +211,8 @@ export class Cursor extends Readable implements RCursor {
   }
 
   public async eachAsync(
-    rowHandler: (row: any, rowFinished?: (error?: string) => any) => any,
-    final?: (error: any) => any,
+    rowHandler: (row: any, rowFinished?: (error?: string) => void) => void,
+    final?: (error: any) => void,
   ) {
     if (this.emitting) {
       throw new RethinkDBError(
@@ -211,57 +229,64 @@ export class Cursor extends Readable implements RCursor {
     let nextRow: any;
     try {
       while (!this.destroyed) {
+        // eslint-disable-next-line no-await-in-loop
         nextRow = await this.next();
         if (rowHandler.length > 1) {
+          // eslint-disable-next-line no-await-in-loop,no-loop-func
           await new Promise<void>((resolve, reject) => {
-            rowHandler(nextRow, (err) =>
-              err
-                ? reject(
-                    new RethinkDBError(err, { type: RethinkDBErrorType.USER }),
-                  )
-                : resolve(),
-            );
+            rowHandler(nextRow, (error) => {
+              if (error) {
+                reject(
+                  new RethinkDBError(error, { type: RethinkDBErrorType.USER }),
+                );
+                return;
+              }
+              resolve();
+            });
           });
         } else {
           const result = rowHandler(nextRow);
           if (result !== undefined && !isPromise(result)) {
             throw result;
           }
+          // eslint-disable-next-line no-await-in-loop
           await result;
         }
       }
     } catch (error) {
+      let finalError = error;
       if (final) {
         try {
           await final(error);
           return;
         } catch (err) {
-          error = err;
+          finalError = err;
         }
       }
       if (
-        !isRethinkDBError(error) ||
+        !isRethinkDBError(finalError) ||
         ![RethinkDBErrorType.CURSOR_END, RethinkDBErrorType.CANCEL].includes(
-          error.type,
+          finalError.type,
         )
       ) {
-        throw error;
+        throw finalError;
       }
     }
   }
 
-  public async resolve() {
+  public async resolve(): Promise<any[]> {
     try {
-      const response = await this.conn.readNext(this.token);
+      const response = await this.socket.readNext(this.token);
       const { n: notes, t: type, r: results, p: profile } = response;
       // eslint-disable-next-line no-underscore-dangle
       this._profile = profile;
       this.position = 0;
-      this.results = getNativeTypes(results, this.runOptions);
+      const convertedResults = parseRawResponse(results, this.runOptions);
+      this.results = convertedResults;
       this.handleResponseNotes(type, notes);
       this.handleErrors(response);
       this.hasNextBatch = type === ResponseType.SUCCESS_PARTIAL;
-      return this.results;
+      return convertedResults;
     } catch (error) {
       this.emitting = false;
       this.destroy();
@@ -279,7 +304,7 @@ export class Cursor extends Readable implements RCursor {
         }
         try {
           const value = await this.next();
-          return { value, done: false };
+          return { done: false, value };
         } catch (error: any) {
           // TODO when db return CURSOR_END error- shoudn't throw an error in cursor.ts code
           if (
@@ -297,7 +322,7 @@ export class Cursor extends Readable implements RCursor {
   }
 
   // eslint-disable-next-line no-underscore-dangle
-  private async _next() {
+  private async _next(): Promise<T> {
     if (this.lastError) {
       this.emitting = false;
       this.destroy();
@@ -315,8 +340,9 @@ export class Cursor extends Readable implements RCursor {
       while (next === undefined && this.hasNextBatch) {
         if (!this.resolving) {
           this.resolving = this.resolve();
-          this.conn.continueQuery(this.token);
+          this.socket.continueQuery(this.token);
         }
+        // eslint-disable-next-line no-await-in-loop
         await this.resolving;
         this.resolving = undefined;
         results = this.getResults();
@@ -387,6 +413,9 @@ export class Cursor extends Readable implements RCursor {
             break;
           case ResponseNote.INCLUDES_STATES:
             acc.includeStates = true;
+            break;
+          default:
+            break;
         }
         return acc;
       },
@@ -397,6 +426,6 @@ export class Cursor extends Readable implements RCursor {
   }
 }
 
-export function isCursor<T = any>(cursor: any): cursor is RCursor<T> {
+export function isCursor<T = any>(cursor: unknown): cursor is Cursor<T> {
   return cursor instanceof Cursor;
 }

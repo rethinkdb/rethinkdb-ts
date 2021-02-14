@@ -1,39 +1,38 @@
-// tslint:disable
 import assert from 'assert';
-import { r } from '../src';
+import { createRethinkdbMasterPool, r } from '../src';
 import { globals } from '../src/query-builder/globals';
 import config from './config';
 import { uuid } from './util/common';
+import { MasterConnectionPool } from '../src/connection/master-pool';
 
 describe('backtraces', () => {
   let dbName: string;
   let tableName: string;
   let result: any;
+  let pool: MasterConnectionPool;
 
   before(async () => {
     globals.backtraceType = 'function';
     globals.pretty = true;
-    await r.connectPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid();
 
-    result = await r.dbCreate(dbName).run();
+    result = await pool.run(r.dbCreate(dbName));
     assert.equal(result.dbs_created, 1);
 
-    result = await r.db(dbName).tableCreate(tableName).run();
+    result = await pool.run(r.db(dbName).tableCreate(tableName));
     assert.equal(result.tables_created, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert(Array(100).fill({}))
-      .run();
+    result = await pool.run(
+      r.db(dbName).table(tableName).insert(Array(100).fill({})),
+    );
     assert.equal(result.inserted, 100);
     assert.equal(result.generated_keys.length, 100);
   });
 
   after(async () => {
-    await r.getPoolMaster().drain();
+    await pool.drain();
   });
 
   /*
@@ -62,7 +61,7 @@ describe('backtraces', () => {
     try {
       globals.nextVarId = 1;
       // @ts-ignore
-      await r.dbDrop(1).run();
+      await pool.run(r.dbDrop(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -85,7 +84,7 @@ describe('backtraces', () => {
     try {
       globals.nextVarId = 1;
       // @ts-ignore
-      await r.dbCreate(1).run();
+      await pool.run(r.dbCreate(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -110,10 +109,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.dbList().do(function(x) { return x.add("a") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .dbList()
-        .do((x) => x.add('a'))
-        .run();
+      await pool.run(r.dbList().do((x) => x.add('a')));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -138,12 +134,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(2).do(function(x) { return x.add("a") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr(2)
-        .do(function (x) {
+      await pool.run(
+        r.expr(2).do(function (x) {
           return x.add('a');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -166,7 +161,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).tableCreate(tableName)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).tableCreate(tableName).run();
+      await pool.run(r.db(dbName).tableCreate(tableName));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -189,7 +184,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).tableDrop("nonExistingTable")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).tableDrop('nonExistingTable').run();
+      await pool.run(r.db(dbName).tableDrop('nonExistingTable'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -214,11 +209,12 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).tableList().do(function(x) { return x.add("a") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .tableList()
-        .do((x) => x.add('a'))
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .tableList()
+          .do((x) => x.add('a')),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -244,10 +240,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(["zoo", "zoo"]).forEach(function(index) { return r.db(dbName).table(tableName).indexCreate(index) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr(['zoo', 'zoo'])
-        .forEach((index) => r.db(dbName).table(tableName).indexCreate(index))
-        .run();
+      await pool.run(
+        r
+          .expr(['zoo', 'zoo'])
+          .forEach((index) => r.db(dbName).table(tableName).indexCreate(index)),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -272,7 +269,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).indexDrop("nonExistingIndex")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table(tableName).indexDrop('nonExistingIndex').run();
+      await pool.run(
+        r.db(dbName).table(tableName).indexDrop('nonExistingIndex'),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -298,14 +297,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).indexList().do(function(x) { return x.add("a") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .indexList()
-        .do(function (x) {
-          return x.add('a');
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .indexList()
+          .do(function (x) {
+            return x.add('a');
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -331,14 +331,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).indexWait().do(function(x) { return x.add("a") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .indexWait()
-        .do(function (x) {
-          return x.add('a');
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .indexWait()
+          .do(function (x) {
+            return x.add('a');
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -362,7 +363,7 @@ describe('backtraces', () => {
   /*
   it('Test backtrace for r.db(dbName).table(tableName).indexWait("foo", "bar")', async () => {
       r.nextVarId=1;
-      await r.db(dbName).table(tableName).indexWait("foo", "bar").run()
+      await pool.run(r.db(dbName).table(tableName).indexWait("foo", "bar"))
       assert.fail('should throw')
     }
     catch(e) {
@@ -385,12 +386,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).indexStatus().and( r.expr(1).add("a"))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .indexStatus()
-        .and(r.expr(1).add('a'))
-        .run();
+      await pool.run(
+        r.db(dbName).table(tableName).indexStatus().and(r.expr(1).add('a')),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -416,14 +414,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).indexStatus("foo", "bar").do(function(x) { return x.add("a") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .indexStatus('foo', 'bar')
-        .do(function (x) {
-          return x.add('a');
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .indexStatus('foo', 'bar')
+          .do(function (x) {
+            return x.add('a');
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -447,7 +446,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table("nonExistingTable").update({foo: "bar"})', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table('nonExistingTable').update({ foo: 'bar' }).run();
+      await pool.run(
+        r.db(dbName).table('nonExistingTable').update({ foo: 'bar' }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -471,13 +472,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table("nonExistingTable").update(function(doc) { return doc("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table('nonExistingTable')
-        .update(function (doc) {
-          return doc('foo');
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table('nonExistingTable')
+          .update(function (doc) {
+            return doc('foo');
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -502,11 +504,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table("nonExistingTable").replace({foo: "bar"})', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table('nonExistingTable')
-        .replace({ foo: 'bar' })
-        .run();
+      await pool.run(
+        r.db(dbName).table('nonExistingTable').replace({ foo: 'bar' }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -531,13 +531,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table("nonExistingTable").replace(function(doc) { return doc("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table('nonExistingTable')
-        .replace(function (doc) {
-          return doc('foo');
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table('nonExistingTable')
+          .replace(function (doc) {
+            return doc('foo');
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -560,7 +561,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table("nonExistingTable").delete()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table('nonExistingTable').delete().run();
+      await pool.run(r.db(dbName).table('nonExistingTable').delete());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -583,7 +584,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table("nonExistingTable").sync()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table('nonExistingTable').sync().run();
+      await pool.run(r.db(dbName).table('nonExistingTable').sync());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -605,7 +606,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.db("nonExistingDb").table("nonExistingTable")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db('nonExistingDb').table('nonExistingTable').run();
+      await pool.run(r.db('nonExistingDb').table('nonExistingTable'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -628,7 +629,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table("nonExistingTable")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table('nonExistingTable').run();
+      await pool.run(r.db(dbName).table('nonExistingTable'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -653,14 +654,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).get(1).do(function(x) { return x.add(3) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .get(1)
-        .do(function (x) {
-          return x.add(3);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .get(1)
+          .do(function (x) {
+            return x.add(3);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -687,14 +689,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).getAll(1, 2, 3).do(function(x) { return x.add(3) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .getAll(1, 2, 3)
-        .do(function (x) {
-          return x.add(3);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .getAll(1, 2, 3)
+          .do(function (x) {
+            return x.add(3);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -725,14 +728,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).getAll(1, 2, 3, { index: "foo"}).do(function(x) { return x.add(3) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .getAll(1, 2, 3, { index: 'foo' })
-        .do(function (x) {
-          return x.add(3);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .getAll(1, 2, 3, { index: 'foo' })
+          .do(function (x) {
+            return x.add(3);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -763,14 +767,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).between(2, 3, { index: "foo"}).do(function(x) { return x.add(3) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .between(2, 3, { index: 'foo' })
-        .do(function (x) {
-          return x.add(3);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .between(2, 3, { index: 'foo' })
+          .do(function (x) {
+            return x.add(3);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -801,14 +806,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).filter({foo: "bar"}).do(function(x) { return x.add(3) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .filter({ foo: 'bar' })
-        .do(function (x) {
-          return x.add(3);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .filter({ foo: 'bar' })
+          .do(function (x) {
+            return x.add(3);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -835,12 +841,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).innerJoin( function(left, right) { return left.eq(right("bar").add(1)) }, r.db(dbName).table(tableName))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .innerJoin(function (left, right) {
+      await pool.run(
+        r.expr([1, 2, 3]).innerJoin(function (left, right) {
           return left.eq(right('bar').add(1));
-        }, r.db(dbName).table(tableName))
-        .run();
+        }, r.db(dbName).table(tableName)),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -866,15 +871,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).innerJoin(r.expr([1,2,3]), function(left, right) { return r.expr(1).add("str").add(left.eq(right("bar").add(1))) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .innerJoin(r.expr([1, 2, 3]), function (left, right) {
+      await pool.run(
+        r.expr([1, 2, 3]).innerJoin(r.expr([1, 2, 3]), function (left, right) {
           return r
             .expr(1)
             .add('str')
             .add(left.eq(right('bar').add(1)));
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -901,12 +905,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).outerJoin( function(left, right) { return left.eq(right("bar").add(1)) }, r.db(dbName).table(tableName))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .outerJoin(function (left, right) {
+      await pool.run(
+        r.expr([1, 2, 3]).outerJoin(function (left, right) {
           return left.eq(right('bar').add(1));
-        }, r.db(dbName).table(tableName))
-        .run();
+        }, r.db(dbName).table(tableName)),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -929,11 +932,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).eqJoin("id", r.db(dbName).table(tableName)).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .eqJoin('id', r.db(dbName).table(tableName))
-        .add(1)
-        .run();
+      await pool.run(
+        r.expr([1, 2, 3]).eqJoin('id', r.db(dbName).table(tableName)).add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -958,12 +959,13 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).eqJoin("id", r.db(dbName).table(tableName)).zip().add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .eqJoin('id', r.db(dbName).table(tableName))
-        .zip()
-        .add(1)
-        .run();
+      await pool.run(
+        r
+          .expr([1, 2, 3])
+          .eqJoin('id', r.db(dbName).table(tableName))
+          .zip()
+          .add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -989,13 +991,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).map(function(v) { return v}).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .map(function (v) {
-          return v;
-        })
-        .add(1)
-        .run();
+      await pool.run(
+        r
+          .expr([1, 2, 3])
+          .map(function (v) {
+            return v;
+          })
+          .add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1017,7 +1020,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).withFields("foo", "bar").add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).withFields('foo', 'bar').add(1).run();
+      await pool.run(r.expr([1, 2, 3]).withFields('foo', 'bar').add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1043,13 +1046,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).concatMap(function(v) { return v}).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .concatMap(function (v) {
-          return v;
-        })
-        .add(1)
-        .run();
+      await pool.run(
+        r
+          .expr([1, 2, 3])
+          .concatMap(function (v) {
+            return v;
+          })
+          .add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1071,7 +1075,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).orderBy("foo").add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).orderBy('foo').add(1).run();
+      await pool.run(r.expr([1, 2, 3]).orderBy('foo').add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1093,7 +1097,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).skip("foo").add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).skip('foo').add(1).run();
+      await pool.run(r.expr([1, 2, 3]).skip('foo').add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1115,7 +1119,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).limit("foo").add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).limit('foo').add(1).run();
+      await pool.run(r.expr([1, 2, 3]).limit('foo').add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1137,7 +1141,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).slice("foo", "bar").add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).slice('foo', 'bar').add(1).run();
+      await pool.run(r.expr([1, 2, 3]).slice('foo', 'bar').add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1159,7 +1163,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).nth("bar").add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).nth('bar').add(1).run();
+      await pool.run(r.expr([1, 2, 3]).nth('bar').add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1181,7 +1185,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1, 2, 3]).offsetsOf("bar").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).offsetsOf('bar').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).offsetsOf('bar').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1203,7 +1207,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).isEmpty().add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).isEmpty().add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).isEmpty().add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1225,7 +1229,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).union([5,6]).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).union([5, 6]).add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).union([5, 6]).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1247,7 +1251,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).sample("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).sample('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).sample('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1273,13 +1277,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).count(() => { return true}).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr([1, 2, 3])
-        .count(() => {
-          return true;
-        })
-        .add('Hello')
-        .run();
+      await pool.run(
+        r
+          .expr([1, 2, 3])
+          .count(() => {
+            return true;
+          })
+          .add('Hello'),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1301,7 +1306,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).distinct().add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).distinct().add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).distinct().add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1323,7 +1328,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).contains("foo", "bar").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).contains('foo', 'bar').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).contains('foo', 'bar').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1350,7 +1355,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).update(r.row("foo")).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).update(r.row('foo')).add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).update(r.row('foo')).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1372,7 +1377,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).pluck("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).pluck('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).pluck('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1394,7 +1399,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).without("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).without('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).without('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1416,7 +1421,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).merge("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).merge('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).merge('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1438,7 +1443,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).append("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).append('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).append('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1460,7 +1465,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).prepend("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).prepend('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).prepend('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1482,7 +1487,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).difference("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).difference('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).difference('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1504,7 +1509,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).setInsert("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).setInsert('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).setInsert('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1526,7 +1531,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).setUnion("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).setUnion('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).setUnion('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1548,7 +1553,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).setIntersection("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).setIntersection('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).setIntersection('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1570,7 +1575,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1, 2, 3])("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3])('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3])('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1592,7 +1597,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).hasFields("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).hasFields('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).hasFields('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1614,7 +1619,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).insertAt("foo", 2).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).insertAt('foo', 2).add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).insertAt('foo', 2).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1636,7 +1641,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).spliceAt("foo", 2).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).spliceAt('foo', 2).add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).spliceAt('foo', 2).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1658,7 +1663,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).deleteAt("foo", 2).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).deleteAt('foo', 2).add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).deleteAt('foo', 2).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1680,7 +1685,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).changeAt("foo", 2).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).changeAt('foo', 2).add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).changeAt('foo', 2).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1702,7 +1707,7 @@ describe('backtraces', () => {
   it('Test backtrace for  r.expr([1,2,3]).keys().add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).keys().add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).keys().add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1724,7 +1729,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).match("foo").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).match('foo').add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).match('foo').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1746,7 +1751,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).add('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1768,7 +1773,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).sub("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).sub('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).sub('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1790,7 +1795,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).mul("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).mul('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).mul('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1812,7 +1817,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).div("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).div('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).div('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1834,7 +1839,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).mod("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).mod('Hello').run();
+      await pool.run(r.expr([1, 2, 3]).mod('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1856,7 +1861,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).and(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).and(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).and(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1878,7 +1883,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(false).or(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr(false).or(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr(false).or(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1900,7 +1905,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).eq(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).eq(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).eq(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1922,7 +1927,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).ne(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).ne(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).ne(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1944,7 +1949,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).gt(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).gt(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).gt(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1966,7 +1971,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).lt(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).lt(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).lt(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -1988,7 +1993,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).le(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).le(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).le(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2010,7 +2015,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).ge(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).ge(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).ge(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2032,7 +2037,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).not().add(r.expr("Hello").add(2))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).not().add(r.expr('Hello').add(2)).run();
+      await pool.run(r.expr([1, 2, 3]).not().add(r.expr('Hello').add(2)));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2054,7 +2059,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().add('Hello').run();
+      await pool.run(r.now().add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2076,7 +2081,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.time(1023, 11, 3, "Z").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.time(1023, 11, 3, 'Z').add('Hello').run();
+      await pool.run(r.time(1023, 11, 3, 'Z').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2098,7 +2103,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.epochTime(12132131).add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.epochTime(12132131).add('Hello').run();
+      await pool.run(r.epochTime(12132131).add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2120,7 +2125,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.ISO8601("UnvalidISO961String").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.ISO8601('UnvalidISO961String').add('Hello').run();
+      await pool.run(r.ISO8601('UnvalidISO961String').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2142,7 +2147,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().inTimezone("noTimezone").add("Hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().inTimezone('noTimezone').add('Hello').run();
+      await pool.run(r.now().inTimezone('noTimezone').add('Hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2164,7 +2169,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().timezone().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().timezone().add(true).run();
+      await pool.run(r.now().timezone().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2186,7 +2191,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().during(r.now(), r.now()).add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().during(r.now(), r.now()).add(true).run();
+      await pool.run(r.now().during(r.now(), r.now()).add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2208,7 +2213,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().timeOfDay().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().timeOfDay().add(true).run();
+      await pool.run(r.now().timeOfDay().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2230,7 +2235,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().year().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().year().add(true).run();
+      await pool.run(r.now().year().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2252,7 +2257,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().month().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().month().add(true).run();
+      await pool.run(r.now().month().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2274,7 +2279,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().day().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().day().add(true).run();
+      await pool.run(r.now().day().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2296,7 +2301,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().dayOfWeek().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().dayOfWeek().add(true).run();
+      await pool.run(r.now().dayOfWeek().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2318,7 +2323,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().dayOfYear().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().dayOfYear().add(true).run();
+      await pool.run(r.now().dayOfYear().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2340,7 +2345,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().hours().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().hours().add(true).run();
+      await pool.run(r.now().hours().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2362,7 +2367,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().minutes().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().minutes().add(true).run();
+      await pool.run(r.now().minutes().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2384,7 +2389,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().seconds().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().seconds().add(true).run();
+      await pool.run(r.now().seconds().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2406,7 +2411,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().toISO8601().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().toISO8601().add(true).run();
+      await pool.run(r.now().toISO8601().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2428,7 +2433,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.now().toEpochTime().add(true)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.now().toEpochTime().add(true).run();
+      await pool.run(r.now().toEpochTime().add(true));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2453,12 +2458,11 @@ describe('backtraces', () => {
     try {
       globals.nextVarId = 1;
 
-      await r
-        .expr(1)
-        .do(function (var_1) {
+      await pool.run(
+        r.expr(1).do(function (var_1) {
           return var_1('bah').add(3);
-        })
-        .run(); // eslint-disable-line camelcase
+        }),
+      ); // eslint-disable-line camelcase
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2480,7 +2484,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.branch(r.expr(1).add("hello"), "Hello", "World")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.branch(r.expr(1).add('hello'), 'Hello', 'World').run();
+      await pool.run(r.branch(r.expr(1).add('hello'), 'Hello', 'World'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2506,12 +2510,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(1).forEach(function(foo) { return foo("bar") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr(1)
-        .forEach(function (foo) {
+      await pool.run(
+        r.expr(1).forEach(function (foo) {
           return foo('bar');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2533,7 +2536,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.error("foo")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.error('foo').run();
+      await pool.run(r.error('foo'));
       assert.fail('should throw');
     } catch (e) {
       assert(e.message === 'foo in:\nr.error("foo")\n^^^^^^^^^^^^^^\n');
@@ -2556,7 +2559,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a:1})("b").default("bar").add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: 1 })('b').default('bar').add(2).run();
+      await pool.run(r.expr({ a: 1 })('b').default('bar').add(2));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2582,7 +2585,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a:1}).add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: 1 }).add(2).run();
+      await pool.run(r.expr({ a: 1 }).add(2));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2608,7 +2611,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a:1}).add(r.js("2"))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: 1 }).add(r.js('2')).run();
+      await pool.run(r.expr({ a: 1 }).add(r.js('2')));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2630,7 +2633,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(2).coerceTo("ARRAY")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr(2).coerceTo('ARRAY').run();
+      await pool.run(r.expr(2).coerceTo('ARRAY'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2652,7 +2655,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(2).add("foo").typeOf()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr(2).add('foo').typeOf().run();
+      await pool.run(r.expr(2).add('foo').typeOf());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2674,7 +2677,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(2).add("foo").info()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr(2).add('foo').info().run();
+      await pool.run(r.expr(2).add('foo').info());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2696,7 +2699,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(2).add(r.json("foo"))', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr(2).add(r.json('foo')).run();
+      await pool.run(r.expr(2).add(r.json('foo')));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2718,11 +2721,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).replace({a:1}, {nonValid:true})', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .replace({ a: 1 }, { nonValid: true })
-        .run();
+      await pool.run(
+        r.db(dbName).table(tableName).replace({ a: 1 }, { nonValid: true }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert(
@@ -2754,11 +2755,12 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).replace({a:1}, {durability: "softt"})', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .replace({ a: 1 }, { durability: 'softt' })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .replace({ a: 1 }, { durability: 'softt' }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2780,10 +2782,10 @@ describe('backtraces', () => {
   // it('Test backtrace for r.expr([1,2]).map(r.row.add("eh"))', async () => {
   //   try {
   //     globals.nextVarId = 1;
-  //     await r
+  //     await pool.run(r
   //       .expr([1, 2])
   //       .map(r.row.add('eh'))
-  //       .run();
+  //       );
   //     assert.fail('should throw');
   //   } catch (e) {
   //     assert.equal(
@@ -2831,62 +2833,63 @@ describe('backtraces', () => {
   it('Test backtrace for r.table("foo").add(1).add(1).add("hello-super-long-string").add("another-long-string").add("one-last-string").map( function(doc) { return r.expr([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).map(function(test) { return test("b").add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string").mul(test("b")).merge({ firstName: "xxxxxx", lastName: "yyyy", email: "xxxxx@yyyy.com", phone: "xxx-xxx-xxxx" }); }).add(2).map(function(doc) { return doc.add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string").add("hello-super-long-string").add("another-long-string").add("one-last-string") }); })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .table('foo')
-        .add(1)
-        .add(1)
-        .add('hello-super-long-string')
-        .add('another-long-string')
-        .add('one-last-string')
-        .map(function (doc) {
-          return r
-            .expr([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-            .map(function (test) {
-              return test('b')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .mul(test('b'))
-                .merge({
-                  firstName: 'xxxxxx',
-                  lastName: 'yyyy',
-                  email: 'xxxxx@yyyy.com',
-                  phone: 'xxx-xxx-xxxx',
-                });
-            })
-            .add(2)
-            .map(function (doc) {
-              return doc
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string')
-                .add('hello-super-long-string')
-                .add('another-long-string')
-                .add('one-last-string');
-            });
-        })
-        .run();
+      await pool.run(
+        r
+          .table('foo')
+          .add(1)
+          .add(1)
+          .add('hello-super-long-string')
+          .add('another-long-string')
+          .add('one-last-string')
+          .map(function (doc) {
+            return r
+              .expr([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+              .map(function (test) {
+                return test('b')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .mul(test('b'))
+                  .merge({
+                    firstName: 'xxxxxx',
+                    lastName: 'yyyy',
+                    email: 'xxxxx@yyyy.com',
+                    phone: 'xxx-xxx-xxxx',
+                  });
+              })
+              .add(2)
+              .map(function (doc) {
+                return doc
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string')
+                  .add('hello-super-long-string')
+                  .add('another-long-string')
+                  .add('one-last-string');
+              });
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2911,7 +2914,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a:1, b:r.expr(1).add("eh")})', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: 1, b: r.expr(1).add('eh') }).run();
+      await pool.run(r.expr({ a: 1, b: r.expr(1).add('eh') }));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2943,12 +2946,13 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).replace({a:1}, {durability:"soft"}).add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .replace({ a: 1 }, { durability: 'soft' })
-        .add(2)
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .replace({ a: 1 }, { durability: 'soft' })
+          .add(2),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -2977,11 +2981,12 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).replace({a:1}, {durability:r.expr(1).add("heloo")})', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .replace({ a: 1 }, { durability: r.expr(1).add('heloo') })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .replace({ a: 1 }, { durability: r.expr(1).add('heloo') }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3010,11 +3015,12 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).replace({a:1}, {durability:r.expr(1).add("heloo")})', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .replace({ a: 1 }, { durability: r.expr(1).add('heloo') })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .replace({ a: 1 }, { durability: r.expr(1).add('heloo') }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3039,7 +3045,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a:r.expr(1).add("eh"), b: 2})', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: r.expr(1).add('eh'), b: 2 }).run();
+      await pool.run(r.expr({ a: r.expr(1).add('eh'), b: 2 }));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3061,7 +3067,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).add("eh")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).add('eh').run();
+      await pool.run(r.expr([1, 2, 3]).add('eh'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3087,7 +3093,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a:1}).add("eh")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: 1 }).add('eh').run();
+      await pool.run(r.expr({ a: 1 }).add('eh'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3109,7 +3115,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).group("foo")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).group('foo').run();
+      await pool.run(r.expr([1, 2, 3]).group('foo'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3136,7 +3142,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).ungroup()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).ungroup().run();
+      await pool.run(r.expr([1, 2, 3]).ungroup());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3158,7 +3164,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3,"hello"]).sum()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3, 'hello']).sum().run();
+      await pool.run(r.expr([1, 2, 3, 'hello']).sum());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3180,7 +3186,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3,"hello"]).avg()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3, 'hello']).avg().run();
+      await pool.run(r.expr([1, 2, 3, 'hello']).avg());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3202,7 +3208,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([]).min()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([]).min().run();
+      await pool.run(r.expr([]).min());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3224,7 +3230,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([]).max()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([]).max().run();
+      await pool.run(r.expr([]).max());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3246,7 +3252,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([]).avg()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([]).avg().run();
+      await pool.run(r.expr([]).avg());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3268,7 +3274,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(1).upcase()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr(1).upcase().run();
+      await pool.run(r.expr(1).upcase());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3290,7 +3296,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(1).downcase()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr(1).downcase().run();
+      await pool.run(r.expr(1).downcase());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3314,12 +3320,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(1).do(function(v) { return r.object(1, 2) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr(1)
-        .do(function (v) {
+      await pool.run(
+        r.expr(1).do(function (v) {
           return r.object(1, 2);
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3343,12 +3348,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(1).do(function(v) { return r.object("a") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr(1)
-        .do(function (v) {
+      await pool.run(
+        r.expr(1).do(function (v) {
           return r.object('a');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3374,7 +3378,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.random(1,2,{float: true}).sub("foo")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.random(1, 2, { float: true }).sub('foo').run();
+      await pool.run(r.random(1, 2, { float: true }).sub('foo'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3396,7 +3400,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.random("foo", "bar")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.random('foo', 'bar').run();
+      await pool.run(r.random('foo', 'bar'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3416,7 +3420,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.random("foo", "bar", "buzz", "lol")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.random('foo', 'bar', 'buzz', 'lol').run();
+      await pool.run(r.random('foo', 'bar', 'buzz', 'lol'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3441,7 +3445,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).changes().add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table(tableName).changes().add(2).run();
+      await pool.run(r.db(dbName).table(tableName).changes().add(2));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3467,7 +3471,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.http("").add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.http('').add(2).run();
+      await pool.run(r.http('').add(2));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3489,7 +3493,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.args(["foo", "bar"]).add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.args(['foo', 'bar']).add(2).run();
+      await pool.run(r.args(['foo', 'bar']).add(2));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3513,11 +3517,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return b.add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return b.add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3546,12 +3550,13 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).between("foo", "bar", {index: "id"}).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .between('foo', 'bar', { index: 'id' })
-        .add(1)
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .between('foo', 'bar', { index: 'id' })
+          .add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3581,7 +3586,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).orderBy({index: "id"}).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table(tableName).orderBy({ index: 'id' }).add(1).run();
+      await pool.run(
+        r.db(dbName).table(tableName).orderBy({ index: 'id' }).add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3603,7 +3610,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.binary("foo").add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.binary('foo').add(1).run();
+      await pool.run(r.binary('foo').add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3625,10 +3632,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.binary(new Buffer([0,1,2,3,4])).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .binary(Buffer.from([0, 1, 2, 3, 4]))
-        .add(1)
-        .run();
+      await pool.run(r.binary(Buffer.from([0, 1, 2, 3, 4])).add(1));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3652,11 +3656,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return r.point(1, 2).add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return r.point(1, 2).add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3680,11 +3684,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return r.line(1, 2).add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return r.line(1, 2).add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3708,11 +3712,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return r.circle(1, 2).add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return r.circle(1, 2).add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3736,11 +3740,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return r.polygon(1, 2, 3).add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return r.polygon(1, 2, 3).add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3764,11 +3768,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return r.polygon([0,0], [1,1], [2,3]).polygonSub(3).add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return r.polygon([0, 0], [1, 1], [2, 3]).polygonSub(3).add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3792,15 +3796,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return r.polygon([0,0], [1,1], [2,3]).fill().polygonSub(3).add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return r
             .polygon([0, 0], [1, 1], [2, 3])
             .fill()
             .polygonSub(3)
             .add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3824,14 +3828,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.do(1,function( b) { return r.polygon([0,0], [1,1], [2,3]).distance(r.expr("foo").polygonSub(3)).add("foo") })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .do(1, function (b) {
+      await pool.run(
+        r.do(1, function (b) {
           return r
             .polygon([0, 0], [1, 1], [2, 3])
             .distance(r.expr('foo').polygonSub(3))
             .add('foo');
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3854,11 +3858,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).getIntersecting(r.circle(0, 1), 3)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .getIntersecting(r.circle(0, 1), 3)
-        .run();
+      await pool.run(
+        r.db(dbName).table(tableName).getIntersecting(r.circle(0, 1), 3),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3881,7 +3883,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).getNearest(r.circle(0, 1), 3)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table(tableName).getNearest(r.circle(0, 1), 3).run();
+      await pool.run(
+        r.db(dbName).table(tableName).getNearest(r.circle(0, 1), 3),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3907,10 +3911,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.polygon([0, 0], [0, 1], [1, 1]).includes(r.expr([0, 1, 3]))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .polygon([0, 0], [0, 1], [1, 1])
-        .includes(r.expr([0, 1, 3]))
-        .run();
+      await pool.run(
+        r.polygon([0, 0], [0, 1], [1, 1]).includes(r.expr([0, 1, 3])),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3936,10 +3939,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.polygon([0, 0], [0, 1], [1, 1]).intersects(r.expr([0, 1, 3]))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .polygon([0, 0], [0, 1], [1, 1])
-        .intersects(r.expr([0, 1, 3]))
-        .run();
+      await pool.run(
+        r.polygon([0, 0], [0, 1], [1, 1]).intersects(r.expr([0, 1, 3])),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3965,10 +3967,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.polygon([0, 0], [0, 1], [1, 1]).includes(r.expr([0, 1, 3]))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .polygon([0, 0], [0, 1], [1, 1])
-        .includes(r.expr([0, 1, 3]))
-        .run();
+      await pool.run(
+        r.polygon([0, 0], [0, 1], [1, 1]).includes(r.expr([0, 1, 3])),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -3993,7 +3994,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).orderBy(r.desc("foo")).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table(tableName).orderBy(r.desc('foo')).add(1).run();
+      await pool.run(
+        r.db(dbName).table(tableName).orderBy(r.desc('foo')).add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4018,7 +4021,9 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).orderBy(r.asc("foo")).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.db(dbName).table(tableName).orderBy(r.asc('foo')).add(1).run();
+      await pool.run(
+        r.db(dbName).table(tableName).orderBy(r.asc('foo')).add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4040,7 +4045,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.range("foo")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.range('foo').run();
+      await pool.run(r.range('foo'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4065,12 +4070,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.range(1,10).do(function(x) { return x.add(4) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .range(1, 10)
-        .do(function (x) {
+      await pool.run(
+        r.range(1, 10).do(function (x) {
           return x.add(4);
-        })
-        .run();
+        }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4095,13 +4099,14 @@ describe('backtraces', () => {
   it('Test backtrace for r.range(1,10).toJSON().do(function(x) { return x.add(4) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .range(1, 10)
-        .toJSON()
-        .do(function (x) {
-          return x.add(4);
-        })
-        .run();
+      await pool.run(
+        r
+          .range(1, 10)
+          .toJSON()
+          .do(function (x) {
+            return x.add(4);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4126,14 +4131,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).config().do(function(x) { return x.add(4) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .config()
-        .do(function (x) {
-          return x.add(4);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .config()
+          .do(function (x) {
+            return x.add(4);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4158,14 +4164,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).status().do(function(x) { return x.add(4) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .status()
-        .do(function (x) {
-          return x.add(4);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .status()
+          .do(function (x) {
+            return x.add(4);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4190,14 +4197,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).wait().do(function(x) { return x.add(4) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .wait()
-        .do(function (x) {
-          return x.add(4);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .wait()
+          .do(function (x) {
+            return x.add(4);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4227,14 +4235,15 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).reconfigure({ shards: 1 }).do(function(x) { return x.add(4) })', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .reconfigure({ shards: 1 })
-        .do(function (x) {
-          return x.add(4);
-        })
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .reconfigure({ shards: 1 })
+          .do(function (x) {
+            return x.add(4);
+          }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4259,19 +4268,20 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(1).add("foo").add(r.db(dbName).table(tableName).rebalance().do(function(x) { return x.add(4) }))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr(1)
-        .add('foo')
-        .add(
-          r
-            .db(dbName)
-            .table(tableName)
-            .rebalance()
-            .do(function (x) {
-              return x.add(4);
-            }),
-        )
-        .run();
+      await pool.run(
+        r
+          .expr(1)
+          .add('foo')
+          .add(
+            r
+              .db(dbName)
+              .table(tableName)
+              .rebalance()
+              .do(function (x) {
+                return x.add(4);
+              }),
+          ),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4297,11 +4307,11 @@ describe('backtraces', () => {
   // it('Test backtrace for r.map([1,2,3], [1,2,3], function(var_1) { return var_1("bah").add(3) })', async () => {
   //   try {
   //     globals.nextVarId = 1;
-  //     await r
+  //     await pool.run(r
   //       .map([1, 2, 3], [1, 2, 3], function(var_1) {
   //         return var_1('bah').add(3);
   //       })
-  //       .run(); // eslint-disable-line camelcase
+  //       ); // eslint-disable-line camelcase
   //     assert.fail('should throw');
   //   } catch (e) {
   //     assert.equal(
@@ -4325,11 +4335,11 @@ describe('backtraces', () => {
   // it('Test backtrace for r.map([1,2,3], [1,2,3], function(var_1, var_2) { return var_1("bah").add(3) })', async () => {
   //   try {
   //     globals.nextVarId = 1;
-  //     await r
+  //     await pool.run(r
   //       .map([1, 2, 3], [1, 2, 3], function(var_1, var_2) {
   //         return var_1('bah').add(3);
   //       })
-  //       .run(); // eslint-disable-line camelcase
+  //       ); // eslint-disable-line camelcase
   //     assert.fail('should throw');
   //   } catch (e) {
   //     assert.equal(
@@ -4351,7 +4361,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr([1,2,3]).split(",", 3).add(3)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr([1, 2, 3]).split(',', 3).add(3).run();
+      await pool.run(r.expr([1, 2, 3]).split(',', 3).add(3));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4381,11 +4391,12 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({}).merge({a: r.literal({foo: "bar"})}).add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr({})
-        .merge({ a: r.literal({ foo: 'bar' }) })
-        .add(2)
-        .run();
+      await pool.run(
+        r
+          .expr({})
+          .merge({ a: r.literal({ foo: 'bar' }) })
+          .add(2),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4407,7 +4418,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.monday.add([1])', async () => {
     try {
       globals.nextVarId = 1;
-      await r.monday.add([1]).run();
+      await pool.run(r.monday.add([1]));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4429,7 +4440,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.november.add([1])', async () => {
     try {
       globals.nextVarId = 1;
-      await r.november.add([1]).run();
+      await pool.run(r.november.add([1]));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4455,7 +4466,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a: r.wednesday}).add([1])', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: r.wednesday }).add([1]).run();
+      await pool.run(r.expr({ a: r.wednesday }).add([1]));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4484,12 +4495,13 @@ describe('backtraces', () => {
   it('Test backtrace for r.db(dbName).table(tableName).between(r.minval, r.maxval, {index: "foo"}).add(1)', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .db(dbName)
-        .table(tableName)
-        .between(r.minval, r.maxval, { index: 'foo' })
-        .add(1)
-        .run();
+      await pool.run(
+        r
+          .db(dbName)
+          .table(tableName)
+          .between(r.minval, r.maxval, { index: 'foo' })
+          .add(1),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4513,11 +4525,12 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr(1).add("bar").add(r.ISO8601("dadsa",{defaultTimezone: "dsada"}))', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr(1)
-        .add('bar')
-        .add(r.ISO8601('dadsa', { defaultTimezone: 'dsada' }))
-        .run();
+      await pool.run(
+        r
+          .expr(1)
+          .add('bar')
+          .add(r.ISO8601('dadsa', { defaultTimezone: 'dsada' })),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4544,10 +4557,11 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({foo: "bar"}).merge({foo: r.literal(), bar: r.expr("lol").add(1)})', async () => {
     try {
       globals.nextVarId = 1;
-      await r
-        .expr({ foo: 'bar' })
-        .merge({ foo: r.literal(), bar: r.expr('lol').add(1) })
-        .run();
+      await pool.run(
+        r
+          .expr({ foo: 'bar' })
+          .merge({ foo: r.literal(), bar: r.expr('lol').add(1) }),
+      );
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4569,7 +4583,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.floor("hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.floor('hello').run();
+      await pool.run(r.floor('hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4589,7 +4603,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.floor()', async () => {
     try {
       globals.nextVarId = 1;
-      await r.floor().run();
+      await pool.run(r.floor());
       assert.fail('should throw');
     } catch (e) {
       assert(e.message === '`r.floor` takes 1 argument, 0 provided.');
@@ -4608,7 +4622,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.round("hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.round('hello').run();
+      await pool.run(r.round('hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4630,7 +4644,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.ceil("hello")', async () => {
     try {
       globals.nextVarId = 1;
-      await r.ceil('hello').run();
+      await pool.run(r.ceil('hello'));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -4660,7 +4674,7 @@ describe('backtraces', () => {
   it('Test backtrace for r.expr({a:1, b:2, c: 3}).values().add(2)', async () => {
     try {
       globals.nextVarId = 1;
-      await r.expr({ a: 1, b: 2, c: 3 }).values().add(2).run();
+      await pool.run(r.expr({ a: 1, b: 2, c: 3 }).values().add(2));
       assert.fail('should throw');
     } catch (e) {
       assert.equal(

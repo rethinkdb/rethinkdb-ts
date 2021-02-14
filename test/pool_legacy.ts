@@ -1,42 +1,46 @@
 import assert from 'assert';
-import { r } from '../src';
+import { createRethinkdbMasterPool, r, Cursor } from '../src';
 import config from './config';
 import { uuid } from './util/common';
+import { MasterConnectionPool } from '../src/connection/master-pool';
 
 describe('pool legacy', () => {
+  let pool: MasterConnectionPool;
+
   after(async () => {
-    await r.getPoolMaster().drain();
+    await pool.drain();
   });
 
+  const servers = [
+    {
+      host: config.server.host,
+      port: config.server.port,
+    },
+  ];
   const options = {
+    db: 'test',
     max: 10,
     buffer: 2,
-    servers: [
-      {
-        host: config.host,
-        port: config.port,
-      },
-    ],
-    user: config.user,
-    password: config.password,
+    user: config.options.user,
+    password: config.options.password,
     discovery: false,
     silent: true,
   };
 
+  before(async () => {
+    pool = await createRethinkdbMasterPool(servers, options);
+  });
+
   it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
-    await r.connectPool(options);
-    assert.ok(r.getPoolMaster(), 'expected an instance of pool master');
-    assert.equal(
-      r.getPoolMaster().getPools().length,
-      1,
-      'expected number of pools is 1',
+    assert.ok(pool, 'expected an instance of pool master');
+    assert.equal(pool.getPools().length, 1, 'expected number of pools is 1',
     );
   });
 
   it('The pool should create a buffer', async () => {
     const result = await new Promise((resolve, reject) => {
       setTimeout(() => {
-        const numConnections = r.getPoolMaster().getAvailableLength();
+        const numConnections = pool.getAvailableLength();
         numConnections >= options.buffer
           ? resolve(numConnections)
           : reject(
@@ -59,23 +63,24 @@ describe('pool legacy', () => {
     const result1 = await Promise.all(
       Array(numExpr)
         .fill(r.expr(1))
-        .map((expr) => expr.run()),
+        .map((expr) => pool.run(expr)),
     );
     assert.deepEqual(result1, Array(numExpr).fill(1));
     await new Promise((resolve) => setTimeout(resolve, 200));
-    const numConnections = r.getPoolMaster().getAvailableLength();
+    const numConnections = pool.getAvailableLength();
     assert.ok(
       numConnections >= options.buffer + numExpr,
       'expected number of connections to be at least buffer size plus number of run expressions',
     );
   });
 
-  it('A noreply query should release the connection', async () => {
-    const numConnections = r.getPoolMaster().getLength();
-    await r.expr(1).run({ noreply: true });
+  it('A noreply query should release the connection kek', async () => {
+    pool = await createRethinkdbMasterPool(servers, options);
+    const numConnections = pool.getLength();
+    await pool.run(r.expr(1), { noreply: true });
     assert.equal(
       numConnections,
-      r.getPoolMaster().getLength(),
+      pool.getLength(),
       'expected number of connections be equal before and after a noreply query',
     );
   });
@@ -83,30 +88,30 @@ describe('pool legacy', () => {
   it('The pool should not have more than `options.max` connections', async () => {
     let result = [];
     for (let i = 0; i <= options.max; i++) {
-      result.push(r.expr(1).run());
+      result.push(pool.run(r.expr(1)));
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     result = await Promise.all(result);
     assert.deepEqual(result, Array(options.max + 1).fill(1));
-    assert.equal(r.getPoolMaster().getLength(), options.max);
+    assert.equal(pool.getLength(), options.max);
     assert.ok(
-      r.getPoolMaster().getAvailableLength() <= options.max,
+      pool.getAvailableLength() <= options.max,
       'available connections more than max',
     );
     assert.equal(
-      r.getPoolMaster().getAvailableLength(),
-      r.getPoolMaster().getLength(),
+      pool.getAvailableLength(),
+      pool.getLength(),
       'expected available connections to equal pool size',
     );
   });
 
   it('The pool should shrink if a connection is not used for some time', async () => {
-    r.getPoolMaster().setOptions({ timeoutGb: 100 });
+    pool.setOptions({ timeoutGb: 100 });
 
     const result = await Promise.all(
       Array(9)
         .fill(r.expr(1))
-        .map((expr) => expr.run()),
+        .map((expr) => pool.run(expr)),
     );
     assert.deepEqual(result, Array(9).fill(1));
 
@@ -117,8 +122,8 @@ describe('pool legacy', () => {
       setTimeout(
         () =>
           resolve({
-            availableLength: r.getPoolMaster().getAvailableLength(),
-            length: r.getPoolMaster().getLength(),
+            availableLength: pool.getAvailableLength(),
+            length: pool.getLength(),
           }),
         1000,
       );
@@ -136,10 +141,10 @@ describe('pool legacy', () => {
   });
 
   it('`poolMaster.drain` should eventually remove all the connections', async () => {
-    await r.getPoolMaster().drain();
+    await pool.drain();
 
-    assert.equal(r.getPoolMaster().getAvailableLength(), 0);
-    assert.equal(r.getPoolMaster().getLength(), 0);
+    assert.equal(pool.getAvailableLength(), 0);
+    assert.equal(pool.getLength(), 0);
   });
 
   it('If the pool cannot create a connection, it should reject queries', async () => {
@@ -152,6 +157,19 @@ describe('pool legacy', () => {
       })
       .catch(() => undefined);
     try {
+      const notARealPool = await createRethinkdbMasterPool(
+        [{ host: 'notarealhost' }],
+        {
+          db: 'test',
+          buffer: 1,
+          max: 2,
+          silent: true,
+        },
+      );
+      await notARealPool.run(r.expr(1));
+      if (notARealPool) {
+        await notARealPool.drain();
+      }
       await r.expr(1).run();
       assert.fail('should throw');
     } catch (e) {
@@ -176,27 +194,27 @@ describe('pool legacy', () => {
       await r.expr(1).run();
       assert.fail('should throw');
     } catch (e) {
-      assert.equal(
-        e.message,
-        'None of the pools have an opened connection and failed to open a new one.',
-      );
-    } finally {
-      await r.getPoolMaster().drain();
+      assert.match(e.message, /Error initializing master pool/);
     }
   });
 
   it('If the pool is drained, it should reject queries', async () => {
-    await r
-      .connectPool({
+    await createRethinkdbMasterPool(
+      [
+        {
+          port: config.server.port,
+          host: config.server.host,
+        },
+      ],
+      {
+        db: 'test',
         buffer: 1,
         max: 2,
-        port: config.port,
-        host: config.host,
-      })
-      .catch(() => undefined);
-    await r.getPoolMaster().drain();
+      },
+    ).catch(() => undefined);
+    await pool.drain();
     try {
-      await r.expr(1).run();
+      await pool.run(r.expr(1));
       assert.fail('should throw');
     } catch (e) {
       assert(
@@ -205,21 +223,28 @@ describe('pool legacy', () => {
         ),
       );
     } finally {
-      await r.getPoolMaster().drain();
+      await pool.drain();
     }
   });
 
   it('If the pool is draining, it should reject queries', async () => {
-    await r.connectPool({
-      buffer: 1,
-      max: 2,
-      silent: true,
-      port: config.port,
-      host: config.host,
-    });
-    r.getPoolMaster().drain();
+    await createRethinkdbMasterPool(
+      [
+        {
+          port: config.server.port,
+          host: config.server.host,
+        },
+      ],
+      {
+        db: 'test',
+        buffer: 1,
+        max: 2,
+        silent: true,
+      },
+    );
+    pool.drain();
     try {
-      await r.expr(1).run();
+      await pool.run(r.expr(1));
       assert.fail('should throw');
     } catch (e) {
       assert(
@@ -228,18 +253,18 @@ describe('pool legacy', () => {
         ),
       );
     } finally {
-      await r.getPoolMaster().drain();
+      await pool.drain();
     }
   });
 
   // it('`drain` should work in case of failures', async function () {
-  //   await r.connectPool({ buffer: 1, max: 2, silent: true });
+  //   await createRethinkdbMasterPool({ buffer: 1, max: 2, silent: true });
   //   r.createPools({
   //     port: 80, // non valid port
   //     silent: true,
   //     timeoutError: 100
   //   });
-  //   const pool = r.getPoolMaster();
+  //   const pool = pool;
   //   await new Promise(function (resolve, reject) {
   //     setTimeout(resolve, 150);
   //   });
@@ -251,20 +276,27 @@ describe('pool legacy', () => {
   // });
 
   it('The pool should remove a connection if it errored', async () => {
-    await r.connectPool({
-      buffer: 1,
-      max: 2,
-      silent: true,
-      port: config.port,
-      host: config.host,
-    });
-    r.getPoolMaster().setOptions({ timeoutGb: 60 * 60 * 1000 });
+    const localPool = await createRethinkdbMasterPool(
+      [
+        {
+          port: config.server.port,
+          host: config.server.host,
+        },
+      ],
+      {
+        db: 'test',
+        buffer: 1,
+        max: 2,
+        silent: true,
+      },
+    );
+    localPool.setOptions({ timeoutGb: 60 * 60 * 1000 });
 
     try {
       const result1 = await Promise.all(
         Array(options.max)
           .fill(r.expr(1))
-          .map((expr) => expr.run()),
+          .map((expr) => localPool.run(expr)),
       );
       assert.deepEqual(result1, Array(options.max).fill(1));
     } catch (e) {
@@ -276,45 +308,43 @@ describe('pool legacy', () => {
       );
 
       // We expect the connection that errored to get closed in the next second
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         setTimeout(() => {
-          assert.equal(r.getPoolMaster().getAvailableLength(), options.max - 1);
-          assert.equal(r.getPoolMaster().getLength(), options.max - 1);
+          assert.equal(localPool.getAvailableLength(), options.max - 1);
+          assert.equal(localPool.getLength(), options.max - 1);
           resolve();
         }, 1000);
       });
     } finally {
-      await r.getPoolMaster().drain();
+      await localPool.drain();
     }
   });
 
   describe('cursor', () => {
     let dbName: string;
     let tableName: string;
+    // eslint-disable-next-line no-shadow
+    let pool: MasterConnectionPool;
 
     before(async () => {
-      await r.connectPool(options);
+      pool = await createRethinkdbMasterPool(servers, options);
       dbName = uuid();
       tableName = uuid();
 
-      const result1 = await r.dbCreate(dbName).run();
+      const result1 = await pool.run(r.dbCreate(dbName));
       assert.equal(result1.dbs_created, 1);
 
-      const result2 = await r.db(dbName).tableCreate(tableName).run();
+      const result2 = await pool.run(r.db(dbName).tableCreate(tableName));
       assert.equal(result2.tables_created, 1);
 
-      const result3 = await r
-        .db(dbName)
-        .table(tableName)
-        .insert(Array(10000).fill({}))
-        .run();
+      const result3 = await pool.run(
+        r.db(dbName).table(tableName).insert(Array(10000).fill({})),
+      );
       assert.equal(result3.inserted, 10000);
 
       // Making bigger documents to retrieve multiple batches
-      const result4 = await r
-        .db(dbName)
-        .table(tableName)
-        .update({
+      const result4 = await pool.run(
+        r.db(dbName).table(tableName).update({
           foo: uuid(),
           fooo: uuid(),
           foooo: uuid(),
@@ -325,23 +355,23 @@ describe('pool legacy', () => {
           fooooooooo: uuid(),
           foooooooooo: uuid(),
           date: r.now(),
-        })
-        .run();
+        }),
+      );
       assert.equal(result4.replaced, 10000);
     });
 
     after(async () => {
-      const result1 = await r.dbDrop(dbName).run();
+      const result1 = await pool.run(r.dbDrop(dbName));
       assert.equal(result1.dbs_dropped, 1);
 
-      await r.getPoolMaster().drain();
+      await pool.drain();
     });
 
     it('The pool should release a connection only when the cursor has fetch everything or get closed', async () => {
-      const result = [];
-      for (let i = 0; i < options.max; i++) {
-        result.push(await r.db(dbName).table(tableName).getCursor());
-        await new Promise((resolve) => setTimeout(resolve, 100));
+      const result: Cursor[] = [];
+      for (let i = 0; i < options.max; i += 1) {
+        result.push(await pool.getCursor(r.db(dbName).table(tableName)));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
       assert.equal(
         result.length,
@@ -349,25 +379,25 @@ describe('pool legacy', () => {
         'expected to get the same number of results as number of expressions',
       );
       assert.equal(
-        r.getPoolMaster().getAvailableLength(),
+        pool.getAvailableLength(),
         0,
         'expected no available connections',
       );
       await result[0].toArray();
       assert.equal(
-        r.getPoolMaster().getAvailableLength(),
+        pool.getAvailableLength(),
         1,
         'expected available connections',
       );
       await result[1].toArray();
       assert.equal(
-        r.getPoolMaster().getAvailableLength(),
+        pool.getAvailableLength(),
         2,
         'expected available connections',
       );
       await result[2].close();
       assert.equal(
-        r.getPoolMaster().getAvailableLength(),
+        pool.getAvailableLength(),
         3,
         'expected available connections',
       );
@@ -378,7 +408,7 @@ describe('pool legacy', () => {
         }),
       );
       assert.equal(
-        r.getPoolMaster().getAvailableLength(),
+        pool.getAvailableLength(),
         options.max,
         'expected available connections to equal option.max',
       );

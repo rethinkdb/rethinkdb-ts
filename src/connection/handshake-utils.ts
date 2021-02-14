@@ -1,7 +1,6 @@
 import { createHash, createHmac, pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
-import { RethinkDBErrorType } from '../types';
-import { RethinkDBError } from '../error/error';
+import { RethinkDBError, RethinkDBErrorType } from '../error';
 import { Version } from '../proto/enums';
 
 export const NULL_BUFFER = Buffer.from('\0', 'binary');
@@ -22,7 +21,9 @@ function xorBuffer(a: Buffer, b: Buffer) {
   return Buffer.from(result);
 }
 
-export function buildAuthBuffer(user: string) {
+type AuthBufferPair = { authBuffer: Buffer; randomString: string };
+
+export function buildAuthBuffer(user: string): AuthBufferPair {
   const versionBuffer = Buffer.alloc(4);
   versionBuffer.writeInt32LE(Version.V1_0, 0);
   const randomString = randomBytes(18).toString('base64');
@@ -47,7 +48,7 @@ type VersionMessage = {
   server_version: string;
 };
 
-export function validateVersion(msg: VersionMessage) {
+export function validateVersion(msg: VersionMessage): void {
   if (
     msg.max_protocol_version < PROTOCOL_VERSION ||
     msg.min_protocol_version > PROTOCOL_VERSION

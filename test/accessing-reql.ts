@@ -1,44 +1,41 @@
 import assert from 'assert';
 import * as net from 'net';
-import { Connection, r } from '../src';
+import {
+  createRethinkdbConnection,
+  createRethinkdbMasterPool,
+  r,
+} from '../src';
 import config from './config';
 import { uuid } from './util/common';
+import { RethinkDBConnection } from '../src/connection/connection';
 
 describe('accessing-reql', () => {
-  let connection: Connection; // global connection
+  let connection: RethinkDBConnection; // global connection
   let dbName: string;
   let tableName: string;
 
   beforeEach(async () => {
-    connection = await r.connect(config);
+    connection = await createRethinkdbConnection(config.server, config.options);
     assert(connection.open);
   });
 
   afterEach(async () => {
     if (!connection.open) {
-      connection = await r.connect(config);
+      connection = await createRethinkdbConnection(
+        config.server,
+        config.options,
+      );
       assert(connection.open);
     }
     // remove any dbs created between each test case
-    await r
-      .dbList()
-      .filter((db) => r.expr(['rethinkdb', 'test']).contains(db).not())
-      .forEach((db) => r.dbDrop(db))
-      .run(connection);
+    await connection.run(
+      r
+        .dbList()
+        .filter((db) => r.expr(['rethinkdb', 'test']).contains(db).not())
+        .forEach((db) => r.dbDrop(db)),
+    );
     await connection.close();
     assert(!connection.open);
-  });
-
-  it('`run` should throw an error when called without connection', async () => {
-    try {
-      await r.expr(1).run();
-      assert.fail('shold throw an error');
-    } catch (e) {
-      assert.equal(
-        e.message,
-        '`run` was called without a connection and no pool has been created after:\nr.expr(1)\n',
-      );
-    }
   });
 
   it('`run` should throw an error when called with a closed connection', async () => {
@@ -46,12 +43,12 @@ describe('accessing-reql', () => {
       connection.close();
       assert(!connection.open);
 
-      await r.expr(1).run(connection);
+      await connection.run(1);
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(
         e.message,
-        '`run` was called with a closed connection after:\nr.expr(1)\n',
+        '`run` was called with a closed connection after:',
       );
     }
   });
@@ -62,32 +59,28 @@ describe('accessing-reql', () => {
     tableName = uuid();
 
     assert(connection.open);
-    const result1 = await r.dbCreate(dbName).run(connection);
+    const result1 = await connection.run(r.dbCreate(dbName));
     assert.equal(result1.config_changes.length, 1);
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r.db(dbName).tableCreate(tableName).run(connection);
+    const result2 = await connection.run(r.db(dbName).tableCreate(tableName));
     assert.equal(result2.tables_created, 1);
 
-    const result3 = await r
-      .db(dbName)
-      .table(tableName)
-      .insert(new Array(100).fill({}))
-      .run(connection);
+    const result3 = await connection.run(
+      r.db(dbName).table(tableName).insert(new Array(100).fill({})),
+    );
     assert.equal(result3.inserted, 100);
 
-    const result4 = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run(connection);
+    const result4 = await connection.run(
+      r.db(dbName).table(tableName).delete(),
+    );
     assert.equal(result4.deleted, 100);
 
-    const result5 = await r.db(dbName).tableDrop(tableName).run(connection);
+    const result5 = await connection.run(r.db(dbName).tableDrop(tableName));
     assert.equal(result5.config_changes.length, 1);
     assert.equal(result5.tables_dropped, 1);
 
-    const result6 = await r.dbDrop(dbName).run(connection);
+    const result6 = await connection.run(r.dbDrop(dbName));
     assert.equal(result6.config_changes.length, 1);
     assert.equal(result6.dbs_dropped, 1);
   });
@@ -96,25 +89,29 @@ describe('accessing-reql', () => {
     dbName = uuid();
     tableName = uuid();
 
-    const result1 = await r.dbCreate(dbName).run(connection);
+    const result1 = await connection.run(r.dbCreate(dbName));
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r.db(dbName).tableCreate(tableName).run(connection);
+    const result2 = await connection.run(r.db(dbName).tableCreate(tableName));
     assert.equal(result2.tables_created, 1);
 
     await connection.close();
     assert(!connection.open);
 
-    connection = await r.connect({
-      db: dbName,
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-    });
+    connection = await createRethinkdbConnection(
+      {
+        host: config.server.host,
+        port: config.server.port,
+      },
+      {
+        db: dbName,
+        user: config.options.user,
+        password: config.options.password,
+      },
+    );
     assert(connection);
 
-    const result = await r.tableList().run(connection);
+    const result = await connection.run(r.tableList());
     assert.deepEqual(result, [tableName]);
   });
 
@@ -122,15 +119,15 @@ describe('accessing-reql', () => {
     dbName = uuid();
     tableName = uuid();
 
-    const result1 = await r.dbCreate(dbName).run(connection);
+    const result1 = await connection.run(r.dbCreate(dbName));
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r.db(dbName).tableCreate(tableName).run(connection);
+    const result2 = await connection.run(r.db(dbName).tableCreate(tableName));
     assert.equal(result2.tables_created, 1);
 
     connection.use(dbName);
 
-    const result3 = await r.tableList().run(connection);
+    const result3 = await connection.run(r.tableList());
     assert.deepEqual(result3, [tableName]);
   });
 
@@ -147,30 +144,20 @@ describe('accessing-reql', () => {
     connection = await connection.reconnect({ noreplyWait: true });
     assert(connection.open);
 
-    const result1 = await r.expr(1).run(connection);
+    const result1 = await connection.run(r.expr(1));
     assert.equal(result1, 1);
 
     connection = await connection.reconnect({ noreplyWait: false });
     assert(connection.open);
 
-    const result2 = await r.expr(1).run(connection);
+    const result2 = await connection.run(r.expr(1));
     assert.equal(result2, 1);
 
     connection = await connection.reconnect();
     assert(connection);
 
-    const result3 = await r.expr(1).run(connection);
+    const result3 = await connection.run(r.expr(1));
     assert.equal(result3, 1);
-  });
-
-  it('`noReplyWait` should throw', async () => {
-    try {
-      // @ts-ignore
-      await connection.noReplyWait();
-      assert.fail('should throw an error');
-    } catch (e) {
-      assert.equal(e.message, 'connection.noReplyWait is not a function');
-    }
   });
 
   it('`noreplyWait` should work', async () => {
@@ -180,52 +167,51 @@ describe('accessing-reql', () => {
       .fill(Math.random())
       .map((random) => r.expr({ random }));
 
-    await r.dbCreate(dbName).run(connection);
-    await r.db(dbName).tableCreate(tableName).run(connection);
+    await connection.run(r.dbCreate(dbName));
+    await connection.run(r.db(dbName).tableCreate(tableName));
 
-    const result1 = await r
-      .db(dbName)
-      .table(tableName)
-      .insert(largeishObject)
-      .run(connection, { noreply: true });
+    const result1 = await connection.run(
+      r.db(dbName).table(tableName).insert(largeishObject),
+      { noreply: true },
+    );
     assert.equal(result1, undefined);
 
-    const result2 = await r.db(dbName).table(tableName).count().run(connection);
+    const result2 = await connection.run(r.db(dbName).table(tableName).count());
     assert.equal(result2, 0);
 
     const result3 = await connection.noreplyWait();
     assert.equal(result3, undefined);
 
-    const result4 = await r.db(dbName).table(tableName).count().run(connection);
+    const result4 = await connection.run(r.db(dbName).table(tableName).count());
     assert.equal(result4, 10000);
   });
 
   it('`run` should take an argument', async () => {
     // @ts-ignore
-    const result1 = await r.expr(1).run(connection, { readMode: 'primary' });
+    const result1 = await connection.run(r.expr(1), { readMode: 'primary' });
     assert.equal(result1, 1);
 
-    const result2 = await r.expr(1).run(connection, { readMode: 'majority' });
+    const result2 = await connection.run(r.expr(1), { readMode: 'majority' });
     assert.equal(result2, 1);
 
-    const result3 = await r.expr(1).run(connection, { profile: false });
+    const result3 = await connection.run(r.expr(1), { profile: false });
     assert.equal(result3, 1);
 
-    const result4 = await r.expr(1).run(connection, { profile: true });
+    const result4 = await connection.run(r.expr(1), { profile: true });
     assert(result4.profile);
     assert.equal(result4.result, 1);
 
-    const result5 = await r.expr(1).run(connection, { durability: 'soft' });
+    const result5 = await connection.run(r.expr(1), { durability: 'soft' });
     assert.equal(result5, 1);
 
-    const result6 = await r.expr(1).run(connection, { durability: 'hard' });
+    const result6 = await connection.run(r.expr(1), { durability: 'hard' });
     assert.equal(result6, 1);
   });
 
   it('`run` should throw on an unrecognized argument', async () => {
     try {
       // @ts-ignore
-      await r.expr(1).run(connection, { foo: 'bar' });
+      await connection.run(r.expr(1), { foo: 'bar' });
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(
@@ -236,41 +222,43 @@ describe('accessing-reql', () => {
   });
 
   it('`r()` should be a shortcut for r.expr()', async () => {
-    const result = await r(1).run(connection);
+    const result = await connection.run(r(1));
     assert.deepEqual(result, 1);
   });
 
   it('`timeFormat` should work', async () => {
-    const result1 = await r.now().run(connection);
+    const result1 = await connection.run(r.now());
     assert(result1 instanceof Date);
 
-    const result2 = await r.now().run(connection, { timeFormat: 'native' });
+    const result2 = await connection.run(r.now(), { timeFormat: 'native' });
     assert(result2 instanceof Date);
 
-    const result3 = await r.now().run(connection, { timeFormat: 'raw' });
+    const result3 = await connection.run(r.now(), { timeFormat: 'raw' });
     // @ts-ignore
     assert.equal(result3.$reql_type$, 'TIME');
   });
 
   it('`binaryFormat` should work', async () => {
-    const result = await r
-      .binary(Buffer.from([1, 2, 3]))
-      .run(connection, { binaryFormat: 'raw' });
+    const result = await connection.run(r.binary(Buffer.from([1, 2, 3])), {
+      binaryFormat: 'raw',
+    });
     // @ts-ignore
     assert.equal(result.$reql_type$, 'BINARY');
   });
 
   it('`groupFormat` should work', async () => {
-    const result = await r
-      .expr([
-        { name: 'Michel', grownUp: true },
-        { name: 'Laurent', grownUp: true },
-        { name: 'Sophie', grownUp: true },
-        { name: 'Luke', grownUp: false },
-        { name: 'Mino', grownUp: false },
-      ])
-      .group('grownUp')
-      .run(connection, { groupFormat: 'raw' });
+    const result = await connection.run(
+      r
+        .expr([
+          { name: 'Michel', grownUp: true },
+          { name: 'Laurent', grownUp: true },
+          { name: 'Sophie', grownUp: true },
+          { name: 'Luke', grownUp: false },
+          { name: 'Mino', grownUp: false },
+        ])
+        .group('grownUp'),
+      { groupFormat: 'raw' },
+    );
 
     assert.deepEqual(result, {
       $reql_type$: 'GROUPED_DATA',
@@ -295,32 +283,32 @@ describe('accessing-reql', () => {
   });
 
   it('`profile` should work', async () => {
-    const result1 = await r.expr(true).run(connection, { profile: false });
+    const result1 = await connection.run(r.expr(true), { profile: false });
     assert(result1);
 
-    const result2 = await r.expr(true).run(connection, { profile: true });
+    const result2 = await connection.run(r.expr(true), { profile: true });
     assert(result2.profile);
     assert.equal(result2.result, true);
 
-    const result3 = await r.expr(true).run(connection, { profile: false });
+    const result3 = await connection.run(r.expr(true), { profile: false });
     assert.equal(result3, true);
   });
 
   it('`timeout` option should work', async () => {
     let server: net.Server;
-    let port: number;
+    const port = Math.floor(Math.random() * (65535 - 1025) + 1025);
     try {
-      port = Math.floor(Math.random() * (65535 - 1025) + 1025);
-
       server = net.createServer().listen(port);
 
-      connection = await r.connect({
-        port,
-        timeout: 1,
-      });
+      connection = await createRethinkdbConnection(
+        { port },
+        { db: 'test', timeout: 1 },
+      );
       assert.fail('should throw an error');
     } catch (err) {
-      await server.close();
+      if (server) {
+        await server.close();
+      }
 
       assert.equal(
         err.message,
@@ -339,35 +327,30 @@ describe('accessing-reql', () => {
     const restrictedDbName = uuid();
     const restrictedTableName = uuid();
 
-    const result1 = await r.dbCreate(restrictedDbName).run(connection);
+    const result1 = await connection.run(r.dbCreate(restrictedDbName));
     assert.equal(result1.config_changes.length, 1);
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(restrictedDbName)
-      .tableCreate(restrictedTableName)
-      .run(connection);
+    const result2 = await connection.run(
+      r.db(restrictedDbName).tableCreate(restrictedTableName),
+    );
     assert.equal(result2.tables_created, 1);
 
     const user = uuid();
     const password = uuid();
-    const result3 = await r
-      .db('rethinkdb')
-      .table('users')
-      .insert({
+    const result3 = await connection.run(
+      r.db('rethinkdb').table('users').insert({
         id: user,
         password,
-      })
-      .run(connection);
-    const result4 = await r
-      .db(restrictedDbName)
-      .table(restrictedTableName)
-      .grant(user, {
+      }),
+    );
+    const result4 = await connection.run(
+      r.db(restrictedDbName).table(restrictedTableName).grant(user, {
         read: true,
         write: true,
         config: true,
-      })
-      .run(connection);
+      }),
+    );
     assert.deepEqual(result4, {
       granted: 1,
       permissions_changes: [
@@ -385,9 +368,7 @@ describe('accessing-reql', () => {
 
   it('If `servers` is specified, it cannot be empty', async () => {
     try {
-      await r.connectPool({
-        servers: [],
-      });
+      await createRethinkdbMasterPool([], config.options);
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(
@@ -400,10 +381,11 @@ describe('accessing-reql', () => {
   // tslint:disable-next-line:max-line-length
   it('should not throw an error (since 1.13, the token is now stored outside the query): `connection` should extend events.Emitter and emit an error if the server failed to parse the protobuf message', async () => {
     connection.addListener('error', () => assert.fail('should not throw'));
-    const result = await Array(687)
-      .fill(1)
-      .reduce((acc, curr) => acc.add(curr), r.expr(1))
-      .run(connection);
+    const result = await connection.run(
+      Array(687)
+        .fill(1)
+        .reduce((acc, curr) => acc.add(curr), r.expr(1)),
+    );
     assert.equal(result, 688);
   });
 });
