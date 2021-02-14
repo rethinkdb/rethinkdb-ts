@@ -1,43 +1,44 @@
 import assert from 'assert';
-import { r } from '../src';
+import { createRethinkdbMasterPool, r } from '../src';
 import config from './config';
 import { uuid } from './util/common';
+import { MasterConnectionPool } from '../src/connection/master-pool';
 
 describe('aggregation', () => {
   let dbName: string;
   let tableName: string;
   let result: any;
+  let pool: MasterConnectionPool;
 
   before(async () => {
-    await r.connectPool(config);
+    pool = await createRethinkdbMasterPool([config.server], config.options);
 
     dbName = uuid();
     tableName = uuid();
 
-    result = await r.dbCreate(dbName).run();
+    result = await pool.run(r.dbCreate(dbName));
     assert.equal(result.dbs_created, 1);
 
-    result = await r.db(dbName).tableCreate(tableName).run();
+    result = await pool.run(r.db(dbName).tableCreate(tableName));
     assert.equal(result.tables_created, 1);
   });
 
   after(async () => {
-    await r.getPoolMaster().drain();
+    await pool.drain();
   });
 
   it('`reduce` should work -- no base ', async () => {
-    result = await r
-      .expr([1, 2, 3])
-      .reduce((left, right) => {
+    result = await pool.run(
+      r.expr([1, 2, 3]).reduce((left, right) => {
         return left.add(right);
-      })
-      .run();
+      }),
+    );
     assert.equal(result, 6);
   });
   it('`reduce` should throw if no argument has been passed', async () => {
     try {
       // @ts-ignore
-      result = await r.db(dbName).table(tableName).reduce().run();
+      result = await pool.run(r.db(dbName).table(tableName).reduce());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -48,19 +49,17 @@ describe('aggregation', () => {
   });
 
   it('`fold` should work', async () => {
-    result = await r
-      .expr([1, 2, 3])
-      .fold(10, (left, right) => {
+    result = await pool.run(
+      r.expr([1, 2, 3]).fold(10, (left, right) => {
         return left.add(right);
-      })
-      .run();
+      }),
+    );
     assert.equal(result, 16);
   });
 
   it('`fold` should work -- with emit', async () => {
-    result = await r
-      .expr(['foo', 'bar', 'buzz', 'hello', 'world'])
-      .fold(
+    result = await pool.run(
+      r.expr(['foo', 'bar', 'buzz', 'hello', 'world']).fold(
         0,
         (acc, row) => {
           return acc.add(1);
@@ -70,8 +69,8 @@ describe('aggregation', () => {
             return [oldAcc, element, newAcc];
           },
         },
-      )
-      .run();
+      ),
+    );
     assert.deepEqual(result, [
       0,
       'foo',
@@ -92,9 +91,8 @@ describe('aggregation', () => {
   });
 
   it('`fold` should work -- with emit and finalEmit', async () => {
-    result = await r
-      .expr(['foo', 'bar', 'buzz', 'hello', 'world'])
-      .fold(
+    result = await pool.run(
+      r.expr(['foo', 'bar', 'buzz', 'hello', 'world']).fold(
         0,
         (acc, row) => {
           return acc.add(1);
@@ -107,8 +105,8 @@ describe('aggregation', () => {
             return [acc];
           },
         },
-      )
-      .run();
+      ),
+    );
     assert.deepEqual(result, [
       0,
       'foo',
@@ -130,37 +128,36 @@ describe('aggregation', () => {
   });
 
   it('`count` should work -- no arg ', async () => {
-    result = await r.expr([0, 1, 2, 3, 4, 5]).count().run();
+    result = await pool.run(r.expr([0, 1, 2, 3, 4, 5]).count());
     assert.equal(result, 6);
   });
 
   it('`count` should work -- filter ', async () => {
-    result = await r
-      .expr([0, 1, 2, 3, 4, 5])
-      .count((row) => row.eq(2))
-      .run();
+    result = await pool.run(
+      r.expr([0, 1, 2, 3, 4, 5]).count((row) => row.eq(2)),
+    );
     assert.equal(result, 1);
 
-    result = await r
-      .expr([0, 1, 2, 3, 4, 5])
-      .count((doc) => {
+    result = await pool.run(
+      r.expr([0, 1, 2, 3, 4, 5]).count((doc) => {
         return doc.eq(2);
-      })
-      .run();
+      }),
+    );
     assert.equal(result, 1);
   });
 
   it('`group` should work ', async () => {
-    result = await r
-      .expr([
-        { name: 'Michel', grownUp: true },
-        { name: 'Laurent', grownUp: true },
-        { name: 'Sophie', grownUp: true },
-        { name: 'Luke', grownUp: false },
-        { name: 'Mino', grownUp: false },
-      ])
-      .group('grownUp')
-      .run();
+    result = await pool.run(
+      r
+        .expr([
+          { name: 'Michel', grownUp: true },
+          { name: 'Laurent', grownUp: true },
+          { name: 'Sophie', grownUp: true },
+          { name: 'Luke', grownUp: false },
+          { name: 'Mino', grownUp: false },
+        ])
+        .group('grownUp'),
+    );
     result.sort();
 
     assert.deepEqual(result, [
@@ -183,16 +180,17 @@ describe('aggregation', () => {
   });
 
   it('`group` should work with row => row', async () => {
-    result = await r
-      .expr([
-        { name: 'Michel', grownUp: true },
-        { name: 'Laurent', grownUp: true },
-        { name: 'Sophie', grownUp: true },
-        { name: 'Luke', grownUp: false },
-        { name: 'Mino', grownUp: false },
-      ])
-      .group((row) => row('grownUp'))
-      .run();
+    result = await pool.run(
+      r
+        .expr([
+          { name: 'Michel', grownUp: true },
+          { name: 'Laurent', grownUp: true },
+          { name: 'Sophie', grownUp: true },
+          { name: 'Luke', grownUp: false },
+          { name: 'Mino', grownUp: false },
+        ])
+        .group((row) => row('grownUp')),
+    );
     result.sort();
 
     assert.deepEqual(result, [
@@ -215,23 +213,22 @@ describe('aggregation', () => {
   });
 
   it('`group` should work with an index ', async () => {
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert([
-        { id: 1, group: 1 },
-        { id: 2, group: 1 },
-        { id: 3, group: 1 },
-        { id: 4, group: 4 },
-      ])
-      .run();
-    result = await r.db(dbName).table(tableName).indexCreate('group').run();
-    result = await r.db(dbName).table(tableName).indexWait('group').run();
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .group({ index: 'group' })
-      .run();
+    result = await pool.run(
+      r
+        .db(dbName)
+        .table(tableName)
+        .insert([
+          { id: 1, group: 1 },
+          { id: 2, group: 1 },
+          { id: 3, group: 1 },
+          { id: 4, group: 4 },
+        ]),
+    );
+    result = await pool.run(r.db(dbName).table(tableName).indexCreate('group'));
+    result = await pool.run(r.db(dbName).table(tableName).indexWait('group'));
+    result = await pool.run(
+      r.db(dbName).table(tableName).group({ index: 'group' }),
+    );
 
     assert.equal(result.length, 2);
     assert(
@@ -243,16 +240,18 @@ describe('aggregation', () => {
   });
 
   it('`groupFormat` should work -- with raw', async () => {
-    result = await r
-      .expr([
-        { name: 'Michel', grownUp: true },
-        { name: 'Laurent', grownUp: true },
-        { name: 'Sophie', grownUp: true },
-        { name: 'Luke', grownUp: false },
-        { name: 'Mino', grownUp: false },
-      ])
-      .group('grownUp')
-      .run({ groupFormat: 'raw' });
+    result = await pool.run(
+      r
+        .expr([
+          { name: 'Michel', grownUp: true },
+          { name: 'Laurent', grownUp: true },
+          { name: 'Sophie', grownUp: true },
+          { name: 'Luke', grownUp: false },
+          { name: 'Mino', grownUp: false },
+        ])
+        .group('grownUp'),
+      { groupFormat: 'raw' },
+    );
 
     assert.deepEqual(result, {
       $reql_type$: 'GROUPED_DATA',
@@ -277,31 +276,33 @@ describe('aggregation', () => {
   });
 
   it('`group` results should be properly parsed ', async () => {
-    result = await r
-      .expr([
-        { name: 'Michel', date: r.now() },
-        { name: 'Laurent', date: r.now() },
-        { name: 'Sophie', date: r.now().sub(1000) },
-      ])
-      .group('date')
-      .run();
+    result = await pool.run(
+      r
+        .expr([
+          { name: 'Michel', date: r.now() },
+          { name: 'Laurent', date: r.now() },
+          { name: 'Sophie', date: r.now().sub(1000) },
+        ])
+        .group('date'),
+    );
     assert.equal(result.length, 2);
     assert(result[0].group instanceof Date);
     assert(result[0].reduction[0].date instanceof Date);
   });
 
   it('`ungroup` should work ', async () => {
-    result = await r
-      .expr([
-        { name: 'Michel', grownUp: true },
-        { name: 'Laurent', grownUp: true },
-        { name: 'Sophie', grownUp: true },
-        { name: 'Luke', grownUp: false },
-        { name: 'Mino', grownUp: false },
-      ])
-      .group('grownUp')
-      .ungroup()
-      .run();
+    result = await pool.run(
+      r
+        .expr([
+          { name: 'Michel', grownUp: true },
+          { name: 'Laurent', grownUp: true },
+          { name: 'Sophie', grownUp: true },
+          { name: 'Luke', grownUp: false },
+          { name: 'Mino', grownUp: false },
+        ])
+        .group('grownUp')
+        .ungroup(),
+    );
     result.sort();
 
     assert.deepEqual(result, [
@@ -324,52 +325,46 @@ describe('aggregation', () => {
   });
 
   it('`contains` should work ', async () => {
-    result = await r.expr([1, 2, 3]).contains(2).run();
+    result = await pool.run(r.expr([1, 2, 3]).contains(2));
     assert.equal(result, true);
 
-    result = await r.expr([1, 2, 3]).contains(1, 2).run();
+    result = await pool.run(r.expr([1, 2, 3]).contains(1, 2));
     assert.equal(result, true);
 
-    result = await r.expr([1, 2, 3]).contains(1, 5).run();
+    result = await pool.run(r.expr([1, 2, 3]).contains(1, 5));
     assert.equal(result, false);
 
-    result = await r
-      .expr([1, 2, 3])
-      .contains((doc) => {
+    result = await pool.run(
+      r.expr([1, 2, 3]).contains((doc) => {
         return doc.eq(1);
-      })
-      .run();
+      }),
+    );
     assert.equal(result, true);
 
-    result = await r
-      .expr([1, 2, 3])
-      .contains((row) => row.eq(1))
-      .run();
+    result = await pool.run(r.expr([1, 2, 3]).contains((row) => row.eq(1)));
     assert.equal(result, true);
 
-    result = await r
-      .expr([1, 2, 3])
-      .contains(
+    result = await pool.run(
+      r.expr([1, 2, 3]).contains(
         (row) => row.eq(1),
         (row) => row.eq(2),
-      )
-      .run();
+      ),
+    );
     assert.equal(result, true);
 
-    result = await r
-      .expr([1, 2, 3])
-      .contains(
+    result = await pool.run(
+      r.expr([1, 2, 3]).contains(
         (row) => row.eq(1),
         (row) => row.eq(5),
-      )
-      .run();
+      ),
+    );
     assert.equal(result, false);
   });
 
   it('`contains` should throw if called without arguments', async () => {
     try {
       // @ts-ignore
-      result = await r.db(dbName).table(tableName).contains().run();
+      result = await pool.run(r.db(dbName).table(tableName).contains());
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
@@ -380,99 +375,87 @@ describe('aggregation', () => {
   });
 
   it('`sum` should work ', async () => {
-    result = await r.expr([1, 2, 3]).sum().run();
+    result = await pool.run(r.expr([1, 2, 3]).sum());
     assert.equal(result, 6);
   });
 
   it('`sum` should work with a field', async () => {
-    result = await r
-      .expr([{ a: 2 }, { a: 10 }, { a: 9 }])
-      .sum('a')
-      .run();
+    result = await pool.run(r.expr([{ a: 2 }, { a: 10 }, { a: 9 }]).sum('a'));
     assert.deepEqual(result, 21);
   });
 
   it('`avg` should work ', async () => {
-    result = await r.expr([1, 2, 3]).avg().run();
+    result = await pool.run(r.expr([1, 2, 3]).avg());
     assert.equal(result, 2);
   });
 
   it('`r.avg` should work ', async () => {
-    result = await r.avg([1, 2, 3]).run();
+    result = await pool.run(r.avg([1, 2, 3]));
     assert.equal(result, 2);
   });
 
   it('`avg` should work with a field', async () => {
-    result = await r
-      .expr([{ a: 2 }, { a: 10 }, { a: 9 }])
-      .avg('a')
-      .run();
+    result = await pool.run(r.expr([{ a: 2 }, { a: 10 }, { a: 9 }]).avg('a'));
     assert.equal(result, 7);
   });
 
   it('`r.avg` should work with a field', async () => {
-    result = await r.avg([{ a: 2 }, { a: 10 }, { a: 9 }], 'a').run();
+    result = await pool.run(r.avg([{ a: 2 }, { a: 10 }, { a: 9 }], 'a'));
     assert.equal(result, 7);
   });
 
   it('`min` should work ', async () => {
-    result = await r.expr([1, 2, 3]).min().run();
+    result = await pool.run(r.expr([1, 2, 3]).min());
     assert.equal(result, 1);
   });
 
   it('`r.min` should work ', async () => {
-    result = await r.min([1, 2, 3]).run();
+    result = await pool.run(r.min([1, 2, 3]));
     assert.equal(result, 1);
   });
 
   it('`min` should work with a field', async () => {
-    result = await r
-      .expr([{ a: 2 }, { a: 10 }, { a: 9 }])
-      .min('a')
-      .run();
+    result = await pool.run(r.expr([{ a: 2 }, { a: 10 }, { a: 9 }]).min('a'));
     assert.deepEqual(result, { a: 2 });
   });
 
   it('`r.min` should work with a field', async () => {
-    result = await r.min([{ a: 2 }, { a: 10 }, { a: 9 }], 'a').run();
+    result = await pool.run(r.min([{ a: 2 }, { a: 10 }, { a: 9 }], 'a'));
     assert.deepEqual(result, { a: 2 });
   });
 
   it('`max` should work ', async () => {
-    result = await r.expr([1, 2, 3]).max().run();
+    result = await pool.run(r.expr([1, 2, 3]).max());
     assert.equal(result, 3);
   });
 
   it('`r.max` should work ', async () => {
-    result = await r.max([1, 2, 3]).run();
+    result = await pool.run(r.max([1, 2, 3]));
     assert.equal(result, 3);
   });
 
   it('`distinct` should work', async () => {
-    result = await r
-      .expr([1, 2, 3, 1, 2, 1, 3, 2, 2, 1, 4])
-      .distinct()
-      .orderBy((row) => row)
-      .run();
+    result = await pool.run(
+      r
+        .expr([1, 2, 3, 1, 2, 1, 3, 2, 2, 1, 4])
+        .distinct()
+        .orderBy((row) => row),
+    );
     assert.deepEqual(result, [1, 2, 3, 4]);
   });
 
   it('`r.distinct` should work', async () => {
-    result = await r
-      .distinct([1, 2, 3, 1, 2, 1, 3, 2, 2, 1, 4])
-      .orderBy((row) => row)
-      .run();
+    result = await pool.run(
+      r.distinct([1, 2, 3, 1, 2, 1, 3, 2, 2, 1, 4]).orderBy((row) => row),
+    );
     assert.deepEqual(result, [1, 2, 3, 4]);
   });
 
   it('`distinct` should work with an index', async () => {
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .distinct({ index: 'id' })
-      .count()
-      .run();
-    const result2 = await r.db(dbName).table(tableName).count().run();
+    result = await pool.run(
+      r.db(dbName).table(tableName).distinct({ index: 'id' }).count(),
+    );
+    const result2 = await pool.run(r.db(dbName).table(tableName).count());
     assert.equal(result, result2);
   });
 });

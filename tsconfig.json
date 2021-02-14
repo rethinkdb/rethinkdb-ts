@@ -4,8 +4,7 @@
     "module": "commonjs",
     "declaration": true,
     "outDir": "./lib",
-    "rootDir": "./src",
-    "strict": true ,
+    "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "noImplicitAny": true,
@@ -13,6 +12,5 @@
       "es2015",
       "esnext.asynciterable"
     ]
-  },
-  "include": ["src"]
+  }
 }
