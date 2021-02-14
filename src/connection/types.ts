@@ -3,8 +3,8 @@ import { ConnectionOptions } from 'tls';
 import { Durability, Format } from '../types';
 
 export type RethinkDBServerConnectionOptions =
-  | (Partial<TcpNetConnectOpts> & { tls?: false })
-  | (Partial<ConnectionOptions> & { tls: boolean });
+  | (Partial<ConnectionOptions> & { tls: true })
+  | (Partial<TcpNetConnectOpts> & { tls?: false });
 
 export interface IConnectionLogger {
   (message: string): void;

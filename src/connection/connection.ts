@@ -63,13 +63,9 @@ function findTableTermAndAddDb(term: TermJson, db: string): void {
 }
 
 export class RethinkDBConnection extends EventEmitter {
-  public clientPort: number;
-
-  public clientAddress: string;
-
   public readonly socket: RethinkDBSocket;
 
-  private options: RethinkDBServerConnectionOptions;
+  public options: RethinkDBServerConnectionOptions;
 
   private timeout: number;
 
@@ -98,19 +94,13 @@ export class RethinkDBConnection extends EventEmitter {
       log,
     } = options;
     this.options = setConnectionDefaults(serverOptions);
-    this.clientPort = this.options.port || 28015;
-    this.clientAddress = this.options.host || 'localhost';
     this.timeout = timeout;
     this.pingInterval = pingInterval;
     this.silent = silent;
     this.log = log;
     this.db = db;
 
-    this.socket = new RethinkDBSocket({
-      connectionOptions: this.options,
-      user,
-      password,
-    });
+    this.socket = new RethinkDBSocket(this.options, user, password);
   }
 
   public eventNames(): string[] {
@@ -184,7 +174,7 @@ export class RethinkDBConnection extends EventEmitter {
     }
     if (this.socket.status !== 'open') {
       const error = new RethinkDBError(
-        `Failed to connect to ${this.clientAddress}:${this.clientPort} in less than ${this.timeout}s.`,
+        `Failed to connect to ${this.options.host}:${this.options.port} in less than ${this.timeout}s.`,
         { type: RethinkDBErrorType.TIMEOUT },
       );
       this.emit('timeout');

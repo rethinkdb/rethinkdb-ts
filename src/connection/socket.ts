@@ -15,9 +15,15 @@ import {
 } from './handshake-utils';
 import { isNativeError } from '../util';
 
+// FIXME reduce number of types, this is excess
+export type RethinkDBServerConnectionParsedOptions = RethinkDBServerConnectionOptions & {
+  host: string;
+  port: number;
+};
+
 export function setConnectionDefaults(
   connectionOptions: RethinkDBServerConnectionOptions,
-): RethinkDBServerConnectionOptions {
+): RethinkDBServerConnectionParsedOptions {
   return {
     ...connectionOptions,
     host: connectionOptions.host || 'localhost',
@@ -31,7 +37,7 @@ export type RethinkDBSocketStatuses =
   | 'open';
 
 export class RethinkDBSocket extends EventEmitter {
-  public connectionOptions: RethinkDBServerConnectionOptions;
+  public connectionOptions: RethinkDBServerConnectionParsedOptions;
 
   public readonly user: string;
 
@@ -70,15 +76,11 @@ export class RethinkDBSocket extends EventEmitter {
 
   private mode: 'handshake' | 'response' = 'handshake';
 
-  constructor({
-    connectionOptions,
+  constructor(
+    connectionOptions: RethinkDBServerConnectionOptions,
     user = 'admin',
     password = '',
-  }: {
-    connectionOptions: RethinkDBServerConnectionOptions;
-    user?: string;
-    password?: string;
-  }) {
+  ) {
     super();
     this.connectionOptions = setConnectionDefaults(connectionOptions);
     this.user = user;

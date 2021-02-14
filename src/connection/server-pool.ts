@@ -10,11 +10,14 @@ import type {
   RunOptions,
 } from './types';
 import { RethinkDBConnection } from './connection';
-import { setConnectionDefaults } from './socket';
+import {
+  RethinkDBServerConnectionParsedOptions,
+  setConnectionDefaults,
+} from './socket';
 import { delay } from '../util';
 
 export class ServerConnectionPool extends EventEmitter {
-  public readonly server: RethinkDBServerConnectionOptions;
+  public readonly serverOptions: RethinkDBServerConnectionParsedOptions;
 
   private draining = false;
 
@@ -65,7 +68,7 @@ export class ServerConnectionPool extends EventEmitter {
     this.maxExponent = maxExponent;
     this.silent = silent;
     this.log = log;
-    this.server = setConnectionDefaults(connectionOptions);
+    this.serverOptions = setConnectionDefaults(connectionOptions);
     this.connParam = { db, user, password, timeout, pingInterval, silent, log };
     this.connections = [];
   }
@@ -206,7 +209,10 @@ export class ServerConnectionPool extends EventEmitter {
   }
 
   private async createConnection() {
-    const connection = new RethinkDBConnection(this.server, this.connParam);
+    const connection = new RethinkDBConnection(
+      this.serverOptions,
+      this.connParam,
+    );
     this.connections.push(connection);
     return this.persistConnection(connection);
   }

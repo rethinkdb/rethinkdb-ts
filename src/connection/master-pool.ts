@@ -387,7 +387,9 @@ export class MasterConnectionPool extends EventEmitter {
       this.servers = this.servers.filter((s) => s !== server);
     }
     const pool = this.serverPools.find(
-      (p) => server.host === p.server.host && server.port === p.server.port,
+      (p) =>
+        server.host === p.serverOptions.host &&
+        server.port === p.serverOptions.port,
     );
     if (pool) {
       await this.closeServerPool(pool);
@@ -413,7 +415,7 @@ export class MasterConnectionPool extends EventEmitter {
       })
       .on('healthy', (healthy?: boolean, error?: Error) => {
         if (!healthy) {
-          const { server } = pool;
+          const { serverOptions } = pool;
           this.closeServerPool(pool)
             .then(
               () =>
@@ -429,7 +431,7 @@ export class MasterConnectionPool extends EventEmitter {
             )
             .then(() => {
               if (!this.draining) {
-                this.createServerPool(server).catch(() => undefined);
+                this.createServerPool(serverOptions).catch(() => undefined);
               }
             });
         }
