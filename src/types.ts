@@ -25,6 +25,7 @@ export type MultiFieldSelector =
   | RDatum<MultiFieldSelector>
   | { [property: string]: MultiFieldSelector }
   | string
+  | string[]
   | boolean
   | number;
 export type FieldSelector<T, U = any> = string | Func<T, U>;
