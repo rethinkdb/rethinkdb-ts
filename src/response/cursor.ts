@@ -203,7 +203,7 @@ export class Cursor<T = any> extends Readable {
       if (err && err.type === RethinkDBErrorType.CURSOR_END) {
         break;
       }
-      resume = cb(err, next);
+      resume = Boolean(cb(err, next));
     }
     if (onFinishedCallback) {
       onFinishedCallback();
