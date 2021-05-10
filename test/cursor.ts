@@ -1,12 +1,11 @@
 import assert from 'assert';
-import { satisfies } from 'semver';
 import {
   Changes,
   Connection,
   isRethinkDBError,
   r,
   RCursor,
-  RethinkDBErrorType
+  RethinkDBErrorType,
 } from '../src';
 import { RethinkDBConnection } from '../src/connection/connection';
 import config from './config';
@@ -16,8 +15,8 @@ function isAsyncIterable(val: any): boolean {
   if (val === null || val === undefined) {
     return false;
   }
-  const isIterable = typeof val[Symbol.iterator] === "function";
-  const isAsync = typeof val[Symbol.asyncIterator] === "function";
+  const isIterable = typeof val[Symbol.iterator] === 'function';
+  const isAsync = typeof val[Symbol.asyncIterator] === 'function';
 
   return isAsync || isIterable;
 }
@@ -44,28 +43,17 @@ describe('cursor', () => {
     // delete all but the system dbs
     await r
       .dbList()
-      .filter(db =>
-        r
-          .expr(['rethinkdb', 'test'])
-          .contains(db)
-          .not()
-      )
-      .forEach(db => r.dbDrop(db))
+      .filter((db) => r.expr(['rethinkdb', 'test']).contains(db).not())
+      .forEach((db) => r.dbDrop(db))
       .run(connection);
 
     result = await r.dbCreate(dbName).run();
     assert.equal(result.dbs_created, 1);
 
-    result = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    result = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result.tables_created, 1);
 
-    result = await r
-      .db(dbName)
-      .tableCreate(tableName2)
-      .run();
+    result = await r.db(dbName).tableCreate(tableName2).run();
     assert.equal(result.tables_created, 1);
   });
 
@@ -98,19 +86,16 @@ describe('cursor', () => {
       .update(
         {
           date: r.now().sub(r.random().mul(1000000)),
-          value: r.random()
+          value: r.random(),
         },
-        { nonAtomic: true }
+        { nonAtomic: true },
       )
       .run();
     assert.equal(result.replaced, 100);
   });
 
   it('`table` should return a cursor', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
     assert.equal(cursor.toString(), '[object Cursor]');
   });
@@ -122,15 +107,12 @@ describe('cursor', () => {
   });
 
   it('`each` should work', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
     await new Promise((resolve, reject) => {
       let count = 0;
-      cursor.each(err => {
+      cursor.each((err) => {
         if (err) {
           reject(err);
         }
@@ -143,16 +125,13 @@ describe('cursor', () => {
   });
 
   it('`each` should work - onFinish - reach end', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
     await new Promise((resolve, reject) => {
       let count = 0;
       cursor.each(
-        err => {
+        (err) => {
           if (err) {
             reject(err);
           }
@@ -162,28 +141,25 @@ describe('cursor', () => {
           if (count !== numDocs) {
             reject(
               new Error(
-                `expected count (${count}) to equal numDocs (${numDocs})`
-              )
+                `expected count (${count}) to equal numDocs (${numDocs})`,
+              ),
             );
           }
           assert.equal(count, numDocs);
           resolve();
-        }
+        },
       );
     });
   });
 
   it('`each` should work - onFinish - return false', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
     await new Promise((resolve, reject) => {
       let count = 0;
       cursor.each(
-        err => {
+        (err) => {
           if (err) {
             reject(err);
           }
@@ -194,16 +170,13 @@ describe('cursor', () => {
           count === 1
             ? resolve()
             : reject(new Error('expected count to not equal 1'));
-        }
+        },
       );
     });
   });
 
   it('`eachAsync` should work', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
     const history = [];
@@ -228,7 +201,7 @@ describe('cursor', () => {
             assert.deepEqual(history, expected);
           }
           if (count > numDocs) {
-            reject(new Error('eachAsync exceeded ' + numDocs + ' iterations'));
+            reject(new Error(`eachAsync exceeded ${numDocs} iterations`));
           } else {
             resolve();
           }
@@ -238,10 +211,7 @@ describe('cursor', () => {
   });
 
   it('`eachAsync` should work - callback style', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
     let count = 0;
@@ -258,28 +228,19 @@ describe('cursor', () => {
   });
 
   it('`toArray` should work', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
     result = await cursor.toArray();
     assert.equal(result.length, numDocs);
   });
 
   it('`toArray` should work - 2', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName2)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName2).getCursor();
     result = await cursor.toArray();
     assert.equal(result.length, smallNumDocs);
   });
 
   it('`toArray` should work -- with a profile', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor({ profile: true });
+    cursor = await r.db(dbName).table(tableName).getCursor({ profile: true });
     result = await cursor.toArray();
     assert(Array.isArray(result));
     assert.equal(result.length, numDocs);
@@ -293,10 +254,7 @@ describe('cursor', () => {
   });
 
   it('`table` should return a cursor - 2', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName2)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName2).getCursor();
     assert(cursor);
   });
 
@@ -307,10 +265,7 @@ describe('cursor', () => {
   });
 
   it('`next` should work -- testing common pattern', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName2)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName2).getCursor();
     assert(cursor);
 
     let i = 0;
@@ -327,19 +282,12 @@ describe('cursor', () => {
   });
 
   it('`cursor.close` should return a promise', async () => {
-    const cursor1 = await r
-      .db(dbName)
-      .table(tableName2)
-      .getCursor();
+    const cursor1 = await r.db(dbName).table(tableName2).getCursor();
     await cursor1.close();
   });
 
   it('`cursor.close` should still return a promise if the cursor was closed', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    cursor = await r.db(dbName).table(tableName2).changes().run();
     await cursor.close();
     result = cursor.close();
     try {
@@ -350,10 +298,7 @@ describe('cursor', () => {
   });
 
   it('cursor should throw if the user try to serialize it in JSON', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName).getCursor();
 
     try {
       // @ts-ignore
@@ -364,35 +309,27 @@ describe('cursor', () => {
   });
 
   it('Remove the field `val` in some docs - 1', async () => {
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .update({ val: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).update({ val: 1 }).run();
     assert.equal(result.replaced, numDocs);
 
     result = await r
       .db(dbName)
       .table(tableName)
       .sample(5)
-      .replace(row => row.without('val'))
+      .replace((row) => row.without('val'))
       .run();
     assert.equal(result.replaced, 5);
   });
 
   it('Remove the field `val` in some docs - 2', async () => {
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .update({ val: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).update({ val: 1 }).run();
 
     result = await r
       .db(dbName)
       .table(tableName)
       .orderBy({ index: r.desc('id') })
       .limit(5)
-      .replace(row => row.without('val'))
+      .replace((row) => row.without('val'))
       .run();
     assert.equal(result.replaced, 5);
   });
@@ -402,7 +339,7 @@ describe('cursor', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection.open);
 
@@ -425,7 +362,7 @@ describe('cursor', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection.open);
 
@@ -444,7 +381,7 @@ describe('cursor', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection.open);
 
@@ -475,7 +412,7 @@ describe('cursor', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -483,7 +420,7 @@ describe('cursor', () => {
       .db(dbName)
       .table(tableName)
       .orderBy({ index: 'id' })
-      .map(row => row('val').add(1))
+      .map((row) => row('val').add(1))
       .getCursor(connection, { maxBatchRows: 10 });
     assert(cursor);
 
@@ -505,34 +442,21 @@ describe('cursor', () => {
   });
 
   it('`changes` should return a feed', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName).changes().run();
     assert(feed);
     assert.equal(feed.toString(), '[object Feed]');
     await feed.close();
   });
 
   it('`changes` should work with squash: true', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName)
-      .changes({ squash: true })
-      .run();
+    feed = await r.db(dbName).table(tableName).changes({ squash: true }).run();
     assert(feed);
     assert.equal(feed.toString(), '[object Feed]');
     await feed.close();
   });
 
   it('`get.changes` should return a feed', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName).get(1).changes().run();
     assert(feed);
     assert.equal(feed.toString(), '[object AtomFeed]');
     await feed.close();
@@ -559,7 +483,7 @@ describe('cursor', () => {
       .limit(2)
       .changes({
         includeOffsets: true,
-        includeInitial: true
+        includeInitial: true,
       })
       .run();
 
@@ -574,20 +498,13 @@ describe('cursor', () => {
         if (counter >= 2) {
           assert(typeof change.old_offset === 'number');
 
-          feed
-            .close()
-            .then(resolve)
-            .catch(reject);
+          feed.close().then(resolve).catch(reject);
         }
         counter++;
       });
     });
 
-    await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 0 })
-      .run();
+    await r.db(dbName).table(tableName).insert({ id: 0 }).run();
     await promise;
   });
 
@@ -599,7 +516,7 @@ describe('cursor', () => {
       .limit(2)
       .changes({
         includeTypes: true,
-        includeInitial: true
+        includeInitial: true,
       })
       .run();
 
@@ -612,30 +529,19 @@ describe('cursor', () => {
         }
         assert(typeof change.type === 'string');
         if (counter > 0) {
-          feed
-            .close()
-            .then(resolve)
-            .catch(reject);
+          feed.close().then(resolve).catch(reject);
         }
         counter++;
       });
     });
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 0 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 0 }).run();
     assert.equal(result.errors, 1); // Duplicate primary key (depends on previous test case)
     await promise;
   });
 
   it('`next` should work on a feed', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
     assert(feed);
 
     const promise = new Promise((resolve, reject) => {
@@ -644,7 +550,7 @@ describe('cursor', () => {
         feed
           .next()
           .then(assert)
-          .catch(err => {
+          .catch((err) => {
             if (
               isRethinkDBError(err) &&
               err.type === RethinkDBErrorType.CANCEL
@@ -659,11 +565,7 @@ describe('cursor', () => {
       }
     });
 
-    await r
-      .db(dbName)
-      .table(tableName2)
-      .update({ foo: r.now() })
-      .run();
+    await r.db(dbName).table(tableName2).update({ foo: r.now() }).run();
     await promise;
   });
 
@@ -680,41 +582,29 @@ describe('cursor', () => {
     const promise = new Promise<void>((resolve, reject) => {
       feed
         .next()
-        .then(res => assert.deepEqual(res, { new_val: null }))
+        .then((res) => assert.deepEqual(res, { new_val: null }))
         .then(() => feed.next())
-        .then(res =>
-          assert.deepEqual(res, { new_val: { id: idValue }, old_val: null })
+        .then((res) =>
+          assert.deepEqual(res, { new_val: { id: idValue }, old_val: null }),
         )
         .then(resolve)
         .catch(reject);
     });
 
-    await r
-      .db(dbName)
-      .table(tableName2)
-      .insert({ id: idValue })
-      .run();
+    await r.db(dbName).table(tableName2).insert({ id: idValue }).run();
     await promise;
     await feed.close();
   });
 
   it('`close` should work on feed', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
     assert(feed);
 
     await feed.close();
   });
 
   it('`close` should work on feed with events', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
 
     const promise = new Promise((resolve, reject) => {
       feed.on('error', reject);
@@ -726,11 +616,7 @@ describe('cursor', () => {
   });
 
   it('`on` should work on feed', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
     assert(feed);
 
     const promise = new Promise<void>((resolve, reject) => {
@@ -738,28 +624,18 @@ describe('cursor', () => {
       feed.on('data', () => {
         i++;
         if (i === smallNumDocs) {
-          feed
-            .close()
-            .then(resolve)
-            .catch(reject);
+          feed.close().then(resolve).catch(reject);
         }
       });
       feed.on('error', reject);
     });
 
-    await r
-      .db(dbName)
-      .table(tableName2)
-      .update({ foo: r.now() })
-      .run();
+    await r.db(dbName).table(tableName2).update({ foo: r.now() }).run();
     await promise;
   });
 
   it('`on` should work on cursor - a `end` event shoul be eventually emitted on a cursor', async () => {
-    cursor = await r
-      .db(dbName)
-      .table(tableName2)
-      .getCursor();
+    cursor = await r.db(dbName).table(tableName2).getCursor();
     assert(cursor);
 
     const promise = new Promise((resolve, reject) => {
@@ -767,20 +643,12 @@ describe('cursor', () => {
       cursor.on('error', reject);
     });
 
-    await r
-      .db(dbName)
-      .table(tableName2)
-      .update({ foo: r.now() })
-      .run();
+    await r.db(dbName).table(tableName2).update({ foo: r.now() }).run();
     await promise;
   });
 
   it('`next`, `each`, `toArray` should be deactivated if the EventEmitter interface is used', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
 
     feed.on('data', () => undefined);
     feed.on('error', assert.fail);
@@ -791,18 +659,14 @@ describe('cursor', () => {
     } catch (e) {
       assert(
         e.message ===
-          'You cannot call `next` once you have bound listeners on the Feed.'
+          'You cannot call `next` once you have bound listeners on the Feed.',
       );
       await feed.close();
     }
   });
 
   it('`each` should not return an error if the feed is closed - 1', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
     assert(feed);
 
     const promise = new Promise<void>((resolve, reject) => {
@@ -816,10 +680,7 @@ describe('cursor', () => {
         }
         if (count === 1) {
           setTimeout(() => {
-            feed
-              .close()
-              .then(resolve)
-              .catch(reject);
+            feed.close().then(resolve).catch(reject);
           }, 100);
         }
       });
@@ -835,11 +696,7 @@ describe('cursor', () => {
   });
 
   it('`each` should not return an error if the feed is closed - 2', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
     assert(feed);
 
     const promise = new Promise<void>((resolve, reject) => {
@@ -853,10 +710,7 @@ describe('cursor', () => {
         }
         if (count === 2) {
           setTimeout(() => {
-            feed
-              .close()
-              .then(resolve)
-              .catch(reject);
+            feed.close().then(resolve).catch(reject);
           }, 100);
         }
       });
@@ -871,12 +725,7 @@ describe('cursor', () => {
   });
 
   it('events should not return an error if the feed is closed - 1', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .get(1)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).get(1).changes().run();
     assert(feed);
 
     const promise = new Promise<void>((resolve, reject) => {
@@ -885,41 +734,27 @@ describe('cursor', () => {
           reject(err);
         }
         if (res.new_val != null && res.new_val.id === 1) {
-          feed
-            .close()
-            .then(resolve)
-            .catch(reject);
+          feed.close().then(resolve).catch(reject);
         }
       });
     });
-    await r
-      .db(dbName)
-      .table(tableName2)
-      .insert({ id: 1 })
-      .run();
+    await r.db(dbName).table(tableName2).insert({ id: 1 }).run();
     await promise;
   });
 
   it('events should not return an error if the feed is closed - 2', async () => {
-    feed = await r
-      .db(dbName)
-      .table(tableName2)
-      .changes()
-      .run();
+    feed = await r.db(dbName).table(tableName2).changes().run();
     assert(feed);
 
     const promise = new Promise<void>((resolve, reject) => {
       let count = 0;
-      feed.on('data', res => {
+      feed.on('data', (res) => {
         if (res.new_val.foo instanceof Date) {
           count++;
         }
         if (count === 1) {
           setTimeout(() => {
-            feed
-              .close()
-              .then(resolve)
-              .catch(reject);
+            feed.close().then(resolve).catch(reject);
           }, 100);
         }
       });
@@ -944,16 +779,13 @@ describe('cursor', () => {
     let i = 0;
 
     await new Promise<void>((resolve, reject) => {
-      feed.each(err => {
+      feed.each((err) => {
         if (err) {
           reject(err);
         }
         i++;
         if (i === 10) {
-          feed
-            .close()
-            .then(resolve)
-            .catch(reject);
+          feed.close().then(resolve).catch(reject);
         }
       });
     });
@@ -964,21 +796,17 @@ describe('cursor', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
-    const feed1 = await r
-      .db(dbName)
-      .table(tableName)
-      .changes()
-      .run(connection);
+    const feed1 = await r.db(dbName).table(tableName).changes().run(connection);
 
-    const promise = feed1.each(err => {
+    const promise = feed1.each((err) => {
       assert(
         err.message.startsWith(
-          'The connection was closed before the query could be completed'
-        )
+          'The connection was closed before the query could be completed',
+        ),
       );
     });
     // Kill the TCP connection
@@ -994,22 +822,18 @@ describe('cursor', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
-    const feed1 = await r
-      .db(dbName)
-      .table(tableName)
-      .changes()
-      .run(connection);
+    const feed1 = await r.db(dbName).table(tableName).changes().run(connection);
     const promise = feed1
       .eachAsync(() => undefined)
-      .catch(err => {
+      .catch((err) => {
         assert(
           err.message.startsWith(
-            'The connection was closed before the query could be completed'
-          )
+            'The connection was closed before the query could be completed',
+          ),
         );
       });
     // Kill the TCP connection
@@ -1020,58 +844,44 @@ describe('cursor', () => {
     return promise;
   });
 
-  if (satisfies(process.version, '>=10')) {
-    it('cursor should be an async iterator', async () => {
-      connection = await r.connect({
-        host: config.host,
-        port: config.port,
-        user: config.user,
-        password: config.password
-      });
-      assert(connection.open);
+  it('cursor should be an async iterator', async () => {
+    connection = await r.connect({
+      host: config.host,
+      port: config.port,
+      user: config.user,
+      password: config.password,
+    });
+    assert(connection.open);
 
-      const feed1 = await r
-        .db(dbName)
-        .table(tableName)
-        .changes()
-        .run(connection);
-      assert(feed1);
+    const feed1 = await r.db(dbName).table(tableName).changes().run(connection);
+    assert(feed1);
 
-      const iterator = feed1;
-      assert(isAsyncIterable(iterator));
-      // Kill the TCP connection
-      const { socket } = (connection as RethinkDBConnection).socket;
-      if (socket) {
-        socket.destroy();
+    const iterator = feed1;
+    assert(isAsyncIterable(iterator));
+    // Kill the TCP connection
+    const { socket } = (connection as RethinkDBConnection).socket;
+    if (socket) {
+      socket.destroy();
+    }
+  });
+
+  it('`asyncIterator` should work', async () => {
+    const feed1 = await r.db(dbName).table(tableName2).changes().run();
+    assert(feed1);
+
+    const value = 1;
+
+    const promise = (async () => {
+      let res: any;
+      for await (const row of feed1 as AsyncIterableIterator<Changes<any>>) {
+        res = row;
+        feed1.close();
       }
-    });
+      return res;
+    })();
 
-    it('`asyncIterator` should work', async () => {
-      const feed1 = await r
-        .db(dbName)
-        .table(tableName2)
-        .changes()
-        .run();
-      assert(feed1);
-
-      const value = 1;
-
-      const promise = (async () => {
-        let res: any;
-        for await (const row of feed1 as AsyncIterableIterator<Changes<any>>) {
-          res = row;
-          feed1.close();
-        }
-        return res;
-      })();
-
-      await r
-        .db(dbName)
-        .table(tableName2)
-        .insert({ foo: value })
-        .run();
-      result = await promise;
-      assert(result.new_val.foo === value);
-    });
-  }
+    await r.db(dbName).table(tableName2).insert({ foo: value }).run();
+    result = await promise;
+    assert(result.new_val.foo === value);
+  });
 });
