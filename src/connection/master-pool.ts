@@ -13,6 +13,7 @@ import { delay, isIPv6 } from '../util';
 import { RethinkDBConnection } from './connection';
 import { ServerConnectionPool } from './server-pool';
 import { setConnectionDefaults } from './socket';
+import { RFeed } from '../types';
 
 function flat<T>(acc: T[], next: T[]) {
   return [...acc, ...next];
@@ -476,6 +477,10 @@ export class MasterConnectionPool extends EventEmitter {
   private getIdleConnections() {
     return this.getOpenConnections().filter((conn) => !conn.numOfQueries);
   }
+
+  public async run(query: RFeed, options?: RunOptions): Promise<Cursor>;
+
+  public async run(query: RQuery, options?: RunOptions): Promise<any>;
 
   async run(query: RQuery, options?: RunOptions): Promise<unknown> {
     const { term } = query;
