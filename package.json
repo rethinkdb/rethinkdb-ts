@@ -15,6 +15,9 @@
   "directories": {
     "test": "test"
   },
+  "engines": {
+    "node": ">12.x"
+  },
   "scripts": {
     "prepare": "tsc",
     "build": "tsc",
