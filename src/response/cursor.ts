@@ -192,7 +192,7 @@ export class Cursor<T = any> extends Readable {
     let resume = true;
     let err: RethinkDBError | undefined;
     let next: any;
-    while (resume !== false && !this.destroyed) {
+    while (resume && !this.destroyed) {
       err = undefined;
       try {
         // eslint-disable-next-line no-await-in-loop
@@ -203,7 +203,7 @@ export class Cursor<T = any> extends Readable {
       if (err && err.type === RethinkDBErrorType.CURSOR_END) {
         break;
       }
-      resume = Boolean(cb(err, next));
+      resume = cb(err, next) !== false;
     }
     if (onFinishedCallback) {
       onFinishedCallback();
