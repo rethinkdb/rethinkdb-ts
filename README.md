@@ -1,6 +1,12 @@
 # rethinkdb-ts
-[![npm Package Version](https://img.shields.io/npm/v/rethinkdb-ts.svg)](https://www.npmjs.com/package/rethinkdb-ts)
-[![Build Status](https://github.com/rethinkdb/rethinkdb-ts/workflows/Test%20and%20Publish/badge.svg)](https://github.com/rethinkdb/rethinkdb-ts/actions?query=workflow%3A%22Test+and+Publish%22) [![Coverage Status](https://coveralls.io/repos/github/rethinkdb/rethinkdb-ts/badge.svg?branch=master)](https://coveralls.io/github/rethinkdb/rethinkdb-ts?branch=master)
+[![npm][npm]][npm-url]
+[![node][node]][node-url]
+[![deps][deps]][deps-url]
+[![licenses][licenses]][licenses-url]
+[![downloads][downloads]][downloads-url]
+[![size][size]][size-url]
+[![build][build]][build-url]
+
 ## Install
 
 `npm i rethinkdb-ts`
@@ -75,3 +81,20 @@ If you want an SSL/TLS, add `tls: true` and the options described [here](https:/
 - Support browsers (Unless it's the only demand of making this driver used instead of rethinkdbdash)
 - Support write streams (Does anyone use it? Will add it if its a popular demand)
 - Multiple connection pools (if someone has a good usecase I'll support it)
+
+[npm]: https://img.shields.io/npm/v/rethinkdb-ts.svg
+[npm-url]: https://www.npmjs.com/package/rethinkdb-ts
+[node]: https://img.shields.io/node/v/rethinkdb-ts.svg
+[node-url]: https://nodejs.org
+[deps]: https://img.shields.io/david/rethinkdb/rethinkdb-ts.svg
+[deps-url]: https://david-dm.org/rethinkdb/rethinkdb-ts
+[licenses-url]: https://opensource.org/licenses/Apache-2.0
+[licenses]: https://img.shields.io/npm/l/rethinkdb-ts.svg
+[downloads-url]: https://npmcharts.com/compare/rethinkdb-ts?minimal=true
+[downloads]: https://img.shields.io/npm/dm/rethinkdb-ts.svg
+[size-url]: https://packagephobia.com/result?p=rethinkdb-ts
+[size]: https://packagephobia.com/badge?p=rethinkdb-ts
+[build]: https://github.com/rethinkdb/rethinkdb-ts/workflows/Test%20and%20Publish/badge.svg
+[build-url]: https://github.com/rethinkdb/rethinkdb-ts/actions?query=workflow%3A%22Test+and+Publish%22
+[coverage]: https://coveralls.io/repos/github/rethinkdb/rethinkdb-ts/badge.svg?branch=master
+[coverage-url]: https://coveralls.io/github/rethinkdb/rethinkdb-ts?branch=master
