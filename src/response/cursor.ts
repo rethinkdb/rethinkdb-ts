@@ -167,7 +167,7 @@ export class Cursor<T = any> extends Readable {
   }
 
   public async each(
-    cb: (error: RethinkDBError | undefined, row?: any) => boolean,
+    cb: (error: RethinkDBError | undefined, row?: any) => boolean | void,
     onFinishedCallback?: () => void,
   ) {
     if (this.emitting) {
