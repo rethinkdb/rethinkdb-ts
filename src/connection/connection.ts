@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { isRethinkDBError, RethinkDBError, RethinkDBErrorType } from '../error';
-import { QueryJson, TermJson } from '../types';
+import { QueryJson, RFeed, TermJson } from '../types';
 import { ErrorType, QueryType, ResponseType, TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
 import { parseOptarg, RQuery } from '../query-builder/query';
@@ -289,6 +289,10 @@ export class RethinkDBConnection extends EventEmitter {
       }
     }
   }
+
+  public async run(query: RFeed, options?: RunOptions): Promise<Cursor>;
+
+  public async run(query: RQuery, options?: RunOptions): Promise<any>;
 
   public async run(query: RQuery, options?: RunOptions): Promise<any> {
     const { term } = query;
