@@ -1,8 +1,8 @@
 import assert from 'assert';
 import { Readable } from 'stream';
 import {
-  createRethinkdbConnection,
-  createRethinkdbMasterPool,
+  connect,
+  connectPool,
   r,
 } from '../src';
 import config from './config';
@@ -19,7 +19,7 @@ describe('stream', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool([config.server], config.options);
+    pool = await connectPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid(); // Big table to test partial sequence
     tableName2 = uuid(); // small table to test success sequence
@@ -146,7 +146,7 @@ describe('stream', () => {
   });
 
   it('`table` should return a stream - testing empty SUCCESS_COMPLETE', async () => {
-    const connection = await createRethinkdbConnection(
+    const connection = await connect(
       config.server,
       config.options,
     );
@@ -162,7 +162,7 @@ describe('stream', () => {
   });
 
   it('Test flowing - event data', async () => {
-    const connection = await createRethinkdbConnection(
+    const connection = await connect(
       config.server,
       config.options,
     );
@@ -185,7 +185,7 @@ describe('stream', () => {
   });
 
   it('Test read', async () => {
-    const connection = await createRethinkdbConnection(
+    const connection = await connect(
       config.server,
       config.options,
     );
@@ -218,7 +218,7 @@ describe('stream', () => {
   });
 
   it('Test flowing - event data', async () => {
-    const connection = await createRethinkdbConnection(
+    const connection = await connect(
       config.server,
       config.options,
     );
@@ -246,7 +246,7 @@ describe('stream', () => {
   });
 
   it('Test read with null value', async () => {
-    const connection = await createRethinkdbConnection(
+    const connection = await connect(
       config.server,
       config.options,
     );
@@ -279,7 +279,7 @@ describe('stream', () => {
   });
 
   it('Test read', async () => {
-    const connection = await createRethinkdbConnection(
+    const connection = await connect(
       config.server,
       config.options,
     );

@@ -9,7 +9,7 @@ import {
 
 export * from './types';
 
-export async function createRethinkdbConnection(
+export async function connect(
   server: RethinkDBServerConnectionOptions,
   options: RethinkDBConnectionOptions,
 ): Promise<RethinkDBConnection> {
@@ -18,7 +18,7 @@ export async function createRethinkdbConnection(
   return c;
 }
 
-export async function createRethinkdbMasterPool(
+export async function connectPool(
   servers: RethinkDBServerConnectionOptions[],
   options: RethinkDBPoolConnectionOptions,
 ): Promise<MasterConnectionPool> {

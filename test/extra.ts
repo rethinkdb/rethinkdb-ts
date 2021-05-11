@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r, deserialize, serialize } from '../src';
+import { connectPool, r, deserialize, serialize } from '../src';
 import { globals } from '../src/query-builder/globals';
 import config from './config';
 import { uuid } from './util/common';
@@ -12,7 +12,7 @@ describe('extra', () => {
 
   before(async () => {
     globals.backtraceType = 'function';
-    pool = await createRethinkdbMasterPool([config.server], config.options);
+    pool = await connectPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid(); // Big table to test partial sequence
 
