@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r } from '../src';
+import { connectPool, r } from '../src';
 import config from './config';
 import { uuid } from './util/common';
 import { MasterConnectionPool } from '../src/connection/master-pool';
@@ -9,7 +9,7 @@ describe('manipulating tables', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool([config.server], config.options);
+    pool = await connectPool([config.server], config.options);
     // delete all but the system dbs
     await pool.run(
       r

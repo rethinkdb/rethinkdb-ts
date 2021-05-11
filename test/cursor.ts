@@ -1,8 +1,8 @@
 import assert from 'assert';
 import {
   Changes,
-  createRethinkdbConnection,
-  createRethinkdbMasterPool,
+  connect,
+  connectPool,
   isRethinkDBError,
   r,
   RethinkDBError,
@@ -55,7 +55,7 @@ describe('cursor', () => {
 
   let pool: MasterConnectionPool;
   before(async () => {
-    pool = await createRethinkdbMasterPool(servers, options);
+    pool = await connectPool(servers, options);
 
     dbName = uuid();
     tableName = uuid(); // Big table to test partial sequence
@@ -366,7 +366,7 @@ describe('cursor', () => {
   });
 
   it('`toArray` with multiple batches - testing empty SUCCESS_COMPLETE', async () => {
-    connection = await createRethinkdbConnection(servers[0], options);
+    connection = await connect(servers[0], options);
     assert(connection.open);
 
     cursor = await connection.getCursor(r.db(dbName).table(tableName), {
@@ -383,7 +383,7 @@ describe('cursor', () => {
   });
 
   it('Automatic coercion from cursor to table with multiple batches', async () => {
-    connection = await createRethinkdbConnection(servers[0], options);
+    connection = await connect(servers[0], options);
     assert(connection.open);
 
     result = await connection.run(r.db(dbName).table(tableName), {
@@ -396,7 +396,7 @@ describe('cursor', () => {
   });
 
   it('`next` with multiple batches', async () => {
-    connection = await createRethinkdbConnection(servers[0], options);
+    connection = await connect(servers[0], options);
 
     assert(connection.open);
 
@@ -423,7 +423,7 @@ describe('cursor', () => {
 
   // TODO sometimes it fails fill smaller numDocs
   it('`next` should error when hitting an error -- not on the first batch', async () => {
-    connection = await createRethinkdbConnection(servers[0], options);
+    connection = await connect(servers[0], options);
 
     assert(connection);
 
@@ -788,7 +788,7 @@ describe('cursor', () => {
   });
 
   it('`each` should return an error if the connection dies', async () => {
-    connection = await createRethinkdbConnection(servers[0], options);
+    connection = await connect(servers[0], options);
     assert(connection);
 
     const feed1 = await connection.run(r.db(dbName).table(tableName).changes());
@@ -809,7 +809,7 @@ describe('cursor', () => {
   });
 
   it('`eachAsync` should return an error if the connection dies', async () => {
-    connection = await createRethinkdbConnection(servers[0], options);
+    connection = await connect(servers[0], options);
     assert(connection);
 
     const feed1 = await connection.run(r.db(dbName).table(tableName).changes());
@@ -831,7 +831,7 @@ describe('cursor', () => {
   });
 
   it('cursor should be an async iterator', async () => {
-    connection = await createRethinkdbConnection(servers[0], options);
+    connection = await connect(servers[0], options);
     assert(connection.open);
 
     const feed1 = await connection.run(r.db(dbName).table(tableName).changes());
