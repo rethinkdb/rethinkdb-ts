@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r } from '../src';
+import { connectPool, r } from '../src';
 import { globals } from '../src/query-builder/globals';
 import config from './config';
 import { uuid } from './util/common';
@@ -14,7 +14,7 @@ describe('backtraces', () => {
   before(async () => {
     globals.backtraceType = 'function';
     globals.pretty = true;
-    pool = await createRethinkdbMasterPool([config.server], config.options);
+    pool = await connectPool([config.server], config.options);
     dbName = uuid();
     tableName = uuid();
 

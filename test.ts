@@ -1,7 +1,7 @@
-import { r, createRethinkdbMasterPool } from './src';
+import { r, connectPool } from './src';
 
 (async function getData() {
-  const pool = await createRethinkdbMasterPool({
+  const pool = await connectPool({
     db: 'root',
     silent: true,
   });

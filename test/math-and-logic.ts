@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r } from '../src';
+import { connectPool, r } from '../src';
 import config from './config';
 import { MasterConnectionPool } from '../src/connection/master-pool';
 
@@ -7,7 +7,7 @@ describe('math and logic', () => {
   let pool: MasterConnectionPool;
 
   before(async () => {
-    pool = await createRethinkdbMasterPool([config.server], config.options);
+    pool = await connectPool([config.server], config.options);
   });
 
   after(async () => {
