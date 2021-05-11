@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { createRethinkdbMasterPool, r, Cursor } from '../src';
+import { connectPool, r, Cursor } from '../src';
 import config from './config';
 import { uuid } from './util/common';
 import { MasterConnectionPool } from '../src/connection/master-pool';
@@ -28,7 +28,7 @@ describe('pool legacy', () => {
   };
 
   before(async () => {
-    pool = await createRethinkdbMasterPool(servers, options);
+    pool = await connectPool(servers, options);
   });
 
   it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
@@ -74,7 +74,7 @@ describe('pool legacy', () => {
   });
 
   it('A noreply query should release the connection kek', async () => {
-    pool = await createRethinkdbMasterPool(servers, options);
+    pool = await connectPool(servers, options);
     const numConnections = pool.getLength();
     await pool.run(r.expr(1), { noreply: true });
     assert.equal(
@@ -148,7 +148,7 @@ describe('pool legacy', () => {
 
   it('If the pool cannot create a connection, it should reject queries', async () => {
     try {
-      const notARealPool = await createRethinkdbMasterPool(
+      const notARealPool = await connectPool(
         [{ host: 'notarealhost' }],
         {
           db: 'test',
@@ -168,7 +168,7 @@ describe('pool legacy', () => {
   });
 
   it('If the pool is drained, it should reject queries', async () => {
-    await createRethinkdbMasterPool(
+    await connectPool(
       [
         {
           port: config.server.port,
@@ -197,7 +197,7 @@ describe('pool legacy', () => {
   });
 
   it('If the pool is draining, it should reject queries', async () => {
-    await createRethinkdbMasterPool(
+    await connectPool(
       [
         {
           port: config.server.port,
@@ -245,7 +245,7 @@ describe('pool legacy', () => {
   // });
 
   it('The pool should remove a connection if it errored', async () => {
-    const localPool = await createRethinkdbMasterPool(
+    const localPool = await connectPool(
       [
         {
           port: config.server.port,
@@ -296,7 +296,7 @@ describe('pool legacy', () => {
     let pool: MasterConnectionPool;
 
     before(async () => {
-      pool = await createRethinkdbMasterPool(servers, options);
+      pool = await connectPool(servers, options);
       dbName = uuid();
       tableName = uuid();
 

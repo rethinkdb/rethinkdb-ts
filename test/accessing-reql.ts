@@ -1,8 +1,8 @@
 import assert from 'assert';
 import * as net from 'net';
 import {
-  createRethinkdbConnection,
-  createRethinkdbMasterPool,
+  connect,
+  connectPool,
   r,
 } from '../src';
 import config from './config';
@@ -15,13 +15,13 @@ describe('accessing-reql', () => {
   let tableName: string;
 
   beforeEach(async () => {
-    connection = await createRethinkdbConnection(config.server, config.options);
+    connection = await connect(config.server, config.options);
     assert(connection.open);
   });
 
   afterEach(async () => {
     if (!connection.open) {
-      connection = await createRethinkdbConnection(
+      connection = await connect(
         config.server,
         config.options,
       );
@@ -98,7 +98,7 @@ describe('accessing-reql', () => {
     await connection.close();
     assert(!connection.open);
 
-    connection = await createRethinkdbConnection(
+    connection = await connect(
       {
         host: config.server.host,
         port: config.server.port,
@@ -300,7 +300,7 @@ describe('accessing-reql', () => {
     try {
       server = net.createServer().listen(port);
 
-      connection = await createRethinkdbConnection(
+      connection = await connect(
         { port },
         { db: 'test', timeout: 1 },
       );
@@ -368,7 +368,7 @@ describe('accessing-reql', () => {
 
   it('If `servers` is specified, it cannot be empty', async () => {
     try {
-      await createRethinkdbMasterPool([], config.options);
+      await connectPool([], config.options);
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(
