@@ -1,6 +1,6 @@
 import assert from 'assert';
 import {
-  createRethinkdbMasterPool,
+  connectPool,
   r,
   setArrayLimit,
   setNestingLevel,
@@ -11,7 +11,7 @@ import { MasterConnectionPool } from '../src/connection/master-pool';
 describe('datum', () => {
   let pool: MasterConnectionPool;
   before(async () => {
-    pool = await createRethinkdbMasterPool([config.server], config.options);
+    pool = await connectPool([config.server], config.options);
   });
 
   after(async () => {
