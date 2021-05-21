@@ -6,7 +6,6 @@ import type {
 const config: {
   server: RethinkDBServerConnectionOptions;
   options: RethinkDBPoolConnectionOptions;
-  fakeServer: any;
 } = {
   server: {
     host: process.env.WERCKER_RETHINKDB_HOST || 'localhost',
@@ -21,10 +20,6 @@ const config: {
     discovery: false,
     silent: false,
     waitForHealthy: true,
-  },
-  fakeServer: {
-    host: process.env.WERCKER_RETHINKDB_HOST || 'localhost',
-    port: parseInt(process.env.WERCKER_RETHINKDB_PORT || '', 10) + 1 || 28016,
   },
 };
 
