@@ -50,7 +50,7 @@ describe('cursor', () => {
   let result: any;
   let feed: Cursor;
 
-  const numDocs = 31; // Number of documents in the "big table" used to test the SUCCESS_PARTIAL
+  const numDocs = 50; // Number of documents in the "big table" used to test the SUCCESS_PARTIAL
   const smallNumDocs = 5; // Number of documents in the "small table"
 
   let pool: MasterConnectionPool;
