@@ -19,12 +19,13 @@
     "node": ">=12.x <=16.x"
   },
   "scripts": {
-    "prepare": "tsc -p tsconfig.build.json",
     "build": "tsc -p tsconfig.build.json",
+    "build:dev": "tsc --watch",
     "lint": "eslint src",
-    "test": "ts-mocha --check-leaks -t 10000 --exit ./test/*.ts",
+    "prepare": "npm run build",
     "proto": "pbjs -t static-module -w commonjs -o src/proto/ql2.js src/proto/ql2.proto && pbts -o src/proto/ql2.d.ts src/proto/ql2.js && ts-node ./generate-enums",
-    "start:dev": "tsc --watch"
+    "release:dev": "ts-node scripts/configure-prerelease.ts next ./package.json",
+    "test": "ts-mocha --check-leaks -t 10000 --exit ./test/*.ts"
   },
   "repository": {
     "type": "git",
