@@ -15,7 +15,7 @@ export type RCursorType =
   | 'OrderByLimitFeed'
   | 'UnionedFeed';
 
-export class Cursor<T = any> extends Readable {
+export class Cursor<T = unknown> extends Readable {
   public get profile(): unknown {
     // eslint-disable-next-line no-underscore-dangle
     return this._profile;
@@ -34,11 +34,11 @@ export class Cursor<T = any> extends Readable {
 
   private emitting = false;
 
-  private resolving: Promise<any> | undefined;
+  private resolving: Promise<unknown> | undefined;
 
   private lastError: Error | undefined;
 
-  private results?: any[];
+  private results?: unknown[];
 
   private hasNextBatch?: boolean;
 
@@ -63,7 +63,7 @@ export class Cursor<T = any> extends Readable {
   // eslint-disable-next-line no-underscore-dangle
   public _read(): void {
     this.emitting = true;
-    const push = (row: any): any => {
+    const push = (row: unknown): void => {
       if (row === null) {
         // eslint-disable-next-line no-underscore-dangle
         this._next().then(push);
@@ -167,9 +167,9 @@ export class Cursor<T = any> extends Readable {
   }
 
   public async each(
-    cb: (error: RethinkDBError | undefined, row?: any) => boolean | void,
+    cb: (error: RethinkDBError | undefined, row?: unknown) => boolean | void,
     onFinishedCallback?: () => void,
-  ) {
+  ): Promise<void> {
     if (this.emitting) {
       throw new RethinkDBError(
         'You cannot call `each` once you have bound listeners on the Feed.',
@@ -190,7 +190,7 @@ export class Cursor<T = any> extends Readable {
     }
     let resume = true;
     let err: RethinkDBError | undefined;
-    let next: any;
+    let next: unknown;
     while (resume && !this.closed) {
       err = undefined;
       try {
@@ -210,9 +210,12 @@ export class Cursor<T = any> extends Readable {
   }
 
   public async eachAsync(
-    rowHandler: (row: any, rowFinished?: (error?: string) => void) => void,
-    final?: (error: any) => void,
-  ) {
+    rowHandler: (
+      row: T,
+      rowFinished?: (error?: string) => void,
+    ) => void | Promise<void>,
+    final?: (error: Error) => void,
+  ): Promise<void> {
     if (this.emitting) {
       throw new RethinkDBError(
         'You cannot call `eachAsync` once you have bound listeners on the Feed.',
@@ -225,7 +228,7 @@ export class Cursor<T = any> extends Readable {
         { type: RethinkDBErrorType.CURSOR },
       );
     }
-    let nextRow: any;
+    let nextRow: T;
     try {
       while (!this.closed) {
         // eslint-disable-next-line no-await-in-loop
@@ -273,7 +276,7 @@ export class Cursor<T = any> extends Readable {
     }
   }
 
-  public async resolve(): Promise<any[]> {
+  public async resolve(): Promise<unknown[]> {
     try {
       const response = await this.socket.readNext(this.token);
       const { n: notes, t: type, r: results, p: profile } = response;
@@ -295,7 +298,7 @@ export class Cursor<T = any> extends Readable {
     }
   }
 
-  public [Symbol.asyncIterator](): AsyncIterableIterator<any> {
+  public [Symbol.asyncIterator](): AsyncIterableIterator<unknown> {
     return {
       next: async () => {
         if (this.closed) {
@@ -314,7 +317,7 @@ export class Cursor<T = any> extends Readable {
           throw error;
         }
       },
-    } as AsyncIterableIterator<any>;
+    } as AsyncIterableIterator<unknown>;
   }
 
   // eslint-disable-next-line no-underscore-dangle
@@ -422,6 +425,6 @@ export class Cursor<T = any> extends Readable {
   }
 }
 
-export function isCursor<T = any>(cursor: unknown): cursor is Cursor<T> {
+export function isCursor<T = unknown>(cursor: unknown): cursor is Cursor<T> {
   return cursor instanceof Cursor;
 }

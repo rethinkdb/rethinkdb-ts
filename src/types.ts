@@ -372,7 +372,7 @@ export interface RDatum<T = any> extends RQuery<T> {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     func: (res: RDatum<ONE>) => RES,
   ): T extends any[] ? RES : never;
@@ -403,7 +403,7 @@ export interface RDatum<T = any> extends RQuery<T> {
   // GROUP
   group<
     F extends T extends Array<infer T1> ? keyof T1 : never,
-    D extends T extends Array<infer T2> ? T2 : never
+    D extends T extends Array<infer T2> ? T2 : never,
   >(
     ...fieldOrFunc: Array<FieldSelector<T>>
   ): T extends Array<infer T1> ? RDatum : never; // <GroupResults<T[U], T[]>>;
@@ -622,7 +622,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     func: (res: RDatum<T>) => RES,
   ): RES;
@@ -1255,7 +1255,7 @@ export interface R {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     stream: RStream<T>,
     func: (res: RDatum<T>) => RES,
@@ -1267,7 +1267,7 @@ export interface R {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     datum: RDatum<T>,
     func: (res: RDatum<ONE>) => RES,
@@ -1410,7 +1410,7 @@ export interface R {
   group<
     T,
     F extends T extends Array<infer T1> ? keyof T1 : never,
-    D extends T extends Array<infer T2> ? T2 : never
+    D extends T extends Array<infer T2> ? T2 : never,
   >(
     datum: RDatum<T>,
     ...fieldOrFunc: Array<FieldSelector<T>>
@@ -1775,9 +1775,7 @@ export interface R {
   values<T>(datum: RDatum<T>): RDatum<Array<T[keyof T]>>;
 
   typeOf(query: any): RDatum<string>;
-  info(
-    query: RQuery,
-  ): RDatum<{
+  info(query: RQuery): RDatum<{
     value?: string;
     db?: { id: string; name: string; type: string };
     // eslint-disable-next-line camelcase
@@ -1789,9 +1787,7 @@ export interface R {
     primary_key?: string;
     type: string;
   }>;
-  info(
-    db: RDatabase,
-  ): RDatum<{
+  info(db: RDatabase): RDatum<{
     id: string;
     name: string;
     type: 'DB';
