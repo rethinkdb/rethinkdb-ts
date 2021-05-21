@@ -116,7 +116,7 @@ export function parseParam(
     // @ts-ignore
     const objTerm = Object.entries(param).reduce<Record<string, TermJson>>(
       (acc, [key, value]) => {
-      // @ts-ignore
+        // @ts-ignore
         acc[key] = parseParam(value, nestingLevel - 1);
         return acc;
       },
