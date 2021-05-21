@@ -1,6 +1,6 @@
 import { TcpNetConnectOpts } from 'net';
 import { ConnectionOptions } from 'tls';
-import { Durability, Format } from '../types';
+import type { Durability, Format } from '../types';
 
 export type RethinkDBServerConnectionOptions =
   | (Partial<ConnectionOptions> & { tls: true })
