@@ -16,10 +16,11 @@ import {
 import { isNativeError } from '../util';
 
 // FIXME reduce number of types, this is excess
-export type RethinkDBServerConnectionParsedOptions = RethinkDBServerConnectionOptions & {
-  host: string;
-  port: number;
-};
+export type RethinkDBServerConnectionParsedOptions =
+  RethinkDBServerConnectionOptions & {
+    host: string;
+    port: number;
+  };
 
 export function setConnectionDefaults(
   connectionOptions: RethinkDBServerConnectionOptions,
