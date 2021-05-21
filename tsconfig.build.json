@@ -8,6 +8,7 @@
     "lib",
     "test",
     "test.ts",
-    "generate-enums.ts"
+    "generate-enums.ts",
+    "scripts"
   ]
 }
