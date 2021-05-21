@@ -15,7 +15,7 @@ export type RCursorType =
   | 'OrderByLimitFeed'
   | 'UnionedFeed';
 
-export class Cursor<T = unknown> extends Readable {
+export class Cursor<T = any> extends Readable {
   public get profile(): unknown {
     // eslint-disable-next-line no-underscore-dangle
     return this._profile;
