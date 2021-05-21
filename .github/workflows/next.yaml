@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - next
+    tags:
+      - v*.*.*-next.*
 
 jobs:
   test:
@@ -33,9 +35,12 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+
   publish:
     runs-on: ubuntu-20.04
+
     if: startsWith(github.ref, 'refs/tags/v')
+
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js
