@@ -38,7 +38,7 @@
       "type": "Apache-2.0",
       "url": "http://www.apache.org/licenses/LICENSE-2.0"
     }
-  ],  
+  ],
   "bugs": {
     "url": "https://github.com/rethinkdb/rethinkdb-ts/issues"
   },
