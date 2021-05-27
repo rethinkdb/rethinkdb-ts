@@ -281,9 +281,12 @@ export class Cursor extends Readable implements RCursor {
           const value = await this.next();
           return { value, done: false };
         } catch (error) {
+          // TODO when db return CURSOR_END error- shoudn't throw an error in cursor.ts code
           if (
             isRethinkDBError(error) &&
-            error.type === RethinkDBErrorType.CANCEL
+            [RethinkDBErrorType.CANCEL, RethinkDBErrorType.CURSOR_END].some(
+              (errorType) => errorType === error.type,
+            )
           ) {
             return { done: true, value: undefined };
           }
