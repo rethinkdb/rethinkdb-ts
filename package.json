@@ -16,7 +16,7 @@
     "test": "test"
   },
   "engines": {
-    "node": ">12.x"
+    "node": ">=12.x <=16.x"
   },
   "scripts": {
     "prepare": "tsc",
