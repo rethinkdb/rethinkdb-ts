@@ -4,7 +4,7 @@ import { r } from '../query-builder/r';
 import { RQuery } from '../query-builder/query';
 import { Cursor } from '../response/cursor';
 import type {
-  RethinkDBPoolConnectionOptions,
+  RethinkDBConnectionOptions,
   RethinkDBServerConnectionOptions,
   RunOptions,
 } from './types';
@@ -110,11 +110,11 @@ export class MasterConnectionPool extends EventEmitter {
 
   private readonly serverPools: ServerConnectionPool[];
 
-  private connParam: RethinkDBPoolConnectionOptions;
+  private connParam: RethinkDBConnectionOptions;
 
   constructor(
     servers: RethinkDBServerConnectionOptions[],
-    options: RethinkDBPoolConnectionOptions,
+    options: RethinkDBConnectionOptions,
   ) {
     super();
     const {
@@ -150,6 +150,7 @@ export class MasterConnectionPool extends EventEmitter {
     };
     this.servers = servers.map(setConnectionDefaults);
     this.serverPools = [];
+    this.initServers().catch(console.error);
   }
 
   public setOptions({
@@ -194,7 +195,7 @@ export class MasterConnectionPool extends EventEmitter {
     ];
   }
 
-  public async initServers(serverNum = 0): Promise<void> {
+  private async initServers(serverNum = 0): Promise<void> {
     if (serverNum < this.servers.length) {
       return this.createServerPool(this.servers[serverNum]).then((pool) => {
         if (!this.draining) {
@@ -292,7 +293,7 @@ export class MasterConnectionPool extends EventEmitter {
     return pool.waitForHealthy();
   }
 
-  private setServerPoolsOptions(params: RethinkDBPoolConnectionOptions) {
+  private setServerPoolsOptions(params: RethinkDBConnectionOptions) {
     const { buffer = 1, max = 1, ...otherParams } = params;
     const pools = this.getPools();
     const healthyLength = pools.filter((pool) => pool.isHealthy).length;
