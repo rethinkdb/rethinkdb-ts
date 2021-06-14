@@ -30,10 +30,6 @@ export type RethinkDBConnectionOptions = RethinkdbConnectionParams & {
   maxExponent?: number; // default 6
 };
 
-export type RethinkDBPoolConnectionOptions = RethinkDBConnectionOptions & {
-  waitForHealthy?: boolean; // default true
-};
-
 export type RunOptions = {
   timeFormat?: Format | 'ISO8601'; // 'native' or 'raw', default 'native'
   groupFormat?: Format; // 'native' or 'raw', default 'native'

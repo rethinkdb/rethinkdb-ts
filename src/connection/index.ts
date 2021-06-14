@@ -1,4 +1,3 @@
-import type { RethinkDBPoolConnectionOptions } from './types';
 import { RethinkDBError, RethinkDBErrorType } from '../error';
 import { RethinkDBConnection } from './connection';
 import { MasterConnectionPool } from './master-pool';
@@ -20,7 +19,7 @@ export async function connect(
 
 export async function connectPool(
   servers: RethinkDBServerConnectionOptions[],
-  options: RethinkDBPoolConnectionOptions,
+  options: RethinkDBConnectionOptions & { waitForHealthy?: boolean },
 ): Promise<MasterConnectionPool> {
   const { waitForHealthy = true } = options;
   if (!servers.length) {
@@ -30,9 +29,10 @@ export async function connectPool(
     );
   }
   const connectionPool = new MasterConnectionPool(servers, options);
-  connectionPool.initServers().catch(console.error);
+
   if (waitForHealthy) {
     await connectionPool.waitForHealthy();
   }
+
   return connectionPool;
 }
