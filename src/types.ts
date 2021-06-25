@@ -762,7 +762,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
     options?: { index: string },
   ): RStream<JoinResult<T, U>>;
 
-  zip(): T extends JoinResult<infer U1, infer U2> ? U1 & U2 : never;
+  zip<T1 = T>(): T1 extends JoinResult<infer U1, infer U2> ? RStream<U1 & U2> : never;
 
   union<U = T>(
     ...other: Array<RStream<U> | RValue<U[]> | { interleave: boolean | string }>
@@ -1418,7 +1418,7 @@ export interface R {
 
   zip<T>(
     stream: RStream<T>,
-  ): T extends JoinResult<infer U1, infer U2> ? U1 & U2 : never;
+  ): T extends JoinResult<infer U1, infer U2> ? RStream<U1 & U2> : never;
 
   union<T, U = T extends Array<infer TArr> ? TArr : T>(
     stream: RValue<U[]> | RStream<U>,
