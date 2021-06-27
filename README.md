@@ -44,10 +44,10 @@ const connection = await connect(options);
 const poll = await connectPool(options);
 
 // New methods with separate connection
-const newConnection = new RethinkDBConnection({}, { db: 'test' });
+const newConnection = new RethinkDBConnection({ server: {}, options: { db: 'test' }});
 await newConnection.reconnect(); // connected
 
-const newPool = new MasterConnectionPool([], { db: 'test' }); // connects instantly
+const newPool = new MasterConnectionPool({ servers: [], options: { db: 'test' }}); // connects instantly
 await newPool.waitForHealthy(); // wait till connection is ready
 ```
 

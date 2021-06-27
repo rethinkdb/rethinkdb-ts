@@ -12,7 +12,7 @@ export async function connect(
   server: RethinkDBServerConnectionOptions,
   options: RethinkDBConnectionOptions,
 ): Promise<RethinkDBConnection> {
-  const c = new RethinkDBConnection(server, options);
+  const c = new RethinkDBConnection({ server, options });
   await c.reconnect();
   return c;
 }
@@ -28,7 +28,7 @@ export async function connectPool(
       { type: RethinkDBErrorType.API_FAIL },
     );
   }
-  const connectionPool = new MasterConnectionPool(servers, options);
+  const connectionPool = new MasterConnectionPool({ servers, options });
 
   if (waitForHealthy) {
     await connectionPool.waitForHealthy();
