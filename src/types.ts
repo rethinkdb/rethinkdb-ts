@@ -994,11 +994,6 @@ export interface R {
   october: RValue;
   november: RValue;
   december: RValue;
-  // Global
-  setNestingLevel(level: number): void;
-  setArrayLimit(limit?: number): void;
-  serialize(query: RQuery): string;
-  deserialize<T extends RQuery = RQuery>(query: string): T;
   // send to DB
   expr<T>(val: T, nestingLevel?: number): RDatum<T>;
   <T>(val: T, nestingLevel?: number): RDatum<T>;
