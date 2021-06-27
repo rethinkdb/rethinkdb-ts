@@ -79,10 +79,13 @@ export class RethinkDBConnection extends EventEmitter {
 
   private db: string;
 
-  constructor(
-    private serverOptions: RethinkDBServerConnectionOptions,
-    options: RethinkdbConnectionParams,
-  ) {
+  constructor({
+    server,
+    options,
+  }: {
+    server: RethinkDBServerConnectionOptions;
+    options: RethinkdbConnectionParams;
+  }) {
     super();
     const {
       db,
@@ -93,7 +96,7 @@ export class RethinkDBConnection extends EventEmitter {
       silent = false,
       log,
     } = options;
-    this.options = setConnectionDefaults(serverOptions);
+    this.options = setConnectionDefaults(server);
     this.timeout = timeout;
     this.pingInterval = pingInterval;
     this.silent = silent;

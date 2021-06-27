@@ -112,10 +112,13 @@ export class MasterConnectionPool extends EventEmitter {
 
   private connParam: RethinkDBConnectionOptions;
 
-  constructor(
-    servers: RethinkDBServerConnectionOptions[],
-    options: RethinkDBConnectionOptions,
-  ) {
+  constructor({
+    servers,
+    options,
+  }: {
+    servers: RethinkDBServerConnectionOptions[];
+    options: RethinkDBConnectionOptions;
+  }) {
     super();
     const {
       db = 'test',
