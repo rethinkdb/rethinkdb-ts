@@ -648,7 +648,9 @@ export interface RStream<T = any> extends RQuery<T[]> {
     options?: { index: string },
   ): RStream<JoinResult<T, U>>;
 
-  zip<T1 = T>(): T1 extends JoinResult<infer U1, infer U2> ? RStream<U1 & U2> : never;
+  zip<T1 = T>(): T1 extends JoinResult<infer U1, infer U2>
+    ? RStream<U1 & U2>
+    : never;
 
   union<U = T>(
     ...other: Array<RStream<U> | RValue<U[]> | { interleave: boolean | string }>
@@ -977,11 +979,6 @@ export interface R {
   october: RValue;
   november: RValue;
   december: RValue;
-  // Global
-  setNestingLevel(level: number): void;
-  setArrayLimit(limit?: number): void;
-  serialize(query: RQuery): string;
-  deserialize<T extends RQuery = RQuery>(query: string): T;
   // send to DB
   expr<T>(val: T, nestingLevel?: number): RDatum<T>;
   <T>(val: T, nestingLevel?: number): RDatum<T>;
