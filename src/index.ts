@@ -10,9 +10,13 @@ export { isCursor } from './response/cursor';
 export * from './connection';
 export * from './connection/connection';
 
-export const serialize = (query: RQuery): string => JSON.stringify(query.term);
-export const deserialize = (termStr: string): RQuery =>
-  toQuery(validateTerm(JSON.parse(termStr)));
+export function serialize(query: RQuery): string {
+  return JSON.stringify(query.term);
+}
+
+export function deserialize(termStr: string): RQuery {
+  return toQuery(validateTerm(JSON.parse(termStr)));
+}
 
 export const setNestingLevel = (level: number): void => {
   globals.nestingLevel = level;
