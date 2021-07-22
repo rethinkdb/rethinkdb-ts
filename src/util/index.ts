@@ -15,9 +15,13 @@ const objectToString = (o: unknown): string =>
 const isObject = (value: unknown): value is Object =>
   value !== null && typeof value === 'object';
 
-function delay(timeInMs: number): Promise<void> {
+function delay(timeInMs: number, options?: { unref: boolean }): Promise<void> {
   return new Promise((resolve) => {
-    setTimeout(resolve, timeInMs);
+    const timer = setTimeout(resolve, timeInMs);
+
+    if (options && options.unref) {
+      timer.unref();
+    }
   });
 }
 
