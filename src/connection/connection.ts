@@ -117,7 +117,10 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
         }
       });
     try {
-      await Promise.race([delay(this.timeout * 1000), this.socket.connect()]);
+      await Promise.race([
+        delay(this.timeout * 1000, { unref: true }),
+        this.socket.connect(),
+      ]);
     } catch (connectionError) {
       const error = new RethinkDBError(
         'Unable to establish connection, see cause for more info.',
