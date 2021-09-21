@@ -125,13 +125,18 @@ export class RethinkDBSocket extends EventEmitter {
     }
   }
 
-  public sendQuery(newQuery: QueryJson, token = this.nextToken++) {
+  public sendQuery(newQuery: QueryJson, token?: number) {
     if (!this.socket || this.status !== 'open') {
       throw new RethinkDBError(
         '`run` was called with a closed connection after:',
         { query: newQuery, type: RethinkDBErrorType.CONNECTION }
       );
     }
+
+    if (token === undefined) {
+      token = this.nextToken++;
+    } 
+
     const encoded = JSON.stringify(newQuery);
     const querySize = Buffer.byteLength(encoded);
     const buffer = Buffer.alloc(8 + 4 + querySize);
