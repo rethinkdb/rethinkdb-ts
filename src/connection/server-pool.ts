@@ -15,7 +15,8 @@ import { delay } from '../util';
 
 export class ServerConnectionPool
   extends EventEmitter
-  implements ConnectionPool {
+  implements ConnectionPool
+{
   public readonly server: RNConnOpts;
 
   private draining = false;
@@ -85,7 +86,7 @@ export class ServerConnectionPool
 
   public async initConnections(): Promise<void> {
     if (this.connections.length < this.buffer && !this.draining) {
-      return this.createConnection().then(() => this.initConnections());
+      await this.createConnection().then(() => this.initConnections());
     }
   }
 
@@ -213,7 +214,7 @@ export class ServerConnectionPool
   private async createConnection() {
     const conn = new RethinkDBConnection(this.server, this.connParam);
     this.connections = [...this.connections, conn];
-    return this.persistConnection(conn);
+    await this.persistConnection(conn);
   }
 
   private subscribeToConnection(conn: RethinkDBConnection) {
@@ -274,20 +275,20 @@ export class ServerConnectionPool
     this.timers.delete(conn);
   }
 
-  private async persistConnection(conn: RethinkDBConnection) {
+  private async persistConnection(conn: RethinkDBConnection): Promise<void> {
     let exp = 0;
     while (this.connections.includes(conn) && !conn.open && !this.draining) {
       try {
         await conn.reconnect();
-      } catch (err) {
-        this.reportError(err);
+      } catch (error: any) {
+        this.reportError(error);
         if (this.connections.length > this.buffer) {
           // if trying to go above buffer and failing just use one of the open connections
           this.closeConnection(conn);
           break;
         }
         if (this.healthy === undefined) {
-          this.setHealthy(false, err);
+          this.setHealthy(false, error);
         }
         await delay(2 ** exp * this.timeoutError);
         exp = Math.min(exp + 1, this.maxExponent);
@@ -299,7 +300,6 @@ export class ServerConnectionPool
       return;
     }
     this.subscribeToConnection(conn);
-    return conn;
   }
 
   private reportError(err: Error, log = false) {

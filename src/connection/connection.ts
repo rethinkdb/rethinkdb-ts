@@ -121,7 +121,7 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
         delay(this.timeout * 1000, { unref: true }),
         this.socket.connect(),
       ]);
-    } catch (connectionError) {
+    } catch (connectionError: any) {
       const error = new RethinkDBError(
         'Unable to establish connection, see cause for more info.',
         {
@@ -256,8 +256,8 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
               );
             }
           }
-        } catch (e) {
-          this.reportError(e);
+        } catch (error: any) {
+          this.reportError(error);
         }
         if (this.pingTimer) {
           this.startPinging();

@@ -117,7 +117,7 @@ export class RethinkDBSocket extends EventEmitter {
               default:
                 break;
             }
-          } catch (error) {
+          } catch (error: any) {
             this.handleError(error);
           }
         });
@@ -140,8 +140,8 @@ export class RethinkDBSocket extends EventEmitter {
       this.lastError = undefined;
       await this.performHandshake();
       this.emit('connect');
-    } catch (err) {
-      this.handleError(err);
+    } catch (error: any) {
+      this.handleError(error);
     }
   }
 
@@ -155,7 +155,7 @@ export class RethinkDBSocket extends EventEmitter {
 
     if (token === undefined) {
       token = this.nextToken++;
-    } 
+    }
 
     const encoded = JSON.stringify(newQuery);
     const querySize = Buffer.byteLength(encoded);
@@ -325,7 +325,7 @@ export class RethinkDBSocket extends EventEmitter {
             errorCode: jsonMsg.error_code,
           });
         }
-      } catch (cause) {
+      } catch (cause: any) {
         error = new RethinkDBError(strMsg, {
           cause,
           type: RethinkDBErrorType.AUTH,

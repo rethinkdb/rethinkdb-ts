@@ -180,7 +180,7 @@ export class Cursor extends Readable implements RCursor {
       err = undefined;
       try {
         next = await this.next();
-      } catch (error) {
+      } catch (error: any) {
         err = error;
       }
       if (err && err.type === RethinkDBErrorType.CURSOR_END) {
@@ -280,7 +280,7 @@ export class Cursor extends Readable implements RCursor {
         try {
           const value = await this.next();
           return { value, done: false };
-        } catch (error) {
+        } catch (error: any) {
           // TODO when db return CURSOR_END error- shoudn't throw an error in cursor.ts code
           if (
             isRethinkDBError(error) &&
