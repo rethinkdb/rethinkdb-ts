@@ -970,7 +970,7 @@ export interface RTable<T = any> extends RSelection<T> {
   insert(obj: any, options?: InsertOptions): RDatum<WriteResult<T>>;
   sync(): RDatum<{ synced: number }>;
 
-  get(key: any): RSingleSelection<T>;
+  get(key: any): RSingleSelection<T | null>;
   getAll(key: any, options?: { index: string }): RSelection<T>;
   getAll(key1: any, key2: any, options?: { index: string }): RSelection<T>;
   getAll(
