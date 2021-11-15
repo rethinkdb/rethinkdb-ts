@@ -38,9 +38,11 @@ const conn = await r.connect(options);
 
 - Fully working typescript driver!
 - Rebuilt from scratch using the latest ES/TS features for readability and maintainability
-- Drop-in replacement for rethinkdbdash with only some minor changes
+- Drop-in replacement for [rethinkdbdash](https://github.com/neumino/rethinkdbdash) with only some minor changes
 
 # CHANGES FROM RETHINKDBDASH
+
+See [rethinkdbdash for example usage](https://github.com/neumino/rethinkdbdash), with these changes:
 - Support for complex socket configuration + tls (notice that for SSL/TLS or any configuration more complex than `{ host: '...', port: '...' }` you'll have to encapsulate in a server/servers property: 
 ```ts
 { 
