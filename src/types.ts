@@ -443,7 +443,7 @@ export interface RDatum<T = any> extends RQuery<T> {
   nth(
     attribute: RValue<number>,
   ): T extends Array<infer T1> ? RDatum<T1> : never;
-  default<U>(value: RValue<U>): RDatum<T | U>;
+  default<U>(value: RValue<U>): RDatum<NonNullable<T> | U>;
   hasFields(
     ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
@@ -1730,7 +1730,7 @@ export interface R {
     >
   ): U extends RStream ? RStream : RDatum;
 
-  default<T, U>(datum: RDatum<T>, value: U): RDatum<T | U>;
+  default<T, U>(datum: RDatum<T>, value: U): RDatum<NonNullable<T> | U>;
   // Works only if T is an array
   append<T, U>(
     datum: RDatum<T>,
