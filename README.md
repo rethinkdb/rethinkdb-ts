@@ -72,7 +72,7 @@ If you want an SSL/TLS, add `tls: true` and the options described [here](https:/
 
 # DROPPING SUPPORT:
 
-- Support node < 10
+- Support node < 12
 - Support callbacks
 - Support using `.then()` directly on a query (optionalRun), it can confuse users that queries are promises leading to false assumptions:
   - Queries are not promises since they are not eagerly evaluated and therefore they can:
