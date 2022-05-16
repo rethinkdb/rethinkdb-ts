@@ -19,7 +19,7 @@
     "node": ">=12.x <=18.x"
   },
   "scripts": {
-    "prepare": "husky install && tsc -p tsconfig.build.json",
+    "prepare": "husky install && npm run build",
     "build": "tsc -p tsconfig.build.json",
     "build:dev": "tsc --watch",
     "lint": "eslint src",
