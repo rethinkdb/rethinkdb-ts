@@ -1,10 +1,12 @@
 import { Readable } from 'stream';
+
 import { RethinkDBSocket } from '../connection/socket';
+import type { RunOptions } from '../connection/types';
 import { isRethinkDBError, RethinkDBError, RethinkDBErrorType } from '../error';
 import { ResponseNote, ResponseType } from '../proto/enums';
 import type { QueryJson, ResponseJson } from '../types';
-import type { RunOptions } from '../connection/types';
 import { isPromise } from '../util';
+
 import { parseRawResponse } from './response-parser';
 
 export type RCursorType =
@@ -100,8 +102,9 @@ export class Cursor<T = any> extends Readable {
     return super.resume();
   }
 
-  public destroy(): void {
-    super.destroy();
+  public destroy(error?: Error): this {
+    super.destroy(error);
+    return this;
   }
 
   // eslint-disable-next-line no-underscore-dangle
@@ -255,7 +258,7 @@ export class Cursor<T = any> extends Readable {
           await result;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       let finalError = error;
       if (final) {
         try {

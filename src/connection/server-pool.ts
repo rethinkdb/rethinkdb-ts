@@ -209,10 +209,10 @@ export class ServerConnectionPool extends EventEmitter {
   }
 
   private async createConnection() {
-    const connection = new RethinkDBConnection(
-      this.serverOptions,
-      this.connParam,
-    );
+    const connection = new RethinkDBConnection({
+      server: this.serverOptions,
+      options: this.connParam,
+    });
     this.connections.push(connection);
     await this.persistConnection(connection);
   }
