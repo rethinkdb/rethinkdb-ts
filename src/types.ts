@@ -718,8 +718,8 @@ export interface RStream<T = any> extends RQuery<T[]> {
     },
   ): RStream<RES>;
   // SELECT
-  distinct(): RStream<T>;
-  distinct<TIndex = any>(index: { index: string }): RStream<TIndex>;
+  distinct(): RDatum<T>;
+  distinct<TIndex = any>(index: { index: string }): RDatum<TIndex>;
 
   pluck(...fields: MultiFieldSelector[]): RStream<Partial<T>>;
   without(...fields: MultiFieldSelector[]): RStream<Partial<T>>;
