@@ -1194,7 +1194,10 @@ export interface R {
     highBound?: RValue<number> | { float: boolean },
     options?: { float: boolean },
   ): RDatum<number>;
-  range(startValue: RValue<number>, endValue?: RValue<number>): RStream<number>;
+  range(
+    startValue?: RValue<number>,
+    endValue?: RValue<number>,
+  ): RStream<number>;
   uuid(val?: RValue<string>): RDatum<string>;
   http(url: RValue<string>, options?: HttpRequestOptions): RDatum;
   http(url: RValue<string>, options?: HTTPStreamRequestOptions): RStream;
