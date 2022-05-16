@@ -9,6 +9,15 @@ export type Primitives = null | string | boolean | number;
 export type Format = 'native' | 'raw';
 export type Durability = 'hard' | 'soft';
 export type RValue<T = any> = RDatum<T> | T;
+
+export type CoerceTypes = {
+  Array: 'array' | 'ARRAY';
+  Binary: 'binary' | 'BINARY';
+  Number: 'number' | 'NUMBER';
+  Object: 'object' | 'OBJECT';
+  String: 'string' | 'STRING';
+};
+
 // TODO: Add recursive type when option available
 // type RValue<T = any> = T extends RDatum
 // ? T
@@ -605,16 +614,16 @@ export interface RDatum<T = any> extends RQuery<T> {
   isEmpty(): T extends Array<infer T1> ? RDatum<boolean> : never;
 
   coerceTo<U = any>(
-    type: 'object' | 'OBJECT',
+    type: CoerceTypes['Object'],
   ): T extends Array<infer T1> ? RDatum<U> : never;
-  coerceTo(type: 'string' | 'STRING'): RDatum<string>;
-  coerceTo(type: 'array' | 'ARRAY'): RDatum<any[]>;
+  coerceTo(type: CoerceTypes['String']): RDatum<string>;
+  coerceTo(type: CoerceTypes['Array']): RDatum<any[]>;
   // Works only if T is a string
   coerceTo(
-    type: 'number' | 'NUMBER',
+    type: CoerceTypes['Number'],
   ): T extends string ? RDatum<number> : never;
   coerceTo(
-    type: 'binary' | 'BINARY',
+    type: CoerceTypes['Binary'],
   ): T extends string ? RDatum<Buffer> : never;
   match(
     regexp: RValue<string>,
@@ -859,8 +868,8 @@ export interface RStream<T = any> extends RQuery<T[]> {
 
   isEmpty(): RDatum<boolean>;
 
-  coerceTo(type: 'array'): RDatum<T[]>;
-  coerceTo<U = any>(type: 'object'): RDatum<U>;
+  coerceTo(type: CoerceTypes['Array']): RDatum<T[]>;
+  coerceTo<U = any>(type: CoerceTypes['Object']): RDatum<U>;
 }
 
 export interface RFeed<T = any> extends RQuery<RCursor<T>> {
@@ -1700,24 +1709,27 @@ export interface R {
   ): T extends Array<infer T1> ? RDatum<boolean> : never;
   isEmpty<T>(stream: RStream<T>): RDatum<boolean>;
 
-  coerceTo<T>(stream: RStream<T>, type: 'array'): RDatum<T[]>;
-  coerceTo<T, U = any>(stream: RStream<T>, type: 'object'): RDatum<U>;
+  coerceTo<T>(stream: RStream<T>, type: CoerceTypes['Array']): RDatum<T[]>;
+  coerceTo<T, U = any>(
+    stream: RStream<T>,
+    type: CoerceTypes['Object'],
+  ): RDatum<U>;
 
   // DATUM
 
   coerceTo<T, U = any>(
     datum: RDatum<T>,
-    type: 'object',
+    type: CoerceTypes['Object'],
   ): T extends Array<infer T1> ? RDatum<U> : never;
-  coerceTo<T>(datum: RDatum<T>, type: 'string'): RDatum<string>;
-  coerceTo<T>(datum: RDatum<T>, type: 'array'): RDatum<any[]>;
+  coerceTo<T>(datum: RDatum<T>, type: CoerceTypes['String']): RDatum<string>;
+  coerceTo<T>(datum: RDatum<T>, type: CoerceTypes['Array']): RDatum<any[]>;
   coerceTo<T>(
     datum: RDatum<T>,
-    type: 'number',
+    type: CoerceTypes['Number'],
   ): T extends string ? RDatum<number> : never;
   coerceTo<T>(
     datum: RDatum<T>,
-    type: 'binary',
+    type: CoerceTypes['Binary'],
   ): T extends string ? RDatum<Buffer> : never;
 
   do<T extends Primitives | Record<string, unknown>, U>(
