@@ -224,6 +224,7 @@ describe('document manipulation', () => {
       await pool.run(
         r
           .expr(1)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .literal('foo'),
       );
@@ -263,6 +264,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .append(),
       );
@@ -286,6 +288,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .prepend(),
       );
@@ -309,6 +312,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .difference(),
       );
@@ -335,6 +339,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .setInsert(),
       );
@@ -358,6 +363,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .setUnion(),
       );
@@ -381,6 +387,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .setIntersection(),
       );
@@ -404,6 +411,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .setDifference(),
       );
@@ -429,6 +437,7 @@ describe('document manipulation', () => {
 
   it('`(...)` should throw if no argument has been passed', async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       await pool.run(r.db(dbName).table(tableName)());
       assert.fail('should throw');
@@ -442,6 +451,7 @@ describe('document manipulation', () => {
 
   it('`getField` should throw if no argument has been passed', async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       await pool.run(r.db(dbName).table(tableName).getField());
       assert.fail('should throw');
@@ -495,6 +505,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .insertAt(),
       );
@@ -518,6 +529,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .spliceAt(),
       );
@@ -544,6 +556,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .deleteAt(),
       );
@@ -562,6 +575,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .deleteAt(1, 1, 1, 1),
       );
@@ -585,6 +599,7 @@ describe('document manipulation', () => {
         r
           .db(dbName)
           .table(tableName)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           .changeAt(),
       );
