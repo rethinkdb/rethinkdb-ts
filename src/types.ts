@@ -640,6 +640,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
   <U extends keyof T>(attribute: RValue<U>): RStream<T[U]>;
   (n: RValue<number>): RDatum<T>;
   getField<U extends keyof T>(fieldName: RValue<U>): RStream<T[U]>;
+  default<U>(value: RValue<U>): RStream<NonNullable<T> | U>;
 
   // FROM
 
