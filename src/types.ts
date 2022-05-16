@@ -325,6 +325,12 @@ export interface RServer {
   port: number;
 }
 
+export type ContainsArgType<T> =
+  | Primitives
+  | any[]
+  | Record<string, unknown>
+  | Func<T>;
+
 export interface RDatum<T = any> extends RQuery<T> {
   do<U>(
     ...args: Array<RDatum | ((arg: RDatum<T>, ...args: RDatum[]) => U)>
@@ -398,10 +404,8 @@ export interface RDatum<T = any> extends RQuery<T> {
 
   // LOGIC
   contains<U = T extends Array<infer T1> ? T1 : never>(
-    val1: any[] | null | string | number | Record<string, unknown> | Func<U>,
-    ...value: Array<
-      any[] | null | string | number | Record<string, unknown> | Func<U>
-    >
+    val1: ContainsArgType<U>,
+    ...value: Array<ContainsArgType<U>>
   ): T extends Array<infer T1> ? RDatum<boolean> : never; // also predicate
 
   // ORDER BY
@@ -689,10 +693,8 @@ export interface RStream<T = any> extends RQuery<T[]> {
 
   // LOGIC
   contains(
-    val1: any[] | null | string | number | Record<string, unknown> | Func<T>,
-    ...value: Array<
-      any[] | null | string | number | Record<string, unknown> | Func<T>
-    >
+    val1: ContainsArgType<T>,
+    ...value: Array<ContainsArgType<T>>
   ): RDatum<boolean>;
 
   // ORDER BY
@@ -1394,17 +1396,13 @@ export interface R {
   intersects<T>(stream: RStream<T>, geometry: RDatum): RStream<T>;
   contains<T, U = T extends Array<infer T1> ? T1 : never>(
     datum: RDatum<T>,
-    val1: any[] | null | string | number | Record<string, unknown> | Func<U>,
-    ...value: Array<
-      any[] | null | string | number | Record<string, unknown> | Func<U>
-    >
+    val1: ContainsArgType<U>,
+    ...value: Array<ContainsArgType<U>>
   ): T extends Array<infer T1> ? RDatum<boolean> : never; // also predicate
   contains<T>(
     stream: RStream<T>,
-    val1: any[] | null | string | number | Record<string, unknown> | Func<T>,
-    ...value: Array<
-      any[] | null | string | number | Record<string, unknown> | Func<T>
-    >
+    val1: ContainsArgType<T>,
+    ...value: Array<ContainsArgType<T>>
   ): RDatum<boolean>;
   orderBy<T, U = T extends Array<infer T1> ? T1 : never>(
     datum: RDatum<T>,
