@@ -88,8 +88,8 @@ export class Cursor extends Readable implements RCursor {
     return super.resume();
   }
 
-  public destroy() {
-    super.destroy();
+  public destroy(error?: Error): this {
+    return super.destroy(error);
   }
 
   public _destroy() {
