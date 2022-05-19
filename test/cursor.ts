@@ -657,9 +657,9 @@ describe('cursor', () => {
       await feed.next();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'You cannot call `next` once you have bound listeners on the Feed.',
+      assert.equal(
+        e.message,
+        'You cannot call `next` once you have bound listeners on the Feed.',
       );
       await feed.close();
     }

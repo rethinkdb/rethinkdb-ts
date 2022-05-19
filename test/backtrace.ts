@@ -68,9 +68,9 @@ describe('backtraces', () => {
       await r.dbDrop(1).run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.dbDrop(1)\n         ^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.dbDrop(1)\n         ^ \n'
       );
     }
   });
@@ -91,9 +91,9 @@ describe('backtraces', () => {
       await r.dbCreate(1).run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.dbCreate(1)\n           ^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.dbCreate(1)\n           ^ \n'
       );
     }
   });
@@ -119,9 +119,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.dbList().do(function(var_1) {\n    return var_1.add("a")\n           ^^^^^^^^^^^^^^\n})\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.dbList().do(function(var_1) {\n    return var_1.add("a")\n           ^^^^^^^^^^^^^^\n})\n'
       );
     }
   });
@@ -149,9 +149,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr(2).do(function(var_1) {\n    return var_1.add("a")\n           ^^^^^^^^^^^^^^\n})\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr(2).do(function(var_1) {\n    return var_1.add("a")\n           ^^^^^^^^^^^^^^\n})\n'
       );
     }
   });
@@ -175,9 +175,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.' +
             tableName +
@@ -209,9 +209,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -242,9 +242,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.db("' +
             dbName +
             '").tableList().do(function(var_1) {\n    return var_1.add("a")\n           ^^^^^^^^^^^^^^\n})\n'
       );
@@ -278,9 +278,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Index `zoo` already exists on table `' +
+      assert.equal(
+        e.message,
+        'Index `zoo` already exists on table `' +
             dbName +
             '.' +
             tableName +
@@ -315,9 +315,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Index `nonExistingIndex` does not exist on table `' +
+      assert.equal(
+        e.message,
+        'Index `nonExistingIndex` does not exist on table `' +
             dbName +
             '.' +
             tableName +
@@ -356,9 +356,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -393,9 +393,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -449,9 +449,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -486,9 +486,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Index `bar` was not found on table `' +
+      assert.equal(
+        e.message,
+        'Index `bar` was not found on table `' +
             dbName +
             '.' +
             tableName +
@@ -522,9 +522,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -556,9 +556,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -589,9 +589,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -624,9 +624,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -655,9 +655,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -686,9 +686,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -715,9 +715,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Database `nonExistingDb` does not exist in:\nr.db("nonExistingDb").table("nonExistingTable")\n^^^^^^^^^^^^^^^^^^^^^                          \n'
+      assert.equal(
+        e.message,
+        'Database `nonExistingDb` does not exist in:\nr.db("nonExistingDb").table("nonExistingTable")\n^^^^^^^^^^^^^^^^^^^^^                          \n'
       );
     }
   });
@@ -741,9 +741,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Table `' +
+      assert.equal(
+        e.message,
+        'Table `' +
             dbName +
             '.nonExistingTable` does not exist in:\nr.db("' +
             dbName +
@@ -777,9 +777,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found NULL in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found NULL in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -815,9 +815,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -859,9 +859,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -903,9 +903,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -947,9 +947,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -985,9 +985,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).innerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("' +
+      assert.equal(
+        e.message,
+        'Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).innerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -1023,9 +1023,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).innerJoin([1, 2, 3], function(var_1, var_2) {\n    return r.expr(1).add("str").add(var_1.eq(var_2("bar").add(1)))\n           ^^^^^^^^^^^^^^^^^^^^                                   \n})\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).innerJoin([1, 2, 3], function(var_1, var_2) {\n    return r.expr(1).add("str").add(var_1.eq(var_2("bar").add(1)))\n           ^^^^^^^^^^^^^^^^^^^^                                   \n})\n'
       );
     }
   });
@@ -1055,9 +1055,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).outerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("' +
+      assert.equal(
+        e.message,
+        'Expected type SEQUENCE but found FUNCTION:\nVALUE FUNCTION in:\nr.expr([1, 2, 3]).outerJoin(function(var_1, var_2) {\n                            ^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1.eq(var_2("bar").add(1))\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n}, r.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -1120,9 +1120,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform get_field on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).eqJoin("id", r.db("' +
+      assert.equal(
+        e.message,
+        'Cannot perform get_field on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).eqJoin("id", r.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -1156,9 +1156,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found NUMBER in:\nr.expr([1, 2, 3]).map(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1\n    ^^^^^^^^^^^^\n}).add(1)\n^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found NUMBER in:\nr.expr([1, 2, 3]).map(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1\n    ^^^^^^^^^^^^\n}).add(1)\n^^^^^^^^^\n'
       );
     }
   });
@@ -1182,9 +1182,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform has_fields on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).withFields("foo", "bar").add(1)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^       \n'
+      assert.equal(
+        e.message,
+        'Cannot perform has_fields on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).withFields("foo", "bar").add(1)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^       \n'
       );
     }
   });
@@ -1214,9 +1214,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot convert NUMBER to SEQUENCE in:\nr.expr([1, 2, 3]).concatMap(function(var_1) {\n                            ^^^^^^^^^^^^^^^^^\n    return var_1\n    ^^^^^^^^^^^^\n}).add(1)\n^        \n'
+      assert.equal(
+        e.message,
+        'Cannot convert NUMBER to SEQUENCE in:\nr.expr([1, 2, 3]).concatMap(function(var_1) {\n                            ^^^^^^^^^^^^^^^^^\n    return var_1\n    ^^^^^^^^^^^^\n}).add(1)\n^        \n'
       );
     }
   });
@@ -1240,9 +1240,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform get_field on a non-object non-sequence `2` in:\nr.expr([1, 2, 3]).orderBy("foo").add(1)\n                          ^^^^^        \n'
+      assert.equal(
+        e.message,
+        'Cannot perform get_field on a non-object non-sequence `2` in:\nr.expr([1, 2, 3]).orderBy("foo").add(1)\n                          ^^^^^        \n'
       );
     }
   });
@@ -1266,9 +1266,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).skip("foo").add(1)\n                       ^^^^^        \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).skip("foo").add(1)\n                       ^^^^^        \n'
       );
     }
   });
@@ -1292,9 +1292,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).limit("foo").add(1)\n                        ^^^^^        \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).limit("foo").add(1)\n                        ^^^^^        \n'
       );
     }
   });
@@ -1318,9 +1318,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).slice("foo", "bar").add(1)\n                        ^^^^^               \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).slice("foo", "bar").add(1)\n                        ^^^^^               \n'
       );
     }
   });
@@ -1344,9 +1344,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).nth("bar").add(1)\n                      ^^^^^        \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).nth("bar").add(1)\n                      ^^^^^        \n'
       );
     }
   });
@@ -1370,9 +1370,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).offsetsOf("bar").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).offsetsOf("bar").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1396,9 +1396,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.expr([1, 2, 3]).isEmpty().add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.expr([1, 2, 3]).isEmpty().add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1422,9 +1422,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).union([5, 6]).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).union([5, 6]).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1447,9 +1447,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).sample("Hello")\n                         ^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).sample("Hello")\n                         ^^^^^^^ \n'
       );
     }
   });
@@ -1505,9 +1505,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).distinct().add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).distinct().add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1531,9 +1531,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.expr([1, 2, 3]).contains("foo", "bar").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.expr([1, 2, 3]).contains("foo", "bar").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1588,9 +1588,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform pluck on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).pluck("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Cannot perform pluck on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).pluck("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1614,9 +1614,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform without on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).without("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Cannot perform without on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).without("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1640,9 +1640,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform merge on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).merge("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Cannot perform merge on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).merge("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1666,9 +1666,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).append("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).append("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1692,9 +1692,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).prepend("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).prepend("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1718,9 +1718,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot convert STRING to SEQUENCE in:\nr.expr([1, 2, 3]).difference("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Cannot convert STRING to SEQUENCE in:\nr.expr([1, 2, 3]).difference("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1744,9 +1744,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).setInsert("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).setInsert("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -1770,9 +1770,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).setUnion("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).setUnion("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1796,9 +1796,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).setIntersection("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).setIntersection("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1821,9 +1821,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform bracket on a non-object non-sequence `1` in:\nr.expr([1, 2, 3])("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Cannot perform bracket on a non-object non-sequence `1` in:\nr.expr([1, 2, 3])("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1847,9 +1847,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform has_fields on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).hasFields("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Cannot perform has_fields on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).hasFields("foo").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1873,9 +1873,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).insertAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).insertAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1899,9 +1899,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).spliceAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).spliceAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1925,9 +1925,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).deleteAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).deleteAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1951,9 +1951,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).changeAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).changeAt("foo", 2).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -1977,9 +1977,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot call `keys` on objects of type `ARRAY` in:\nr.expr([1, 2, 3]).keys().add("Hello")\n^^^^^^^^^^^^^^^^^                    \n'
+      assert.equal(
+        e.message,
+        'Cannot call `keys` on objects of type `ARRAY` in:\nr.expr([1, 2, 3]).keys().add("Hello")\n^^^^^^^^^^^^^^^^^                    \n'
       );
     }
   });
@@ -2028,9 +2028,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2053,9 +2053,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found ARRAY in:\nr.expr([1, 2, 3]).sub("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found ARRAY in:\nr.expr([1, 2, 3]).sub("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2078,9 +2078,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).mul("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3]).mul("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2103,9 +2103,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found ARRAY in:\nr.expr([1, 2, 3]).div("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found ARRAY in:\nr.expr([1, 2, 3]).div("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2128,9 +2128,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found ARRAY in:\nr.expr([1, 2, 3]).mod("Hello")\n^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found ARRAY in:\nr.expr([1, 2, 3]).mod("Hello")\n^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -2153,9 +2153,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).and(r.expr("Hello").add(2))\n                      ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).and(r.expr("Hello").add(2))\n                      ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2178,9 +2178,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr(false).or(r.expr("Hello").add(2))\n                 ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr(false).or(r.expr("Hello").add(2))\n                 ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2203,9 +2203,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).eq(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).eq(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2228,9 +2228,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).ne(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).ne(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2253,9 +2253,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).gt(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).gt(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2278,9 +2278,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).lt(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).lt(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2303,9 +2303,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).le(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).le(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2328,9 +2328,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).ge(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).ge(r.expr("Hello").add(2))\n                     ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2354,9 +2354,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).not().add(r.expr("Hello").add(2))\n                            ^^^^^^^^^^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr([1, 2, 3]).not().add(r.expr("Hello").add(2))\n                            ^^^^^^^^^^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -2379,9 +2379,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.now().add("Hello")\n^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.now().add("Hello")\n^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2391,7 +2391,7 @@ describe('backtraces', () => {
   [ { type: 'POS', pos: 0 } ]
 
   Error:
-  Error in time logic: Year is out of valid range: 1400..9999 in:
+  Error in time logic: Year is out of valid range: 1400..10000 in:
   r.time(1023, 11, 3, "Z").add("Hello")
   ^^^^^^^^^^^^^^^^^^^^^^^^
   */
@@ -2404,9 +2404,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Error in time logic: Year is out of valid range: 1400..9999 in:\nr.time(1023, 11, 3, "Z").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Error in time logic: Year is out of valid range: 1400..10000 in:\nr.time(1023, 11, 3, "Z").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -2429,9 +2429,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.epochTime(12132131).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.epochTime(12132131).add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2454,9 +2454,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Invalid date string `UnvalidISO961String` (got `U` but expected a digit) in:\nr.ISO8601("UnvalidISO961String").add("Hello")\n          ^^^^^^^^^^^^^^^^^^^^^              \n'
+      assert.equal(
+        e.message,
+        'Invalid date string `UnvalidISO961String` (got `U` but expected a digit) in:\nr.ISO8601("UnvalidISO961String").add("Hello")\n          ^^^^^^^^^^^^^^^^^^^^^              \n'
       );
     }
   });
@@ -2480,9 +2480,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Timezone `noTimezone` does not start with `-` or `+` in:\nr.now().inTimezone("noTimezone").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
+      assert.equal(
+        e.message,
+        'Timezone `noTimezone` does not start with `-` or `+` in:\nr.now().inTimezone("noTimezone").add("Hello")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^             \n'
       );
     }
   });
@@ -2506,9 +2506,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found BOOL in:\nr.now().timezone().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found BOOL in:\nr.now().timezone().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2532,9 +2532,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().during(r.now(), r.now()).add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().during(r.now(), r.now()).add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2558,9 +2558,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().timeOfDay().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().timeOfDay().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2584,9 +2584,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().year().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().year().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2610,9 +2610,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().month().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().month().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2636,9 +2636,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().day().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().day().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2662,9 +2662,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().dayOfWeek().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().dayOfWeek().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2688,9 +2688,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().dayOfYear().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().dayOfYear().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2714,9 +2714,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().hours().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().hours().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2740,9 +2740,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().minutes().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().minutes().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2766,9 +2766,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().seconds().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().seconds().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2792,9 +2792,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found BOOL in:\nr.now().toISO8601().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found BOOL in:\nr.now().toISO8601().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2818,9 +2818,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found BOOL in:\nr.now().toEpochTime().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found BOOL in:\nr.now().toEpochTime().add(true)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -2848,9 +2848,9 @@ describe('backtraces', () => {
         .run(); // eslint-disable-line camelcase
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform bracket on a non-object non-sequence `1` in:\nr.expr(1).do(function(var_1) {\n    return var_1("bah").add(3)\n           ^^^^^              \n})\n'
+      assert.equal(
+        e.message,
+        'Cannot perform bracket on a non-object non-sequence `1` in:\nr.expr(1).do(function(var_1) {\n    return var_1("bah").add(3)\n           ^^^^^              \n})\n'
       );
     }
   });
@@ -2901,9 +2901,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot convert NUMBER to SEQUENCE in:\nr.expr(1).forEach(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1("bar")\n    ^^^^^^^^^^^^^^^^^^^\n})\n^^\n'
+      assert.equal(
+        e.message,
+        'Cannot convert NUMBER to SEQUENCE in:\nr.expr(1).forEach(function(var_1) {\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    return var_1("bar")\n    ^^^^^^^^^^^^^^^^^^^\n})\n^^\n'
       );
     }
   });
@@ -2979,9 +2979,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: 1\n    ^^^^\n}).add(2)\n^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: 1\n    ^^^^\n}).add(2)\n^^^^^^^^^\n'
       );
     }
   });
@@ -3008,9 +3008,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: 1\n    ^^^^\n}).add(r.js("2"))\n^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: 1\n    ^^^^\n}).add(r.js("2"))\n^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3033,9 +3033,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot coerce NUMBER to ARRAY in:\nr.expr(2).coerceTo("ARRAY")\n^^^^^^^^^                  \n'
+      assert.equal(
+        e.message,
+        'Cannot coerce NUMBER to ARRAY in:\nr.expr(2).coerceTo("ARRAY")\n^^^^^^^^^                  \n'
       );
     }
   });
@@ -3059,9 +3059,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr(2).add("foo").typeOf()\n^^^^^^^^^^^^^^^^^^^^         \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr(2).add("foo").typeOf()\n^^^^^^^^^^^^^^^^^^^^         \n'
       );
     }
   });
@@ -3085,9 +3085,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr(2).add("foo").info()\n^^^^^^^^^^^^^^^^^^^^       \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr(2).add("foo").info()\n^^^^^^^^^^^^^^^^^^^^       \n'
       );
     }
   });
@@ -3110,9 +3110,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Failed to parse "foo" as JSON: Invalid value in:\nr.expr(2).add(r.json("foo"))\n              ^^^^^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Failed to parse "foo" as JSON: Invalid value in:\nr.expr(2).add(r.json("foo"))\n              ^^^^^^^^^^^^^ \n'
       );
     }
   });
@@ -3201,9 +3201,9 @@ describe('backtraces', () => {
   //       .run();
   //     assert.fail('should throw');
   //   } catch (e) {
-  //     assert(
-  //       e.message ===
-  //         'Expected type NUMBER but found STRING in:\nr.expr([1, 2]).map(r.row.add("eh"))\n                   ^^^^^^^^^^^^^^^ \n'
+  //     assert.equal(
+  //       e.message,
+  //       'Expected type NUMBER but found STRING in:\nr.expr([1, 2]).map(r.row.add("eh"))\n                   ^^^^^^^^^^^^^^^ \n'
   //     );
   //   }
   // });
@@ -3366,9 +3366,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -3494,9 +3494,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).add("eh")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found STRING in:\nr.expr([1, 2, 3]).add("eh")\n^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3523,9 +3523,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: 1\n    ^^^^\n}).add("eh")\n^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: 1\n    ^^^^\n}).add("eh")\n^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3548,9 +3548,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot perform get_field on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).group("foo")\n                        ^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Cannot perform get_field on a non-object non-sequence `1` in:\nr.expr([1, 2, 3]).group("foo")\n                        ^^^^^ \n'
       );
     }
   });
@@ -3578,9 +3578,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type GROUPED_DATA but found DATUM:\n[\n\t1,\n\t2,\n\t3\n] in:\nr.expr([1, 2, 3]).ungroup()\n^^^^^^^^^^^^^^^^^          \n'
+      assert.equal(
+        e.message,
+        'Expected type GROUPED_DATA but found DATUM:\n[\n\t1,\n\t2,\n\t3\n] in:\nr.expr([1, 2, 3]).ungroup()\n^^^^^^^^^^^^^^^^^          \n'
       );
     }
   });
@@ -3603,9 +3603,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3, "hello"]).sum()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3, "hello"]).sum()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3628,9 +3628,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3, "hello"]).avg()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr([1, 2, 3, "hello"]).avg()\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3703,9 +3703,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Cannot take the average of an empty stream.  (If you passed `avg` a field name, it may be that no elements of the stream had that field.) in:\nr.expr([]).avg()\n^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Cannot take the average of an empty stream.  (If you passed `avg` a field name, it may be that no elements of the stream had that field.) in:\nr.expr([]).avg()\n^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3728,9 +3728,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr(1).upcase()\n^^^^^^^^^         \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr(1).upcase()\n^^^^^^^^^         \n'
       );
     }
   });
@@ -3753,9 +3753,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr(1).downcase()\n^^^^^^^^^           \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr(1).downcase()\n^^^^^^^^^           \n'
       );
     }
   });
@@ -3782,9 +3782,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.object(1, 2)\n                    ^    \n})\n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.object(1, 2)\n                    ^    \n})\n'
       );
     }
   });
@@ -3811,9 +3811,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'OBJECT expects an even number of arguments (but found 1) in:\nr.expr(1).do(function(var_1) {\n    return r.object("a")\n           ^^^^^^^^^^^^^\n})\n'
+      assert.equal(
+        e.message,
+        'OBJECT expects an even number of arguments (but found 1) in:\nr.expr(1).do(function(var_1) {\n    return r.object("a")\n           ^^^^^^^^^^^^^\n})\n'
       );
     }
   });
@@ -3840,9 +3840,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.random(1, 2, {\n^^^^^^^^^^^^^^^^\n    float: true\n    ^^^^^^^^^^^\n}).sub("foo")\n^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.random(1, 2, {\n^^^^^^^^^^^^^^^^\n    float: true\n    ^^^^^^^^^^^\n}).sub("foo")\n^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3912,9 +3912,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -3945,9 +3945,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Error in HTTP GET of ``: URL using bad/illegal format or missing URL.\nheader:\nnull\nbody:\nnull in:\nr.http("").add(2)\n^^^^^^^^^^       \n'
+      assert.equal(
+        e.message,
+        'Error in HTTP GET of ``: URL using bad/illegal format or missing URL.\nheader:\nnull\nbody:\nnull in:\nr.http("").add(2)\n^^^^^^^^^^       \n'
       );
     }
   });
@@ -3970,9 +3970,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found NUMBER in:\nr.args(["foo", "bar"]).add(2)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found NUMBER in:\nr.args(["foo", "bar"]).add(2)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -3998,9 +3998,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr(1).do(function(var_1) {\n    return var_1.add("foo")\n           ^^^^^^^^^^^^^^^^\n})\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr(1).do(function(var_1) {\n    return var_1.add("foo")\n           ^^^^^^^^^^^^^^^^\n})\n'
       );
     }
   });
@@ -4032,9 +4032,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -4073,9 +4073,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -4104,9 +4104,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found PTYPE<BINARY> in:\nr.binary("foo").add(1)\n^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found PTYPE<BINARY> in:\nr.binary("foo").add(1)\n^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -4129,9 +4129,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found PTYPE<BINARY> in:\nr.binary(<Buffer>).add(1)\n^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found PTYPE<BINARY> in:\nr.binary(<Buffer>).add(1)\n^^^^^^^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -4157,9 +4157,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found PTYPE<GEOMETRY> in:\nr.expr(1).do(function(var_1) {\n    return r.point(1, 2).add("foo")\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n})\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found PTYPE<GEOMETRY> in:\nr.expr(1).do(function(var_1) {\n    return r.point(1, 2).add("foo")\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n})\n'
       );
     }
   });
@@ -4185,9 +4185,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.line(1, 2).add("foo")\n           ^^^^^^^^^^^^           \n})\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.line(1, 2).add("foo")\n           ^^^^^^^^^^^^           \n})\n'
       );
     }
   });
@@ -4213,9 +4213,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.circle(1, 2).add("foo")\n           ^^^^^^^^^^^^^^           \n})\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.circle(1, 2).add("foo")\n           ^^^^^^^^^^^^^^           \n})\n'
       );
     }
   });
@@ -4241,9 +4241,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type ARRAY but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.polygon(1, 2, 3).add("foo")\n           ^^^^^^^^^^^^^^^^^^           \n})\n'
+      assert.equal(
+        e.message,
+        'Expected type ARRAY but found NUMBER in:\nr.expr(1).do(function(var_1) {\n    return r.polygon(1, 2, 3).add("foo")\n           ^^^^^^^^^^^^^^^^^^           \n})\n'
       );
     }
   });
@@ -4272,9 +4272,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Not a GEOMETRY pseudotype: `3` in:\nr.expr(1).do(function(var_1) {\n    return r.polygon([0, 0], [1, 1], [2, 3]).polygonSub(3).add("foo")\n                                                        ^            \n})\n'
+      assert.equal(
+        e.message,
+        'Not a GEOMETRY pseudotype: `3` in:\nr.expr(1).do(function(var_1) {\n    return r.polygon([0, 0], [1, 1], [2, 3]).polygonSub(3).add("foo")\n                                                        ^            \n})\n'
       );
     }
   });
@@ -4304,9 +4304,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected geometry of type `LineString` but found `Polygon` in:\nr.expr(1).do(function(var_1) {\n    return r.polygon([0, 0], [1, 1], [2, 3]).fill().polygonSub(3).add("foo")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                         \n})\n'
+      assert.equal(
+        e.message,
+        'Expected geometry of type `LineString` but found `Polygon` in:\nr.expr(1).do(function(var_1) {\n    return r.polygon([0, 0], [1, 1], [2, 3]).fill().polygonSub(3).add("foo")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                         \n})\n'
       );
     }
   });
@@ -4426,9 +4426,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Not a GEOMETRY pseudotype: `[\n\t0,\n\t1,\n\t3\n]` in:\nr.polygon([0, 0], [0, 1], [1, 1]).includes([0, 1, 3])\n                                           ^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Not a GEOMETRY pseudotype: `[\n\t0,\n\t1,\n\t3\n]` in:\nr.polygon([0, 0], [0, 1], [1, 1]).includes([0, 1, 3])\n                                           ^^^^^^^^^ \n'
       );
     }
   });
@@ -4455,9 +4455,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Not a GEOMETRY pseudotype: `[\n\t0,\n\t1,\n\t3\n]` in:\nr.polygon([0, 0], [0, 1], [1, 1]).intersects([0, 1, 3])\n                                             ^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Not a GEOMETRY pseudotype: `[\n\t0,\n\t1,\n\t3\n]` in:\nr.polygon([0, 0], [0, 1], [1, 1]).intersects([0, 1, 3])\n                                             ^^^^^^^^^ \n'
       );
     }
   });
@@ -4484,9 +4484,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Not a GEOMETRY pseudotype: `[\n\t0,\n\t1,\n\t3\n]` in:\nr.polygon([0, 0], [0, 1], [1, 1]).includes([0, 1, 3])\n                                           ^^^^^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Not a GEOMETRY pseudotype: `[\n\t0,\n\t1,\n\t3\n]` in:\nr.polygon([0, 0], [0, 1], [1, 1]).includes([0, 1, 3])\n                                           ^^^^^^^^^ \n'
       );
     }
   });
@@ -4514,9 +4514,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -4550,9 +4550,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SELECTION:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -4578,9 +4578,9 @@ describe('backtraces', () => {
       await r.range('foo').run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.range("foo")\n        ^^^^^ \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.range("foo")\n        ^^^^^ \n'
       );
     }
   });
@@ -4608,9 +4608,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.range(1, 10).do(function(var_1) {\n^^^^^^^^^^^^^^                     \n    return var_1.add(4)\n})\n'
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.range(1, 10).do(function(var_1) {\n^^^^^^^^^^^^^^                     \n    return var_1.add(4)\n})\n'
       );
     }
   });
@@ -4639,9 +4639,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.range(1, 10).toJSON().do(function(var_1) {\n^^^^^^^^^^^^^^                              \n    return var_1.add(4)\n})\n'
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found SEQUENCE:\nVALUE SEQUENCE in:\nr.range(1, 10).toJSON().do(function(var_1) {\n^^^^^^^^^^^^^^                              \n    return var_1.add(4)\n})\n'
       );
     }
   });
@@ -4671,9 +4671,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -4707,9 +4707,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -4743,9 +4743,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -4784,9 +4784,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Missing required argument `replicas` in:\nr.db("' +
+      assert.equal(
+        e.message,
+        'Missing required argument `replicas` in:\nr.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -4825,9 +4825,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr(1).add("foo").add(r.db("' +
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr(1).add("foo").add(r.db("' +
             dbName +
             '").table("' +
             tableName +
@@ -4913,9 +4913,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type STRING but found ARRAY in:\nr.expr([1, 2, 3]).split(",", 3).add(3)\n^^^^^^^^^^^^^^^^^                     \n'
+      assert.equal(
+        e.message,
+        'Expected type STRING but found ARRAY in:\nr.expr([1, 2, 3]).split(",", 3).add(3)\n^^^^^^^^^^^^^^^^^                     \n'
       );
     }
   });
@@ -4969,9 +4969,9 @@ describe('backtraces', () => {
       await r.monday.add([1]).run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found ARRAY in:\nr.monday.add([1])\n^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found ARRAY in:\nr.monday.add([1])\n^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -4991,9 +4991,9 @@ describe('backtraces', () => {
       await r.november.add([1]).run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found ARRAY in:\nr.november.add([1])\n^^^^^^^^^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found ARRAY in:\nr.november.add([1])\n^^^^^^^^^^^^^^^^^^^\n'
       );
     }
   });
@@ -5020,9 +5020,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: r.wednesday\n    ^^^^^^^^^^^^^^\n}).add([1])\n^^^^^^^^^^^\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found OBJECT in:\nr.expr({\n^^^^^^^^\n    a: r.wednesday\n    ^^^^^^^^^^^^^^\n}).add([1])\n^^^^^^^^^^^\n'
       );
     }
   });
@@ -5054,9 +5054,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
+      assert.equal(
+        e.message,
+        'Expected type DATUM but found TABLE_SLICE:\nSELECTION ON table(' +
             tableName +
             ') in:\nr.db("' +
             dbName +
@@ -5088,9 +5088,9 @@ describe('backtraces', () => {
         .run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr(1).add("bar").add(r.ISO8601("dadsa", {\n^^^^^^^^^^^^^^^^^^^^                         \n    defaultTimezone: "dsada"\n}))\n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr(1).add("bar").add(r.ISO8601("dadsa", {\n^^^^^^^^^^^^^^^^^^^^                         \n    defaultTimezone: "dsada"\n}))\n'
       );
     }
   });
@@ -5140,9 +5140,9 @@ describe('backtraces', () => {
       await r.floor('hello').run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr("hello").floor()\n^^^^^^^^^^^^^^^        \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr("hello").floor()\n^^^^^^^^^^^^^^^        \n'
       );
     }
   });
@@ -5179,9 +5179,9 @@ describe('backtraces', () => {
       await r.round('hello').run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr("hello").round()\n^^^^^^^^^^^^^^^        \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr("hello").round()\n^^^^^^^^^^^^^^^        \n'
       );
     }
   });
@@ -5201,9 +5201,9 @@ describe('backtraces', () => {
       await r.ceil('hello').run();
       assert.fail('should throw');
     } catch (e) {
-      assert(
-        e.message ===
-          'Expected type NUMBER but found STRING in:\nr.expr("hello").ceil()\n^^^^^^^^^^^^^^^       \n'
+      assert.equal(
+        e.message,
+        'Expected type NUMBER but found STRING in:\nr.expr("hello").ceil()\n^^^^^^^^^^^^^^^       \n'
       );
     }
   });
