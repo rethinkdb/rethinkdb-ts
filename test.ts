@@ -54,7 +54,7 @@ r.connectPool({
   host: '127.0.0.1',
   port: 28015,
   db: 'test',
-  silent: true
+  silent: true,
 });
 (async function getData() {
   const pool = r.getPoolMaster();
