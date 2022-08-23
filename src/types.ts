@@ -981,7 +981,7 @@ export interface RTable<T = any> extends RSelection<T> {
   indexStatus(...indexName: string[]): RDatum<IndexStatus[]>;
   indexWait(...indexName: string[]): RDatum<IndexStatus[]>;
 
-  insert(obj: any, options?: InsertOptions): RDatum<WriteResult<T>>;
+  insert(obj: T | T[], options?: InsertOptions): RDatum<WriteResult<T>>;
   sync(): RDatum<{ synced: number }>;
 
   get(key: any): RSingleSelection<T | null>;
