@@ -1,4 +1,4 @@
-import { QueryJson, TermJson } from '../internal-types';
+import { TermJson } from '../internal-types';
 import { ErrorType, ResponseType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
 import { backtraceTerm } from './term-backtrace';
@@ -182,12 +182,11 @@ function preparseMessage(message: string): string {
 }
 function buildMessage(
   messageString: string,
-  query?: QueryJson,
   term?: TermJson,
   backtrace?: Array<number | string>,
 ) {
   let message = messageString;
-  const t = query ? query[1] : term;
+  const t = term;
   if (t) {
     message = preparseMessage(message);
     const [str, mark] = backtraceTerm(t, true, backtrace);
@@ -208,7 +207,6 @@ export interface RethinkDBErrorArgs {
   type?: RethinkDBErrorType;
   errorCode?: number;
   term?: TermJson;
-  query?: QueryJson;
   backtrace?: Array<number | string>;
   responseType?: ResponseType;
   responseErrorType?: ErrorType;
@@ -291,26 +289,14 @@ export class RethinkDBError extends Error {
 
   private term?: TermJson;
 
-  private backtrace?: Array<number | string>;
-
-  constructor(
-    public msg: string,
-    {
-      cause,
-      type,
-      term,
-      query,
-      errorCode,
-      backtrace,
-      responseErrorType,
-    }: RethinkDBErrorArgs = {},
-  ) {
-    super(buildMessage(msg, query, term, backtrace));
+  constructor(public msg: string, args: RethinkDBErrorArgs = {}) {
+    const { cause, type, term, errorCode, backtrace, responseErrorType } = args;
+    super(buildMessage(msg, term, backtrace));
     this.cause = cause;
     this.name = 'ReqlDriverError';
     this.msg = msg;
-    this.term = query ? query[1] : term;
-    this.backtrace = backtrace;
+    this.term = term;
+
     const { name, type: returnedType } = getErrorNameAndType({
       errorCode,
       responseErrorType,
@@ -319,18 +305,6 @@ export class RethinkDBError extends Error {
     this.name = name;
     this.type = returnedType;
     Error.captureStackTrace(this, RethinkDBError);
-  }
-
-  public addBacktrace({
-    term,
-    query,
-    backtrace,
-  }: {
-    term?: TermJson;
-    query?: QueryJson;
-    backtrace?: [string, string];
-  } = {}) {
-    this.message = buildMessage(this.msg, query, term, backtrace);
   }
 }
 
