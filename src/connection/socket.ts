@@ -30,6 +30,18 @@ export function setConnectionDefaults(
   };
 }
 
+const createQueryBuffer = (token: number, query: QueryJson): Buffer => {
+  const encoded = JSON.stringify(query);
+  const querySize = Buffer.byteLength(encoded);
+  const buffer = Buffer.alloc(8 + 4 + querySize);
+  // eslint-disable-next-line no-bitwise
+  buffer.writeUInt32LE(token & 0xffffffff, 0);
+  buffer.writeUInt32LE(Math.floor(token / 0xffffffff), 4);
+  buffer.writeUInt32LE(querySize, 8);
+  buffer.write(encoded, 12);
+  return buffer;
+};
+
 export class RethinkDBSocket extends EventEmitter {
   public connectionOptions: RNConnOpts;
 
@@ -145,7 +157,12 @@ export class RethinkDBSocket extends EventEmitter {
     }
   }
 
-  public sendQuery(newQuery: QueryJson, token?: number) {
+  public getToken(): number {
+    this.nextToken += 1;
+    return this.nextToken;
+  }
+
+  public sendQuery(newQuery: QueryJson, token: number) {
     if (!this.socket || this.status !== 'open') {
       throw new RethinkDBError(
         '`run` was called with a closed connection after:',
@@ -153,18 +170,8 @@ export class RethinkDBSocket extends EventEmitter {
       );
     }
 
-    if (token === undefined) {
-      token = this.nextToken++;
-    }
+    const buffer = createQueryBuffer(token, newQuery);
 
-    const encoded = JSON.stringify(newQuery);
-    const querySize = Buffer.byteLength(encoded);
-    const buffer = Buffer.alloc(8 + 4 + querySize);
-    // eslint-disable-next-line no-bitwise
-    buffer.writeUInt32LE(token & 0xffffffff, 0);
-    buffer.writeUInt32LE(Math.floor(token / 0xffffffff), 4);
-    buffer.writeUInt32LE(querySize, 8);
-    buffer.write(encoded, 12);
     const { noreply = false } = newQuery[2] || {};
     if (noreply) {
       this.socket.write(buffer);
@@ -312,13 +319,13 @@ export class RethinkDBSocket extends EventEmitter {
     let index = -1;
     while ((index = this.buffer.indexOf(0)) >= 0) {
       const strMsg = this.buffer.slice(0, index).toString('utf8');
-      const { data = null } = this.runningQueries.get(this.nextToken++) || {};
+      const { data = null } = this.runningQueries.get(this.getToken()) || {};
       let error: RethinkDBError | undefined;
       try {
         const jsonMsg = JSON.parse(strMsg);
         if (jsonMsg.success) {
           if (data) {
-            data.enqueue(jsonMsg as any);
+            data.enqueue(jsonMsg);
           }
         } else {
           error = new RethinkDBError(jsonMsg.error, {

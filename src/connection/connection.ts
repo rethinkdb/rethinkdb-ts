@@ -162,7 +162,8 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
   }
 
   public async noreplyWait(): Promise<void> {
-    const token = this.socket.sendQuery([QueryType.NOREPLY_WAIT]);
+    const token = this.socket.getToken();
+    this.socket.sendQuery([QueryType.NOREPLY_WAIT], token);
     const result = await this.socket.readNext(token);
     if (result.t !== ResponseType.WAIT_COMPLETE) {
       if (this.socket.status === 'errored') {
@@ -175,7 +176,8 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
   }
 
   public async server(): Promise<ServerInfo> {
-    const token = this.socket.sendQuery([QueryType.SERVER_INFO]);
+    const token = this.socket.getToken();
+    this.socket.sendQuery([QueryType.SERVER_INFO], token);
     const result = await this.socket.readNext(token);
     if (result.t !== ResponseType.SERVER_INFO) {
       if (this.socket.status === 'errored') {
@@ -204,7 +206,8 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
     if (optArgs) {
       query.push(optArgs);
     }
-    const token = this.socket.sendQuery(query);
+    const token = this.socket.getToken();
+    this.socket.sendQuery(query, token);
     if (options.noreply) {
       return undefined;
     }
@@ -246,10 +249,11 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
       this.pingTimer = setTimeout(async () => {
         try {
           if (this.socket.status === 'open') {
-            const token = this.socket.sendQuery([
-              QueryType.START,
-              [TermType.ERROR, ['ping']],
-            ]);
+            const token = this.socket.getToken();
+            this.socket.sendQuery(
+              [QueryType.START, [TermType.ERROR, ['ping']]],
+              token,
+            );
             const result = await this.socket.readNext(token);
             if (
               result.t !== ResponseType.RUNTIME_ERROR ||

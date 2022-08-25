@@ -89,7 +89,8 @@ export class ServerConnectionPool
 
   public async initConnections(): Promise<void> {
     if (this.connections.length < this.buffer && !this.draining) {
-      await this.createConnection().then(() => this.initConnections());
+      await this.createConnection();
+      await this.initConnections();
     }
   }
 
