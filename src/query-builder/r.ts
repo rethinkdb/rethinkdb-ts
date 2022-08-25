@@ -1,10 +1,9 @@
 import { RethinkDBConnection } from '../connection/connection';
 import { MasterConnectionPool } from '../connection/master-pool';
-import { RethinkDBError } from '../error/error';
+import { RethinkDBError, RethinkDBErrorType } from '../error/error';
 import {
   R,
   RConnectionOptions,
-  RethinkDBErrorType,
   RPoolConnectionOptions,
   RQuery,
 } from '../types';

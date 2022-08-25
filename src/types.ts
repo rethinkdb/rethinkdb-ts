@@ -2,6 +2,8 @@ import { EventEmitter } from 'events';
 import { TcpNetConnectOpts } from 'net';
 import { ConnectionOptions } from 'tls';
 import { Readable } from 'stream';
+
+import { RethinkDBError } from './error/error';
 import { DeepPartial } from './internal-types';
 
 // #region optargs
@@ -38,38 +40,6 @@ export type MultiFieldSelector =
   | boolean
   | number;
 export type FieldSelector<T, U = any> = string | Func<T, U>;
-
-export enum RethinkDBErrorType {
-  UNKNOWN,
-  // driver
-  API_FAIL,
-  // query errors
-  CONNECTION,
-  MASTER_POOL_FAIL,
-  POOL_FAIL,
-  CURSOR_END,
-  TIMEOUT,
-  CANCEL,
-  PARSE,
-  ARITY,
-  CURSOR,
-  // connection error
-  AUTH,
-  UNSUPPORTED_PROTOCOL,
-  // reql response errors
-  INTERNAL,
-  RESOURCE_LIMIT,
-  QUERY_LOGIC,
-  NON_EXISTENCE,
-  OP_FAILED,
-  OP_INDETERMINATE,
-  USER,
-  PERMISSION_ERROR,
-}
-
-export interface RethinkDBError extends Error {
-  readonly type: RethinkDBErrorType;
-}
 
 export interface FilterOperatorOptions {
   default: boolean | RethinkDBError;

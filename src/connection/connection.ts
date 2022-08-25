@@ -1,5 +1,9 @@
 import { EventEmitter } from 'events';
-import { isRethinkDBError, RethinkDBError } from '../error/error';
+import {
+  isRethinkDBError,
+  RethinkDBError,
+  RethinkDBErrorType,
+} from '../error/error';
 import { QueryJson, TermJson } from '../internal-types';
 import { ErrorType, QueryType, ResponseType, TermType } from '../proto/enums';
 import { globals } from '../query-builder/globals';
@@ -7,7 +11,6 @@ import { parseOptarg } from '../query-builder/parse-opt-arg';
 import { Cursor } from '../response/cursor';
 import {
   Connection,
-  RethinkDBErrorType,
   RServerConnectionOptions,
   RunOptions,
   ServerInfo,

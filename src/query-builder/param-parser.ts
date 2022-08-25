@@ -1,5 +1,4 @@
-import { RethinkDBErrorType } from '../types';
-import { RethinkDBError } from '../error/error';
+import { RethinkDBError, RethinkDBErrorType } from '../error/error';
 import { TermJson } from '../internal-types';
 import { TermType } from '../proto/enums';
 import { globals } from './globals';

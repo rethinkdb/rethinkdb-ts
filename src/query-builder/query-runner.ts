@@ -1,10 +1,10 @@
 import { bracket, funcall, termConfig } from './query-config';
 import { TermJson } from '../internal-types';
 import { RethinkDBConnection } from '../connection/connection';
-import { RCursor, RethinkDBErrorType, RunOptions } from '../types';
+import { RCursor, RunOptions } from '../types';
 import { r } from './r';
 import { MasterConnectionPool } from '../connection/master-pool';
-import { RethinkDBError } from '../error/error';
+import { RethinkDBError, RethinkDBErrorType } from '../error/error';
 import { backtraceTerm } from '../error/term-backtrace';
 import { querySymbol, RunnableRQuery, termBuilder } from './query';
 

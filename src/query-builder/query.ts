@@ -1,7 +1,7 @@
 import { TermJson, ComplexTermJson } from '../internal-types';
 import { TermConfig } from './query-config';
-import { RQuery, RethinkDBErrorType } from '../types';
-import { RethinkDBError } from '../error/error';
+import { RQuery } from '../types';
+import { RethinkDBError, RethinkDBErrorType } from '../error/error';
 import { TermType } from '../proto/enums';
 import { parseParam } from './param-parser';
 import { parseOptarg } from './parse-opt-arg';

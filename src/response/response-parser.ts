@@ -1,5 +1,5 @@
-import { RethinkDBErrorType, RunOptions } from '../types';
-import { RethinkDBError } from '../error/error';
+import { RunOptions } from '../types';
+import { RethinkDBError, RethinkDBErrorType } from '../error/error';
 
 export function getNativeTypes(
   obj: any,

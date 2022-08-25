@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { isIPv6 } from 'net';
-import { RethinkDBError } from '../error/error';
+import { RethinkDBError, RethinkDBErrorType } from '../error/error';
 import { TermJson } from '../internal-types';
 import { r } from '../query-builder/r';
 import { Cursor } from '../response/cursor';
@@ -9,7 +9,6 @@ import {
   Connection,
   MasterPool,
   RCursor,
-  RethinkDBErrorType,
   RPoolConnectionOptions,
   RServer,
   RunOptions,

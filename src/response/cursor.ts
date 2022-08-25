@@ -1,9 +1,13 @@
 import { Readable } from 'stream';
 import { RethinkDBSocket } from '../connection/socket';
-import { isRethinkDBError, RethinkDBError } from '../error/error';
+import {
+  isRethinkDBError,
+  RethinkDBError,
+  RethinkDBErrorType,
+} from '../error/error';
 import { QueryJson, ResponseJson } from '../internal-types';
 import { ResponseNote, ResponseType } from '../proto/enums';
-import { RCursor, RCursorType, RethinkDBErrorType, RunOptions } from '../types';
+import { RCursor, RCursorType, RunOptions } from '../types';
 import { isPromise } from '../util';
 import { getNativeTypes } from './response-parser';
 

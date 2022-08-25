@@ -1,11 +1,14 @@
 import { EventEmitter } from 'events';
-import { isRethinkDBError, RethinkDBError } from '../error/error';
+import {
+  isRethinkDBError,
+  RethinkDBError,
+  RethinkDBErrorType,
+} from '../error/error';
 import { TermJson } from '../internal-types';
 import { Cursor } from '../response/cursor';
 import {
   ConnectionPool,
   RConnectionOptions,
-  RethinkDBErrorType,
   RServerConnectionOptions,
   RunOptions,
 } from '../types';

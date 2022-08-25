@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
 import { connect as netConnect, Socket, TcpNetConnectOpts } from 'net';
 import { connect as tlsConnect } from 'tls';
-import { RethinkDBErrorType, RServerConnectionOptions } from '../types';
-import { RethinkDBError } from '../error/error';
+import { RServerConnectionOptions } from '../types';
+import { RethinkDBError, RethinkDBErrorType } from '../error/error';
 import { QueryJson, ResponseJson } from '../internal-types';
 import { QueryType, ResponseType } from '../proto/enums';
 import { DataQueue } from './data-queue';
