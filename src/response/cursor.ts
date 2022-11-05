@@ -22,8 +22,6 @@ export class Cursor extends Readable implements RCursor {
 
   private includeStates = false;
 
-  private closed = false;
-
   private emitting = false;
 
   private resolving: Promise<any> | undefined;
@@ -110,7 +108,7 @@ export class Cursor extends Readable implements RCursor {
         this.conn.stopQuery(this.token);
       }
       this.emitting = false;
-      this.closed = true;
+      this.destroy();
     }
   }
 
@@ -264,7 +262,7 @@ export class Cursor extends Readable implements RCursor {
       return this.results;
     } catch (error) {
       this.emitting = false;
-      this.closed = true;
+      this.destroy();
       this.results = undefined;
       this.hasNextBatch = false;
       throw error;
@@ -299,7 +297,7 @@ export class Cursor extends Readable implements RCursor {
   private async _next() {
     if (this.lastError) {
       this.emitting = false;
-      this.closed = true;
+      this.destroy();
       this.results = undefined;
       this.hasNextBatch = false;
       throw this.lastError;
@@ -329,7 +327,7 @@ export class Cursor extends Readable implements RCursor {
       this.position += 1;
       return next;
     } catch (error) {
-      this.closed = true;
+      this.destroy(error as Error);
       throw error;
     }
   }

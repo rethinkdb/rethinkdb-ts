@@ -13,7 +13,7 @@ export function hasImplicitVar(term: TermJson | undefined): boolean {
   }
   const termParam = term[1];
   if (termParam) {
-    return termParam.some((value) => hasImplicitVar(value));
+    return termParam.some((value: TermJson) => hasImplicitVar(value));
   }
   return false;
 }

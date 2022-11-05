@@ -232,7 +232,9 @@ export class RethinkDBConnection extends EventEmitter implements Connection {
       return;
     }
     if (termParam) {
-      termParam.forEach((value) => this.findTableTermAndAddDb(value, db));
+      termParam.forEach((value: TermJson) =>
+        this.findTableTermAndAddDb(value, db),
+      );
     }
   }
 

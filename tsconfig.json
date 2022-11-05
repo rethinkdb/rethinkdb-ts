@@ -13,6 +13,5 @@
       "es2015",
       "esnext.asynciterable"
     ]
-  },
-  "include": ["src"]
+  }
 }

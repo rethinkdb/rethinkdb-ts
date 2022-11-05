@@ -160,7 +160,7 @@ export function backtraceTerm(
       }
       const [func, caller, ...params] = args;
       const parsedParams = params
-        .map((a, i) => parseArg(a, i + 2))
+        .map((a: TermJson, i: number) => parseArg(a, i + 2))
         .reduce(joinMultiArray, ['', '']);
       const parsedFunc = parseArg(func, 0);
       const parsedCaller = parseArg(caller, 1, undefined, true);
@@ -244,7 +244,7 @@ export function backtraceTerm(
       // }
       const hasParams = params.length > 0;
       const parsedParams = params
-        .map((a, i) => parseArg(a, i + 1))
+        .map((a: TermJson, i: number) => parseArg(a, i + 1))
         .reduce(joinMultiArray, ['', '']);
       const parsedCaller = parseArg(caller, 0);
       const parsedOptarg = optarg
