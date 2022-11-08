@@ -149,7 +149,7 @@ export class RethinkDBSocket extends EventEmitter {
     if (!this.socket || this.status !== 'open') {
       throw new RethinkDBError(
         '`run` was called with a closed connection after:',
-        { query: newQuery, type: RethinkDBErrorType.CONNECTION },
+        { term: newQuery[1], type: RethinkDBErrorType.CONNECTION },
       );
     }
 
@@ -181,7 +181,7 @@ export class RethinkDBSocket extends EventEmitter {
         // Resolving and not rejecting so there won't be "unhandled rejection" if nobody listens
         data.destroy(
           new RethinkDBError('Query cancelled', {
-            query,
+            term: query[1],
             type: RethinkDBErrorType.CANCEL,
           }),
         );
@@ -256,7 +256,7 @@ export class RethinkDBSocket extends EventEmitter {
         new RethinkDBError(
           'The connection was closed before the query could be completed',
           {
-            query,
+            term: query[1],
             type: RethinkDBErrorType.CONNECTION,
           },
         ),

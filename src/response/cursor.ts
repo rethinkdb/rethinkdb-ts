@@ -352,7 +352,7 @@ export class Cursor extends Readable implements RCursor {
         throw new RethinkDBError(results[0], {
           responseErrorType: error,
           responseType: type,
-          query: this.query,
+          term: this.query[1],
           backtrace,
         });
       case ResponseType.SUCCESS_ATOM:
