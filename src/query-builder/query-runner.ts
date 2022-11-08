@@ -42,7 +42,7 @@ const runQueryFunc = (term: TermJson) => {
           case 'Cursor':
             return cursor.profile
               ? { profile: cursor.profile, result: await cursor.toArray() }
-              : await cursor.toArray();
+              : cursor.toArray();
           default:
             return cursor;
         }

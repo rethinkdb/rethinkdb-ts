@@ -65,7 +65,7 @@ r.connectPool = async (options: RPoolConnectionOptions = {}) => {
   } as any);
   (r as any).pool = cpool;
   cpool.initServers().catch(() => undefined);
-  return waitForHealthy ? await cpool.waitForHealthy() : cpool;
+  return waitForHealthy ? cpool.waitForHealthy() : cpool;
 };
 
 r.connect = async (options: RConnectionOptions = {}) => {

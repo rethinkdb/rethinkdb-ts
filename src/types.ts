@@ -503,7 +503,7 @@ export interface RDatum<T = any> extends RQuery<T> {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     func: (res: RDatum<ONE>) => RES,
   ): T extends any[] ? RES : never;
@@ -532,7 +532,7 @@ export interface RDatum<T = any> extends RQuery<T> {
   // GROUP
   group<
     F extends T extends Array<infer T1> ? keyof T1 : never,
-    D extends T extends Array<infer T2> ? T2 : never
+    D extends T extends Array<infer T2> ? T2 : never,
   >(
     ...fieldOrFunc: Array<FieldSelector<T>>
   ): T extends Array<infer T1> ? RDatum : never; // <GroupResults<T[U], T[]>>;
@@ -751,7 +751,7 @@ export interface RStream<T = any> extends RQuery<T[]> {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     func: (res: RDatum<T>) => RES,
   ): RES;
@@ -778,7 +778,9 @@ export interface RStream<T = any> extends RQuery<T[]> {
     options?: { index: string },
   ): RStream<JoinResult<T, U>>;
 
-  zip<T1 = T>(): T1 extends JoinResult<infer U1, infer U2> ? RStream<U1 & U2> : never;
+  zip<T1 = T>(): T1 extends JoinResult<infer U1, infer U2>
+    ? RStream<U1 & U2>
+    : never;
 
   union<U = T>(
     ...other: Array<RStream<U> | RValue<U[]> | { interleave: boolean | string }>
@@ -981,7 +983,10 @@ export interface RTable<T = any> extends RSelection<T> {
   indexStatus(...indexName: string[]): RDatum<IndexStatus[]>;
   indexWait(...indexName: string[]): RDatum<IndexStatus[]>;
 
-  insert(obj: RValue<T> | RValue<T[]>, options?: InsertOptions): RDatum<WriteResult<T>>;
+  insert(
+    obj: RValue<T> | RValue<T[]>,
+    options?: InsertOptions,
+  ): RDatum<WriteResult<T>>;
   sync(): RDatum<{ synced: number }>;
 
   get(key: any): RSingleSelection<T | null>;
@@ -1386,7 +1391,7 @@ export interface R {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     stream: RStream<T>,
     func: (res: RDatum<T>) => RES,
@@ -1398,7 +1403,7 @@ export interface R {
     RES extends
       | RDatum<WriteResult<U>>
       | RDatum<DBChangeResult>
-      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>
+      | RDatum<IndexChangeResult> = RDatum<WriteResult<U>>,
   >(
     datum: RDatum<T>,
     func: (res: RDatum<ONE>) => RES,
@@ -1537,7 +1542,7 @@ export interface R {
   group<
     T,
     F extends T extends Array<infer T1> ? keyof T1 : never,
-    D extends T extends Array<infer T2> ? T2 : never
+    D extends T extends Array<infer T2> ? T2 : never,
   >(
     datum: RDatum<T>,
     ...fieldOrFunc: Array<FieldSelector<T>>
@@ -1905,9 +1910,7 @@ export interface R {
   values<T>(datum: RDatum<T>): RDatum<Array<T[keyof T]>>;
 
   typeOf(query: any): RDatum<string>;
-  info(
-    query: RQuery,
-  ): RDatum<{
+  info(query: RQuery): RDatum<{
     value?: string;
     db?: { id: string; name: string; type: string };
     doc_count_estimates?: number[];
@@ -1917,9 +1920,7 @@ export interface R {
     primary_key?: string;
     type: string;
   }>;
-  info(
-    db: RDatabase,
-  ): RDatum<{
+  info(db: RDatabase): RDatum<{
     id: string;
     name: string;
     type: 'DB';
