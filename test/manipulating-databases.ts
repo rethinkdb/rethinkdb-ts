@@ -73,8 +73,8 @@ describe('manipulating databases', () => {
     } catch (e) {
       assert(
         e.message.match(
-          /Database name `\*_\*` invalid \(Use A-Z, a-z, 0-9, _ and - only\)/
-        )
+          /Database name `\*_\*` invalid \(Use A-Z, a-z, 0-9, _ and - only\)/,
+        ),
       );
     }
   });
@@ -87,7 +87,7 @@ describe('manipulating databases', () => {
 
     const result2 = await r.dbList().run();
     assert(Array.isArray(result2));
-    assert(result2.find(name => name === dbName) !== undefined);
+    assert(result2.find((name) => name === dbName) !== undefined);
   });
 
   it('`dbDrop` should drop a table', async () => {
@@ -153,10 +153,10 @@ describe('manipulating databases', () => {
 
     const result2 = await r.dbDrop(dbName).run();
     assert.deepEqual(result2.dbs_dropped, 1);
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const result3 = await r.dbList().run();
     assert(Array.isArray(result3));
-    assert(result3.find(name => name === dbName) === undefined);
+    assert(result3.find((name) => name === dbName) === undefined);
   });
 });

@@ -17,7 +17,7 @@ describe('control structures', () => {
   it('`do` should work', async () => {
     result = await r
       .expr({ a: 1 })
-      .do(doc => {
+      .do((doc) => {
         return doc('a');
       })
       .run();
@@ -42,10 +42,7 @@ describe('control structures', () => {
     result = await r.do(3).run();
     assert.equal(result, 3);
 
-    result = await r
-      .expr(4)
-      .do()
-      .run();
+    result = await r.expr(4).do().run();
     assert.equal(result, 4);
 
     result = await r.do(1, 2).run();
@@ -62,22 +59,13 @@ describe('control structures', () => {
     result = await r.branch(false, 1, 2).run();
     assert.equal(result, 2);
 
-    result = await r
-      .expr(false)
-      .branch('foo', false, 'bar', 'lol')
-      .run();
+    result = await r.expr(false).branch('foo', false, 'bar', 'lol').run();
     assert.equal(result, 'lol');
 
-    result = await r
-      .expr(true)
-      .branch('foo', false, 'bar', 'lol')
-      .run();
+    result = await r.expr(true).branch('foo', false, 'bar', 'lol').run();
     assert.equal(result, 'foo');
 
-    result = await r
-      .expr(false)
-      .branch('foo', true, 'bar', 'lol')
-      .run();
+    result = await r.expr(false).branch('foo', true, 'bar', 'lol').run();
     assert.equal(result, 'bar');
   });
 
@@ -88,7 +76,7 @@ describe('control structures', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`r.branch` takes at least 3 arguments, 0 provided/)
+        e.message.match(/^`r.branch` takes at least 3 arguments, 0 provided/),
       );
     }
   });
@@ -100,7 +88,7 @@ describe('control structures', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`r.branch` takes at least 3 arguments, 1 provided/)
+        e.message.match(/^`r.branch` takes at least 3 arguments, 1 provided/),
       );
     }
   });
@@ -111,21 +99,15 @@ describe('control structures', () => {
       result = await r.branch(true, true).run();
     } catch (e) {
       assert(
-        e.message.match(/^`r.branch` takes at least 3 arguments, 2 provided/)
+        e.message.match(/^`r.branch` takes at least 3 arguments, 2 provided/),
       );
     }
   });
 
   it('`branch` is defined after a term', async () => {
-    result = await r
-      .expr(true)
-      .branch(2, 3)
-      .run();
+    result = await r.expr(true).branch(2, 3).run();
     assert.equal(result, 2);
-    result = await r
-      .expr(false)
-      .branch(2, 3)
-      .run();
+    result = await r.expr(false).branch(2, 3).run();
     assert.equal(result, 3);
   });
 
@@ -136,19 +118,13 @@ describe('control structures', () => {
     result = await r.dbCreate(dbName).run();
     assert.equal(result.dbs_created, 1);
 
-    result = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    result = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result.tables_created, 1);
 
     result = await r
       .expr([{ foo: 'bar' }, { foo: 'foo' }])
-      .forEach(doc => {
-        return r
-          .db(dbName)
-          .table(tableName)
-          .insert(doc);
+      .forEach((doc) => {
+        return r.db(dbName).table(tableName).insert(doc);
       })
       .run();
     assert.equal(result.inserted, 2);
@@ -185,7 +161,7 @@ describe('control structures', () => {
     } catch (e) {
       assert(
         e.message.match(/^`r.range` takes at most 2 arguments, 3 provided/) !==
-          null
+          null,
       );
     }
   });
@@ -198,25 +174,19 @@ describe('control structures', () => {
     } catch (e) {
       assert(
         e.message.match(/^`r.range` takes at least 1 argument, 0 provided/) !==
-          null
+          null,
       );
     }
   });
 
   it('`default` should work', async () => {
-    result = await r
-      .expr({ a: 1 })('b')
-      .default('Hello')
-      .run();
+    result = await r.expr({ a: 1 })('b').default('Hello').run();
     assert.equal(result, 'Hello');
   });
   it('`default` should throw if no argument has been given', async () => {
     try {
       // @ts-ignore
-      result = await r
-        .expr({})('')
-        .default()
-        .run();
+      result = await r.expr({})('').default().run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.match(/^`default` takes 1 argument, 0 provided after/));
@@ -252,20 +222,14 @@ describe('control structures', () => {
   });
 
   it('`coerceTo` should work', async () => {
-    result = await r
-      .expr(1)
-      .coerceTo('STRING')
-      .run();
+    result = await r.expr(1).coerceTo('STRING').run();
     assert.equal(result, '1');
   });
 
   it('`coerceTo` should throw if no argument has been given', async () => {
     try {
       // @ts-ignore
-      result = await r
-        .expr(1)
-        .coerceTo()
-        .run();
+      result = await r.expr(1).coerceTo().run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.match(/^`coerceTo` takes 1 argument, 0 provided/));
@@ -273,10 +237,7 @@ describe('control structures', () => {
   });
 
   it('`typeOf` should work', async () => {
-    result = await r
-      .expr(1)
-      .typeOf()
-      .run();
+    result = await r.expr(1).typeOf().run();
     assert.equal(result, 'NUMBER');
   });
 
@@ -316,30 +277,21 @@ describe('control structures', () => {
   });
 
   it('`toJSON` and `toJsonString` should work', async () => {
-    result = await r
-      .expr({ a: 1 })
-      .toJSON()
-      .run();
+    result = await r.expr({ a: 1 }).toJSON().run();
     assert.equal(result, '{"a":1}');
 
-    result = await r
-      .expr({ a: 1 })
-      .toJsonString()
-      .run();
+    result = await r.expr({ a: 1 }).toJsonString().run();
     assert.equal(result, '{"a":1}');
   });
 
   it('`toJSON` should throw if an argument is provided', async () => {
     try {
       // @ts-ignore
-      result = await r
-        .expr({ a: 1 })
-        .toJSON('foo')
-        .run();
+      result = await r.expr({ a: 1 }).toJSON('foo').run();
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`toJSON` takes 0 arguments, 1 provided/) !== null
+        e.message.match(/^`toJSON` takes 0 arguments, 1 provided/) !== null,
       );
     }
   });

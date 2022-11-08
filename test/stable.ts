@@ -25,10 +25,7 @@ describe('stable', () => {
   });
 
   it('Create table', async () => {
-    const result = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result.tables_created, 1);
   });
 
@@ -36,25 +33,21 @@ describe('stable', () => {
     const result = await r
       .db(dbName)
       .table(tableName)
-      .insert([{ name: 'Michel', age: 27 }, { name: 'Sophie', age: 23 }])
+      .insert([
+        { name: 'Michel', age: 27 },
+        { name: 'Sophie', age: 23 },
+      ])
       .run();
     assert.deepEqual(result.inserted, 2);
   });
 
   it('Table', async () => {
-    const result = (docs = await r
-      .db(dbName)
-      .table(tableName)
-      .run());
+    const result = (docs = await r.db(dbName).table(tableName).run());
     assert.equal(result.length, 2);
   });
 
   it('get', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(docs[0].id)
-      .run();
+    const result = await r.db(dbName).table(tableName).get(docs[0].id).run();
     assert.deepEqual(result, docs[0]);
   });
 

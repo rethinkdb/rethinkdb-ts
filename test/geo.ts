@@ -17,10 +17,7 @@ describe('geo', () => {
     const result1 = await r.dbCreate(dbName).run();
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result2 = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result2.tables_created, 1);
 
     const result3 = await r
@@ -29,11 +26,7 @@ describe('geo', () => {
       .indexCreate('location', { geo: true })
       .run();
     assert.equal(result3.created, 1);
-    await r
-      .db(dbName)
-      .table(tableName)
-      .indexWait('location')
-      .run();
+    await r.db(dbName).table(tableName).indexWait('location').run();
     const result4 = await r
       .db(dbName)
       .table(tableName)
@@ -41,9 +34,9 @@ describe('geo', () => {
         Array(numDocs).fill({
           location: r.point(
             r.random(0, 1, { float: true }),
-            r.random(0, 1, { float: true })
-          )
-        })
+            r.random(0, 1, { float: true }),
+          ),
+        }),
       )
       .run();
     assert.equal(result4.inserted, numDocs);
@@ -106,7 +99,7 @@ describe('geo', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`r.circle` takes at least 2 arguments, 1 provided/)
+        e.message.match(/^`r.circle` takes at least 2 arguments, 1 provided/),
       );
     }
   });
@@ -118,16 +111,13 @@ describe('geo', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`r.circle` takes at most 3 arguments, 5 provided/)
+        e.message.match(/^`r.circle` takes at most 3 arguments, 5 provided/),
       );
     }
   });
 
   it('`distance` should work - 1', async () => {
-    const result = await r
-      .point(0, 0)
-      .distance(r.point(1, 1))
-      .run();
+    const result = await r.point(0, 0).distance(r.point(1, 1)).run();
     assert.equal(Math.floor(result), 156899);
   });
 
@@ -147,14 +137,11 @@ describe('geo', () => {
   it('`distance` arity - 1', async () => {
     try {
       // @ts-ignore
-      await r
-        .point(0, 0)
-        .distance()
-        .run();
+      await r.point(0, 0).distance().run();
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`distance` takes at least 1 argument, 0 provided/)
+        e.message.match(/^`distance` takes at least 1 argument, 0 provided/),
       );
     }
   });
@@ -162,14 +149,11 @@ describe('geo', () => {
   it('`distance` arity - 2', async () => {
     try {
       // @ts-ignore
-      await r
-        .point(0, 0)
-        .distance(1, 2, 3)
-        .run();
+      await r.point(0, 0).distance(1, 2, 3).run();
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`distance` takes at most 2 arguments, 3 provided/)
+        e.message.match(/^`distance` takes at most 2 arguments, 3 provided/),
       );
     }
   });
@@ -225,10 +209,7 @@ describe('geo', () => {
   it('`toGeojson` arity error', async () => {
     try {
       // @ts-ignore
-      await r
-        .point(0, 0)
-        .toGeojson(1, 2, 3)
-        .run();
+      await r.point(0, 0).toGeojson(1, 2, 3).run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.match(/^`toGeojson` takes 0 arguments, 3 provided/));
@@ -241,7 +222,7 @@ describe('geo', () => {
       .db(dbName)
       .table(tableName)
       .getIntersecting(r.polygon([0, 0], [0, 1], [1, 1], [1, 0]), {
-        index: 'location'
+        index: 'location',
       })
       .count()
       .run();
@@ -261,7 +242,7 @@ describe('geo', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`getIntersecting` takes 2 arguments, 1 provided/)
+        e.message.match(/^`getIntersecting` takes 2 arguments, 1 provided/),
       );
     }
   });
@@ -273,7 +254,7 @@ describe('geo', () => {
       .table(tableName)
       .getNearest(r.point(0, 0), {
         index: 'location',
-        maxResults: 5
+        maxResults: 5,
       })
       .run();
     assert(result.length <= 5);
@@ -296,20 +277,14 @@ describe('geo', () => {
   it('`includes` should work', async () => {
     const point1 = r.point(-117.220406, 32.719464);
     const point2 = r.point(-117.206201, 32.725186);
-    const result = await r
-      .circle(point1, 2000)
-      .includes(point2)
-      .run();
+    const result = await r.circle(point1, 2000).includes(point2).run();
     assert(result);
   });
 
   it('`includes` arity', async () => {
     try {
       // @ts-ignore
-      await r
-        .circle([0, 0], 2000)
-        .includes()
-        .run();
+      await r.circle([0, 0], 2000).includes().run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.match(/^`includes` takes 1 argument, 0 provided/));
@@ -363,7 +338,7 @@ describe('geo', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`r.line` takes at least 2 arguments, 0 provided/)
+        e.message.match(/^`r.line` takes at least 2 arguments, 0 provided/),
       );
     }
   });
@@ -399,7 +374,7 @@ describe('geo', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`r.polygon` takes at least 3 arguments, 0 provided/)
+        e.message.match(/^`r.polygon` takes at least 3 arguments, 0 provided/),
       );
     }
   });
@@ -417,10 +392,7 @@ describe('geo', () => {
   it('`polygonSub` arity', async () => {
     try {
       // @ts-ignore
-      await r
-        .polygon([0, 0], [0, 1], [1, 1])
-        .polygonSub()
-        .run();
+      await r.polygon([0, 0], [0, 1], [1, 1]).polygonSub().run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.match(/^`polygonSub` takes 1 argument, 0 provided/));

@@ -20,11 +20,11 @@
   },
   "scripts": {
     "prepare": "husky install && tsc",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc",
     "lint": "eslint src",
     "test": "./scripts/ts-mocha --check-leaks -t 10000 --exit ./test/*.ts",
     "proto": "pbjs -t static-module -w commonjs -o src/proto/ql2.js src/proto/ql2.proto && pbts -o src/proto/ql2.d.ts src/proto/ql2.js && ts-node ./generate-enums",
-    "start:dev": "tsc -p tsconfig.build.json --watch"
+    "start:dev": "tsc --watch"
   },
   "repository": {
     "type": "git",
@@ -55,7 +55,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "husky": "^7.0.2",
     "lint-staged": "^11.1.2",
-    "mocha": "^9.1.2",
+    "mocha": "^9.2.2",
     "prettier": "^2.7.1",
     "protobufjs": "^6.11.2",
     "ts-node": "^10.9.1",

@@ -22,13 +22,8 @@ describe('accessing-reql', () => {
     // remove any dbs created between each test case
     await r
       .dbList()
-      .filter(db =>
-        r
-          .expr(['rethinkdb', 'test'])
-          .contains(db)
-          .not()
-      )
-      .forEach(db => r.dbDrop(db))
+      .filter((db) => r.expr(['rethinkdb', 'test']).contains(db).not())
+      .forEach((db) => r.dbDrop(db))
       .run(connection);
     await connection.close();
     assert(!connection.open);
@@ -41,7 +36,7 @@ describe('accessing-reql', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`run` was called without a connection and no pool has been created after:\nr.expr(1)\n'
+        '`run` was called without a connection and no pool has been created after:\nr.expr(1)\n',
       );
     }
   });
@@ -56,7 +51,7 @@ describe('accessing-reql', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`run` was called with a closed connection after:\nr.expr(1)\n'
+        '`run` was called with a closed connection after:\nr.expr(1)\n',
       );
     }
   });
@@ -71,10 +66,7 @@ describe('accessing-reql', () => {
     assert.equal(result1.config_changes.length, 1);
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run(connection);
+    const result2 = await r.db(dbName).tableCreate(tableName).run(connection);
     assert.equal(result2.tables_created, 1);
 
     const result3 = await r
@@ -91,10 +83,7 @@ describe('accessing-reql', () => {
       .run(connection);
     assert.equal(result4.deleted, 100);
 
-    const result5 = await r
-      .db(dbName)
-      .tableDrop(tableName)
-      .run(connection);
+    const result5 = await r.db(dbName).tableDrop(tableName).run(connection);
     assert.equal(result5.config_changes.length, 1);
     assert.equal(result5.tables_dropped, 1);
 
@@ -110,10 +99,7 @@ describe('accessing-reql', () => {
     const result1 = await r.dbCreate(dbName).run(connection);
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run(connection);
+    const result2 = await r.db(dbName).tableCreate(tableName).run(connection);
     assert.equal(result2.tables_created, 1);
 
     await connection.close();
@@ -124,7 +110,7 @@ describe('accessing-reql', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -139,10 +125,7 @@ describe('accessing-reql', () => {
     const result1 = await r.dbCreate(dbName).run(connection);
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run(connection);
+    const result2 = await r.db(dbName).tableCreate(tableName).run(connection);
     assert.equal(result2.tables_created, 1);
 
     connection.use(dbName);
@@ -195,13 +178,10 @@ describe('accessing-reql', () => {
     tableName = uuid();
     const largeishObject = Array(10000)
       .fill(Math.random())
-      .map(random => r.expr({ random }));
+      .map((random) => r.expr({ random }));
 
     await r.dbCreate(dbName).run(connection);
-    await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run(connection);
+    await r.db(dbName).tableCreate(tableName).run(connection);
 
     const result1 = await r
       .db(dbName)
@@ -210,21 +190,13 @@ describe('accessing-reql', () => {
       .run(connection, { noreply: true });
     assert.equal(result1, undefined);
 
-    const result2 = await r
-      .db(dbName)
-      .table(tableName)
-      .count()
-      .run(connection);
+    const result2 = await r.db(dbName).table(tableName).count().run(connection);
     assert.equal(result2, 0);
 
     const result3 = await connection.noreplyWait();
     assert.equal(result3, undefined);
 
-    const result4 = await r
-      .db(dbName)
-      .table(tableName)
-      .count()
-      .run(connection);
+    const result4 = await r.db(dbName).table(tableName).count().run(connection);
     assert.equal(result4, 10000);
   });
 
@@ -258,7 +230,7 @@ describe('accessing-reql', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Unrecognized global optional argument `foo` in:\nr.expr(1)\n^^^^^^^^^\n'
+        'Unrecognized global optional argument `foo` in:\nr.expr(1)\n^^^^^^^^^\n',
       );
     }
   });
@@ -295,7 +267,7 @@ describe('accessing-reql', () => {
         { name: 'Laurent', grownUp: true },
         { name: 'Sophie', grownUp: true },
         { name: 'Luke', grownUp: false },
-        { name: 'Mino', grownUp: false }
+        { name: 'Mino', grownUp: false },
       ])
       .group('grownUp')
       .run(connection, { groupFormat: 'raw' });
@@ -305,17 +277,20 @@ describe('accessing-reql', () => {
       data: [
         [
           false,
-          [{ grownUp: false, name: 'Luke' }, { grownUp: false, name: 'Mino' }]
+          [
+            { grownUp: false, name: 'Luke' },
+            { grownUp: false, name: 'Mino' },
+          ],
         ],
         [
           true,
           [
             { grownUp: true, name: 'Michel' },
             { grownUp: true, name: 'Laurent' },
-            { grownUp: true, name: 'Sophie' }
-          ]
-        ]
-      ]
+            { grownUp: true, name: 'Sophie' },
+          ],
+        ],
+      ],
     });
   });
 
@@ -341,7 +316,7 @@ describe('accessing-reql', () => {
 
       connection = await r.connect({
         port,
-        timeout: 1
+        timeout: 1,
       });
       assert.fail('should throw an error');
     } catch (err) {
@@ -349,7 +324,7 @@ describe('accessing-reql', () => {
 
       assert.equal(
         err.message,
-        'Failed to connect to localhost:' + port + ' in less than 1s.'
+        `Failed to connect to localhost:${port} in less than 1s.`,
       );
     }
   });
@@ -381,7 +356,7 @@ describe('accessing-reql', () => {
       .table('users')
       .insert({
         id: user,
-        password
+        password,
       })
       .run(connection);
     const result4 = await r
@@ -390,7 +365,7 @@ describe('accessing-reql', () => {
       .grant(user, {
         read: true,
         write: true,
-        config: true
+        config: true,
       })
       .run(connection);
     assert.deepEqual(result4, {
@@ -400,24 +375,24 @@ describe('accessing-reql', () => {
           new_val: {
             config: true,
             read: true,
-            write: true
+            write: true,
           },
-          old_val: null
-        }
-      ]
+          old_val: null,
+        },
+      ],
     });
   });
 
   it('If `servers` is specified, it cannot be empty', async () => {
     try {
       await r.connectPool({
-        servers: []
+        servers: [],
       });
       assert.fail('should throw an error');
     } catch (e) {
       assert.equal(
         e.message,
-        'If `servers` is an array, it must contain at least one server.'
+        'If `servers` is an array, it must contain at least one server.',
       );
     }
   });

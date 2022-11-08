@@ -54,7 +54,7 @@ describe('datum', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'Nesting depth limit exceeded.\nYou probably have a circular reference somewhere.'
+        'Nesting depth limit exceeded.\nYou probably have a circular reference somewhere.',
       );
     }
   });
@@ -72,7 +72,7 @@ describe('datum', () => {
       } catch (e) {
         assert.equal(
           e.message,
-          'Nesting depth limit exceeded.\nYou probably have a circular reference somewhere.'
+          'Nesting depth limit exceeded.\nYou probably have a circular reference somewhere.',
         );
       }
     });
@@ -165,10 +165,7 @@ describe('datum', () => {
   it('`r.binary` should work - with a ReQL term', async () => {
     const result1 = await r.binary(r.expr('foo')).run();
     assert(result1 instanceof Buffer);
-    const result2 = await r
-      .expr(result1)
-      .coerceTo('STRING')
-      .run();
+    const result2 = await r.expr(result1).coerceTo('STRING').run();
     assert.equal(result2, 'foo');
   });
 

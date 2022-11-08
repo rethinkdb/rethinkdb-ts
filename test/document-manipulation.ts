@@ -15,10 +15,7 @@ describe('document manipulation', () => {
     const result1 = await r.dbCreate(dbName).run();
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result2 = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result2.tables_created, 1);
   });
 
@@ -29,23 +26,19 @@ describe('document manipulation', () => {
   it('`row => row` should work - 1', async () => {
     const result = await r
       .expr([1, 2, 3])
-      .map(row => row)
+      .map((row) => row)
       .run();
     assert.deepEqual(result, [1, 2, 3]);
   });
 
   it('`row => row` should work - 2', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({})
-      .run();
+    let result = await r.db(dbName).table(tableName).insert({}).run();
     assert.equal(result.inserted, 1);
 
     result = await r
       .db(dbName)
       .table(tableName)
-      .update(row => ({ idCopyUpdate: row('id') }))
+      .update((row) => ({ idCopyUpdate: row('id') }))
       .run();
     assert.equal(result.replaced, 1);
   });
@@ -54,7 +47,7 @@ describe('document manipulation', () => {
     const result = await r
       .db(dbName)
       .table(tableName)
-      .replace(row => row)
+      .replace((row) => row)
       .run();
     assert.equal(result.replaced, 0);
   });
@@ -63,34 +56,23 @@ describe('document manipulation', () => {
     const result = await r
       .db(dbName)
       .table(tableName)
-      .replace(doc => doc.merge({ idCopyReplace: doc('id') }))
+      .replace((doc) => doc.merge({ idCopyReplace: doc('id') }))
       .run();
     assert.equal(result.replaced, 1);
   });
 
   it('`row => row` should work - 5', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    const result = await r.db(dbName).table(tableName).delete().run();
     assert.equal(result.deleted, 1);
   });
 
   it('`r.row` should work - 1', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .map(r.row)
-      .run();
+    const result = await r.expr([1, 2, 3]).map(r.row).run();
     assert.deepEqual(result, [1, 2, 3]);
   });
 
   it('`r.row` should work - 2', async () => {
-    const result1 = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({})
-      .run();
+    const result1 = await r.db(dbName).table(tableName).insert({}).run();
     assert.equal(result1.inserted, 1);
 
     const result2 = await r
@@ -103,74 +85,61 @@ describe('document manipulation', () => {
   });
 
   it('`r.row` should work - 3', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .replace(r.row)
-      .run();
+    const result = await r.db(dbName).table(tableName).replace(r.row).run();
     assert.equal(result.replaced, 0);
   });
   it('`r.row` should work - 4', async () => {
     const result = await r
       .db(dbName)
       .table(tableName)
-      .replace(doc => doc.merge({ idCopyReplace: doc('id') }))
+      .replace((doc) => doc.merge({ idCopyReplace: doc('id') }))
       .run();
     assert.equal(result.replaced, 1);
   });
 
   it('`r.row` should work - 5', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    const result = await r.db(dbName).table(tableName).delete().run();
     assert.equal(result.deleted, 1);
   });
 
   it('`pluck` should work', async () => {
-    const result1 = await r
-      .expr({ a: 0, b: 1, c: 2 })
-      .pluck('a', 'b')
-      .run();
+    const result1 = await r.expr({ a: 0, b: 1, c: 2 }).pluck('a', 'b').run();
     assert.deepEqual(result1, { a: 0, b: 1 });
 
     const result2 = await r
-      .expr([{ a: 0, b: 1, c: 2 }, { a: 0, b: 10, c: 20 }])
+      .expr([
+        { a: 0, b: 1, c: 2 },
+        { a: 0, b: 10, c: 20 },
+      ])
       .pluck('a', 'b')
       .run();
-    assert.deepEqual(result2, [{ a: 0, b: 1 }, { a: 0, b: 10 }]);
+    assert.deepEqual(result2, [
+      { a: 0, b: 1 },
+      { a: 0, b: 10 },
+    ]);
   });
 
   it('`pluck` should throw if no argument has been passed', async () => {
     try {
-      await r
-        .db(dbName)
-        .table(tableName)
-        .pluck()
-        .run();
+      await r.db(dbName).table(tableName).pluck().run();
       assert.fail('should trow');
     } catch (e) {
       assert.equal(
         e.message,
-        '`pluck` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`pluck\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`without` should work', async () => {
-    const result1 = await r
-      .expr({ a: 0, b: 1, c: 2 })
-      .without('c')
-      .run();
+    const result1 = await r.expr({ a: 0, b: 1, c: 2 }).without('c').run();
     assert.deepEqual(result1, { a: 0, b: 1 });
 
     const result2 = await r
-      .expr([{ a: 0, b: 1, c: 2 }, { a: 0, b: 10, c: 20 }])
+      .expr([
+        { a: 0, b: 1, c: 2 },
+        { a: 0, b: 10, c: 20 },
+      ])
       .without('a', 'c')
       .run();
     assert.deepEqual(result2, [{ b: 1 }, { b: 10 }]);
@@ -178,35 +147,28 @@ describe('document manipulation', () => {
 
   it('`without` should throw if no argument has been passed', async () => {
     try {
-      await r
-        .db(dbName)
-        .table(tableName)
-        .without()
-        .run();
+      await r.db(dbName).table(tableName).without().run();
     } catch (e) {
       assert.equal(
         e.message,
-        '`without` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`without\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`merge` should work', async () => {
-    let result = await r
-      .expr({ a: 0 })
-      .merge({ b: 1 })
-      .run();
+    let result = await r.expr({ a: 0 }).merge({ b: 1 }).run();
     assert.deepEqual(result, { a: 0, b: 1 });
 
     result = await r
       .expr([{ a: 0 }, { a: 1 }, { a: 2 }])
       .merge({ b: 1 })
       .run();
-    assert.deepEqual(result, [{ a: 0, b: 1 }, { a: 1, b: 1 }, { a: 2, b: 1 }]);
+    assert.deepEqual(result, [
+      { a: 0, b: 1 },
+      { a: 1, b: 1 },
+      { a: 2, b: 1 },
+    ]);
 
     result = await r
       .expr({ a: 0, c: { l: 'tt' } })
@@ -215,19 +177,16 @@ describe('document manipulation', () => {
     assert.deepEqual(result, {
       a: 0,
       b: { c: { d: { e: 'fff' } }, k: 'pp' },
-      c: { l: 'tt' }
+      c: { l: 'tt' },
     });
 
-    result = await r
-      .expr({ a: 1 })
-      .merge({ date: r.now() })
-      .run();
+    result = await r.expr({ a: 1 }).merge({ date: r.now() }).run();
     assert.equal(result.a, 1);
     assert(result.date instanceof Date);
 
     result = await r
       .expr({ a: 1 })
-      .merge(row => ({ nested: row }), { b: 2 })
+      .merge((row) => ({ nested: row }), { b: 2 })
       .run();
     assert.deepEqual(result, { a: 1, nested: { a: 1 }, b: 2 });
   });
@@ -235,14 +194,14 @@ describe('document manipulation', () => {
   it('`merge` should take an anonymous function', async () => {
     let result = await r
       .expr({ a: 0 })
-      .merge(doc => ({ b: doc('a').add(1) }))
+      .merge((doc) => ({ b: doc('a').add(1) }))
       .run();
     assert.deepEqual(result, { a: 0, b: 1 });
 
     result = await r
       .expr({ a: 0 })
-      .merge(row => ({
-        b: row('a').add(1)
+      .merge((row) => ({
+        b: row('a').add(1),
       }))
       .run();
     assert.deepEqual(result, { a: 0, b: 1 });
@@ -271,20 +230,12 @@ describe('document manipulation', () => {
 
   it('`merge` should throw if no argument has been passed', async () => {
     try {
-      await r
-        .db(dbName)
-        .table(tableName)
-        .merge()
-        .run();
+      await r.db(dbName).table(tableName).merge().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`merge` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`merge\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -298,10 +249,7 @@ describe('document manipulation', () => {
   });
 
   it('`append` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .append(4)
-      .run();
+    const result = await r.expr([1, 2, 3]).append(4).run();
     assert.deepEqual(result, [1, 2, 3, 4]);
   });
 
@@ -317,20 +265,13 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`append` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`append\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`prepend` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .prepend(4)
-      .run();
+    const result = await r.expr([1, 2, 3]).prepend(4).run();
     assert.deepEqual(result, [4, 1, 2, 3]);
   });
 
@@ -346,20 +287,13 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`prepend` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`prepend\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`difference` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .prepend(4)
-      .run();
+    const result = await r.expr([1, 2, 3]).prepend(4).run();
     assert.deepEqual(result, [4, 1, 2, 3]);
   });
 
@@ -375,26 +309,16 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`difference` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`difference\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`setInsert` should work', async () => {
-    let result = await r
-      .expr([1, 2, 3])
-      .setInsert(4)
-      .run();
+    let result = await r.expr([1, 2, 3]).setInsert(4).run();
     assert.deepEqual(result, [1, 2, 3, 4]);
 
-    result = await r
-      .expr([1, 2, 3])
-      .setInsert(2)
-      .run();
+    result = await r.expr([1, 2, 3]).setInsert(2).run();
     assert.deepEqual(result, [1, 2, 3]);
   });
 
@@ -410,20 +334,13 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setInsert` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`setInsert\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`setUnion` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .setUnion([2, 4])
-      .run();
+    const result = await r.expr([1, 2, 3]).setUnion([2, 4]).run();
     assert.deepEqual(result, [1, 2, 3, 4]);
   });
 
@@ -439,20 +356,13 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setUnion` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`setUnion\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`setIntersection` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .setIntersection([2, 4])
-      .run();
+    const result = await r.expr([1, 2, 3]).setIntersection([2, 4]).run();
     assert.deepEqual(result, [2]);
   });
 
@@ -468,20 +378,13 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setIntersection` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`setIntersection\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`setDifference` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3])
-      .setDifference([2, 4])
-      .run();
+    const result = await r.expr([1, 2, 3]).setDifference([2, 4]).run();
     assert.deepEqual(result, [1, 3]);
   });
 
@@ -497,25 +400,16 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`setDifference` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`setDifference\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`getField` should work', async () => {
-    let result = await r
-      .expr({ a: 0, b: 1 })('a')
-      .run();
+    let result = await r.expr({ a: 0, b: 1 })('a').run();
     assert.equal(result, 0);
 
-    result = await r
-      .expr({ a: 0, b: 1 })
-      .getField('a')
-      .run();
+    result = await r.expr({ a: 0, b: 1 }).getField('a').run();
     assert.equal(result, 0);
 
     result = await r
@@ -527,19 +421,12 @@ describe('document manipulation', () => {
   it('`(...)` should throw if no argument has been passed', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)()
-        .run();
+      await r.db(dbName).table(tableName)().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`(...)` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`(...)\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -547,63 +434,48 @@ describe('document manipulation', () => {
   it('`getField` should throw if no argument has been passed', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .getField()
-        .run();
+      await r.db(dbName).table(tableName).getField().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`getField` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`getField\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`hasFields` should work', async () => {
     const result = await r
-      .expr([{ a: 0, b: 1, c: 2 }, { a: 0, b: 10, c: 20 }, { b: 1, c: 3 }])
+      .expr([
+        { a: 0, b: 1, c: 2 },
+        { a: 0, b: 10, c: 20 },
+        { b: 1, c: 3 },
+      ])
       .hasFields('a', 'c')
       .run();
-    assert.deepEqual(result, [{ a: 0, b: 1, c: 2 }, { a: 0, b: 10, c: 20 }]);
+    assert.deepEqual(result, [
+      { a: 0, b: 1, c: 2 },
+      { a: 0, b: 10, c: 20 },
+    ]);
   });
 
   it('`hasFields` should throw if no argument has been passed', async () => {
     try {
-      await r
-        .db(dbName)
-        .table(tableName)
-        .hasFields()
-        .run();
+      await r.db(dbName).table(tableName).hasFields().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`hasFields` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`hasFields\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`insertAt` should work', async () => {
-    let result = await r
-      .expr([1, 2, 3, 4])
-      .insertAt(0, 2)
-      .run();
+    let result = await r.expr([1, 2, 3, 4]).insertAt(0, 2).run();
     assert.deepEqual(result, [2, 1, 2, 3, 4]);
 
-    result = await r
-      .expr([1, 2, 3, 4])
-      .insertAt(3, 2)
-      .run();
+    result = await r.expr([1, 2, 3, 4]).insertAt(3, 2).run();
     assert.deepEqual(result, [1, 2, 3, 2, 4]);
   });
 
@@ -619,20 +491,13 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`insertAt` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`insertAt\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`spliceAt` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3, 4])
-      .spliceAt(1, [9, 9])
-      .run();
+    const result = await r.expr([1, 2, 3, 4]).spliceAt(1, [9, 9]).run();
     assert.deepEqual(result, [1, 9, 9, 2, 3, 4]);
   });
 
@@ -648,26 +513,16 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`spliceAt` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`spliceAt\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`deleteAt` should work', async () => {
-    let result = await r
-      .expr([1, 2, 3, 4])
-      .deleteAt(1)
-      .run();
+    let result = await r.expr([1, 2, 3, 4]).deleteAt(1).run();
     assert.deepEqual(result, [1, 3, 4]);
 
-    result = await r
-      .expr([1, 2, 3, 4])
-      .deleteAt(1, 3)
-      .run();
+    result = await r.expr([1, 2, 3, 4]).deleteAt(1, 3).run();
     assert.deepEqual(result, [1, 4]);
   });
 
@@ -683,11 +538,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`deleteAt` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`deleteAt\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -704,20 +555,13 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`deleteAt` takes at most 2 arguments, 4 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`deleteAt\` takes at most 2 arguments, 4 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
 
   it('`changeAt` should work', async () => {
-    const result = await r
-      .expr([1, 2, 3, 4])
-      .changeAt(1, 3)
-      .run();
+    const result = await r.expr([1, 2, 3, 4]).changeAt(1, 3).run();
     assert.deepEqual(result, [1, 3, 3, 4]);
   });
 
@@ -733,11 +577,7 @@ describe('document manipulation', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`changeAt` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`changeAt\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -746,7 +586,7 @@ describe('document manipulation', () => {
     const result = await r
       .expr({ a: 0, b: 1, c: 2 })
       .keys()
-      .orderBy(row => row)
+      .orderBy((row) => row)
       .run();
     assert.deepEqual(result, ['a', 'b', 'c']);
   });
@@ -756,12 +596,12 @@ describe('document manipulation', () => {
       await r
         .expr('hello')
         .keys()
-        .orderBy(row => row)
+        .orderBy((row) => row)
         .run();
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^Cannot call `keys` on objects of type `STRING` in/)
+        e.message.match(/^Cannot call `keys` on objects of type `STRING` in/),
       );
     }
   });
@@ -770,7 +610,7 @@ describe('document manipulation', () => {
     const result = await r
       .expr({ a: 0, b: 1, c: 2 })
       .values()
-      .orderBy(row => row)
+      .orderBy((row) => row)
       .run();
     assert.deepEqual(result, [0, 1, 2]);
   });

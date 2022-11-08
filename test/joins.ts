@@ -15,10 +15,7 @@ describe('joins', () => {
 
     const result1 = await r.dbCreate(dbName).run();
     assert.equal(result1.dbs_created, 1);
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result2 = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result2.tables_created, 1);
     const result3 = await r
       .db(dbName)
@@ -28,16 +25,8 @@ describe('joins', () => {
     pks = result3.generated_keys;
     assert.equal(result3.inserted, 3);
 
-    await r
-      .db(dbName)
-      .table(tableName)
-      .indexCreate('val')
-      .run();
-    const result4 = await r
-      .db(dbName)
-      .table(tableName)
-      .indexWait('val')
-      .run();
+    await r.db(dbName).table(tableName).indexCreate('val').run();
+    const result4 = await r.db(dbName).table(tableName).indexWait('val').run();
     assert(result4);
   });
 
@@ -53,7 +42,7 @@ describe('joins', () => {
     assert.deepEqual(result, [
       { left: 1, right: 1 },
       { left: 2, right: 2 },
-      { left: 3, right: 3 }
+      { left: 3, right: 3 },
     ]);
   });
 
@@ -61,7 +50,7 @@ describe('joins', () => {
     const result = await r
       .expr([1, 2, 3])
       .innerJoin(r.db(dbName).table(tableName), (left, right) =>
-        left.eq(right('val'))
+        left.eq(right('val')),
       )
       .run();
     assert.equal(result.length, 3);
@@ -91,20 +80,12 @@ describe('joins', () => {
   it('`innerJoin` should throw if no sequence', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .innerJoin()
-        .run();
+      await r.db(dbName).table(tableName).innerJoin().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`innerJoin` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`innerJoin\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -121,11 +102,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`innerJoin` takes 2 arguments, 1 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`innerJoin\` takes 2 arguments, 1 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -138,7 +115,7 @@ describe('joins', () => {
     assert.deepEqual(result, [
       { left: 1, right: 1 },
       { left: 2, right: 2 },
-      { left: 3, right: 3 }
+      { left: 3, right: 3 },
     ]);
   });
 
@@ -146,7 +123,7 @@ describe('joins', () => {
     const result = await r
       .expr([1, 2, 3, 4])
       .outerJoin(r.db(dbName).table(tableName), (left, right) =>
-        left.eq(right('val'))
+        left.eq(right('val')),
       )
       .run();
     assert.equal(result.length, 4);
@@ -162,7 +139,7 @@ describe('joins', () => {
     const result = await r
       .expr([1, 2, 3, 4])
       .outerJoin(r.db(dbName).table(tableName), (left, right) =>
-        left.eq(right('val'))
+        left.eq(right('val')),
       )
       .run();
     assert.equal(result.length, 4);
@@ -194,20 +171,12 @@ describe('joins', () => {
   it('`outerJoin` should throw if no sequence', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .outerJoin()
-        .run();
+      await r.db(dbName).table(tableName).outerJoin().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`outerJoin` takes 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`outerJoin\` takes 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -224,11 +193,7 @@ describe('joins', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`outerJoin` takes 2 arguments, 1 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`outerJoin\` takes 2 arguments, 1 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -236,7 +201,7 @@ describe('joins', () => {
   it('`eqJoin` should return -- pk -- array-stream - function', async () => {
     const result = await r
       .expr(pks)
-      .eqJoin(doc => doc, r.db(dbName).table(tableName))
+      .eqJoin((doc) => doc, r.db(dbName).table(tableName))
       .run();
     assert.equal(result.length, 3);
     assert(result[0].left);
@@ -250,7 +215,7 @@ describe('joins', () => {
   it('`eqJoin` should return -- pk -- array-stream - row => row', async () => {
     const result = await r
       .expr(pks)
-      .eqJoin(row => row, r.db(dbName).table(tableName))
+      .eqJoin((row) => row, r.db(dbName).table(tableName))
       .run();
     assert.equal(result.length, 3);
     assert(result[0].left);
@@ -264,7 +229,7 @@ describe('joins', () => {
   it('`eqJoin` should return -- secondary index -- array-stream - row => row', async () => {
     const result = await r
       .expr([1, 2, 3])
-      .eqJoin(row => row, r.db(dbName).table(tableName), { index: 'val' })
+      .eqJoin((row) => row, r.db(dbName).table(tableName), { index: 'val' })
       .run();
     assert.equal(result.length, 3);
     assert(result[0].left);
@@ -278,20 +243,12 @@ describe('joins', () => {
   it('`eqJoin` should throw if no argument', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .eqJoin()
-        .run();
+      await r.db(dbName).table(tableName).eqJoin().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`eqJoin` takes at least 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`eqJoin\` takes at least 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -300,17 +257,17 @@ describe('joins', () => {
     try {
       await r
         .expr([1, 2, 3])
-        .eqJoin(row => row, r.db(dbName).table(tableName), {
+        .eqJoin((row) => row, r.db(dbName).table(tableName), {
           // @ts-ignore
-          nonValidKey: 'val'
+          nonValidKey: 'val',
         })
         .run();
       assert.fail('should throw');
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in'
-        )
+          'Unrecognized optional argument `non_valid_key` in',
+        ),
       );
     }
   });
@@ -318,20 +275,12 @@ describe('joins', () => {
   it('`eqJoin` should throw if no sequence', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .eqJoin('id')
-        .run();
+      await r.db(dbName).table(tableName).eqJoin('id').run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`eqJoin` takes at least 2 arguments, 1 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`eqJoin\` takes at least 2 arguments, 1 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -339,20 +288,12 @@ describe('joins', () => {
   it('`eqJoin` should throw if too many arguments', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .eqJoin(1, 1, 1, 1, 1)
-        .run();
+      await r.db(dbName).table(tableName).eqJoin(1, 1, 1, 1, 1).run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`eqJoin` takes at most 3 arguments, 5 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`eqJoin\` takes at most 3 arguments, 5 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -360,7 +301,7 @@ describe('joins', () => {
   it('`zip` should zip stuff', async () => {
     const result = await r
       .expr(pks)
-      .eqJoin(doc => doc, r.db(dbName).table(tableName))
+      .eqJoin((doc) => doc, r.db(dbName).table(tableName))
       .zip()
       .run();
     assert.equal(result.length, 3);

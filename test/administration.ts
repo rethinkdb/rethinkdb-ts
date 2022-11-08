@@ -17,10 +17,7 @@ describe('administration', () => {
     result = await r.dbCreate(dbName).run();
     assert.equal(result.dbs_created, 1);
 
-    result = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    result = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result.tables_created, 1);
 
     result = await r
@@ -37,27 +34,17 @@ describe('administration', () => {
   });
 
   it('`config` should work', async () => {
-    result = await r
-      .db(dbName)
-      .config()
-      .run();
+    result = await r.db(dbName).config().run();
     assert.equal(result.name, dbName);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .config()
-      .run();
+    result = await r.db(dbName).table(tableName).config().run();
     assert.equal(result.name, tableName);
   });
 
   it('`config` should throw if called with an argument', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .config('hello')
-        .run();
+      await r.db(dbName).config('hello').run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.match(/^`config` takes 0 arguments, 1 provided after:/));
@@ -65,11 +52,7 @@ describe('administration', () => {
   });
 
   it('`status` should work', async () => {
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .status()
-      .run();
+    result = await r.db(dbName).table(tableName).status().run();
     assert.equal(result.name, tableName);
     assert.notEqual(result.status, undefined);
   });
@@ -77,11 +60,7 @@ describe('administration', () => {
   it('`status` should throw if called with an argument', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .status('hello')
-        .run();
+      await r.db(dbName).table(tableName).status('hello').run();
       assert.fail('should throw');
     } catch (e) {
       assert(e.message.match(/^`status` takes 0 arguments, 1 provided after:/));
@@ -89,11 +68,7 @@ describe('administration', () => {
   });
 
   it('`wait` should work', async () => {
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .wait()
-      .run();
+    result = await r.db(dbName).table(tableName).wait().run();
     assert.equal(result.ready, 1);
   });
 
@@ -121,7 +96,7 @@ describe('administration', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.wait` takes at least 1 argument, 0 provided.'
+        '`r.wait` takes at least 1 argument, 0 provided.',
       );
     }
   });
@@ -129,15 +104,11 @@ describe('administration', () => {
   it('`wait` should throw if called with 2 arguments', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .wait('hello', 'world')
-        .run();
+      await r.db(dbName).table(tableName).wait('hello', 'world').run();
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`wait` takes at most 1 argument, 2 provided after:/)
+        e.message.match(/^`wait` takes at most 1 argument, 2 provided after:/),
       );
     }
   });
@@ -195,17 +166,13 @@ describe('administration', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^First argument of `reconfigure` must be an object./)
+        e.message.match(/^First argument of `reconfigure` must be an object./),
       );
     }
   });
 
   it('`rebalanced` should work - 1', async () => {
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .rebalance()
-      .run();
+    result = await r.db(dbName).table(tableName).rebalance().run();
     assert.equal(result.rebalanced, 1);
   });
 
@@ -222,15 +189,11 @@ describe('administration', () => {
   it('`rebalance` should throw if an argument is provided', async () => {
     try {
       // @ts-ignore
-      result = await r
-        .db(dbName)
-        .table(tableName)
-        .rebalance(1)
-        .run();
+      result = await r.db(dbName).table(tableName).rebalance(1).run();
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.match(/^`rebalance` takes 0 arguments, 1 provided after:/)
+        e.message.match(/^`rebalance` takes 0 arguments, 1 provided after:/),
       );
     }
   });

@@ -23,18 +23,9 @@ describe('stream', () => {
     assert.equal(result1.dbs_created, 1);
 
     const result2 = await Promise.all([
-      r
-        .db(dbName)
-        .tableCreate(tableName)('tables_created')
-        .run(),
-      r
-        .db(dbName)
-        .tableCreate(tableName2)('tables_created')
-        .run(),
-      r
-        .db(dbName)
-        .tableCreate(dumpTable)('tables_created')
-        .run()
+      r.db(dbName).tableCreate(tableName)('tables_created').run(),
+      r.db(dbName).tableCreate(tableName2)('tables_created').run(),
+      r.db(dbName).tableCreate(dumpTable)('tables_created').run(),
     ]);
     assert.deepEqual(result2, [1, 1, 1]);
 
@@ -64,22 +55,14 @@ describe('stream', () => {
     // remove any dbs created
     await r
       .dbList()
-      .filter(db =>
-        r
-          .expr(['rethinkdb', 'test'])
-          .contains(db)
-          .not()
-      )
-      .forEach(db => r.dbDrop(db))
+      .filter((db) => r.expr(['rethinkdb', 'test']).contains(db).not())
+      .forEach((db) => r.dbDrop(db))
       .run();
     await r.getPoolMaster().drain();
   });
 
   it('`table` should return a stream', async () => {
-    const stream = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    const stream = await r.db(dbName).table(tableName).getCursor();
     assert(stream);
     assert(stream instanceof Readable);
     stream.close();
@@ -110,7 +93,7 @@ describe('stream', () => {
       { n: 4 },
       { n: 5 },
       { n: 6 },
-      { n: 7 }
+      { n: 7 },
     ];
     // added include initial, so it won't hang on some extreame cases
     const stream = await r
@@ -122,8 +105,8 @@ describe('stream', () => {
     assert(stream instanceof Readable);
     const promise = new Promise((resolve, reject) => {
       let count = 0;
-      stream.on('data', d => {
-        if (!!d.new_val.n) {
+      stream.on('data', (d) => {
+        if (d.new_val.n) {
           count++;
           if (count === data.length) {
             resolve();
@@ -133,21 +116,13 @@ describe('stream', () => {
       });
     });
 
-    await r
-      .db(dbName)
-      .table(tableName)
-      .insert(data)
-      .run();
+    await r.db(dbName).table(tableName).insert(data).run();
     await promise;
   });
 
   it('get().changes() should return a stream', async () => {
     const id = uuid();
-    await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id })
-      .run();
+    await r.db(dbName).table(tableName).insert({ id }).run();
     const stream = await r
       .db(dbName)
       .table(tableName)
@@ -167,25 +142,10 @@ describe('stream', () => {
         }
       });
     });
-    await new Promise(resolve => setTimeout(resolve, 200));
-    await r
-      .db(dbName)
-      .table(tableName)
-      .get(id)
-      .update({ update: 1 })
-      .run();
-    await r
-      .db(dbName)
-      .table(tableName)
-      .get(id)
-      .update({ update: 2 })
-      .run();
-    await r
-      .db(dbName)
-      .table(tableName)
-      .get(id)
-      .update({ update: 3 })
-      .run();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await r.db(dbName).table(tableName).get(id).update({ update: 1 }).run();
+    await r.db(dbName).table(tableName).get(id).update({ update: 2 }).run();
+    await r.db(dbName).table(tableName).get(id).update({ update: 3 }).run();
     await promise;
   });
 
@@ -194,7 +154,7 @@ describe('stream', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -213,7 +173,7 @@ describe('stream', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -221,10 +181,10 @@ describe('stream', () => {
       .db(dbName)
       .table(tableName)
       .getCursor(connection, { maxBatchRows: 1 });
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       let count = 0;
       stream.on('data', () => {
-        count++;
+        count += 1;
         if (count === numDocs) {
           resolve();
         }
@@ -239,7 +199,7 @@ describe('stream', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -253,12 +213,12 @@ describe('stream', () => {
         if (doc === null) {
           reject(
             new Error(
-              'stream.read() should not return null when readable was emitted'
-            )
+              'stream.read() should not return null when readable was emitted',
+            ),
           );
         }
         let count = 1;
-        stream.on('data', data => {
+        stream.on('data', (data) => {
           count++;
           if (count === numDocs) {
             resolve();
@@ -275,7 +235,7 @@ describe('stream', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -306,7 +266,7 @@ describe('stream', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -315,17 +275,12 @@ describe('stream', () => {
       .table(tableName)
       .limit(10)
       .union([null])
-      .union(
-        r
-          .db(dbName)
-          .table(tableName)
-          .limit(10)
-      )
+      .union(r.db(dbName).table(tableName).limit(10))
       .getCursor(connection, { maxBatchRows: 1 });
     await new Promise((resolve, reject) => {
       stream.once('readable', () => {
         let count = 0;
-        stream.on('data', data => {
+        stream.on('data', (data) => {
           count++;
           if (count === 20) {
             resolve();
@@ -344,7 +299,7 @@ describe('stream', () => {
       host: config.host,
       port: config.port,
       user: config.user,
-      password: config.password
+      password: config.password,
     });
     assert(connection);
 
@@ -357,8 +312,8 @@ describe('stream', () => {
         stream.read() === null
           ? reject(
               new Error(
-                'stream.read() should not return null when readable was emitted'
-              )
+                'stream.read() should not return null when readable was emitted',
+              ),
             )
           : resolve();
       });
@@ -387,10 +342,7 @@ describe('stream', () => {
   // });
 
   it('toStream', async () => {
-    const stream = await r
-      .db(dbName)
-      .table(tableName)
-      .getCursor();
+    const stream = await r.db(dbName).table(tableName).getCursor();
 
     await new Promise((resolve, reject) => {
       stream.once('readable', () => {
@@ -398,12 +350,12 @@ describe('stream', () => {
         if (doc === null) {
           reject(
             new Error(
-              'stream.read() should not return null when readable was emitted'
-            )
+              'stream.read() should not return null when readable was emitted',
+            ),
           );
         }
         let count = 1;
-        stream.on('data', data => {
+        stream.on('data', (data) => {
           count++;
           if (count === numDocs) {
             resolve();
@@ -427,12 +379,12 @@ describe('stream', () => {
         if (doc === null) {
           reject(
             new Error(
-              'stream.read() should not return null when readable was emitted'
-            )
+              'stream.read() should not return null when readable was emitted',
+            ),
           );
         }
         let count = 1;
-        stream.on('data', data => {
+        stream.on('data', (data) => {
           count++;
           if (count === numDocs) {
             resolve();

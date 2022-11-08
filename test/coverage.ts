@@ -5,13 +5,13 @@ import {
   funcall,
   rConfig,
   rConsts,
-  termConfig
+  termConfig,
 } from '../src/query-builder/query-config';
 
 describe('coverage', () => {
   const keys = Object.keys(TermType)
-    .filter(key => isNaN(key as any))
-    .map(key => TermType[key]);
+    .filter((key) => isNaN(key as any))
+    .map((key) => TermType[key]);
   // Test that the term appears somewhere in the file, which find terms that were not implemented
   it('all terms should be present in query-config.js', async () => {
     const ignoredKeys = [
@@ -22,15 +22,15 @@ describe('coverage', () => {
       TermType.MAKE_ARRAY,
       TermType.DATUM,
       TermType.MAKE_OBJ,
-      TermType.BETWEEN_DEPRECATED
+      TermType.BETWEEN_DEPRECATED,
     ];
     const missing = [];
     const supportedTerms = [
       bracket[0],
       funcall[0],
-      ...termConfig.map(t => t[0]),
-      ...rConfig.map(t => t[0]),
-      ...rConsts.map(t => t[0])
+      ...termConfig.map((t) => t[0]),
+      ...rConfig.map((t) => t[0]),
+      ...rConsts.map((t) => t[0]),
     ];
     for (const key of keys) {
       if (ignoredKeys.includes(key)) {

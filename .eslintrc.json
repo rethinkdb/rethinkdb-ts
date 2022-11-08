@@ -1,5 +1,8 @@
-  {
-  "parser": "@typescript-eslint/parser",
+{
+  "env": {
+    "mocha": true,
+    "node": true
+  },
   "extends": [
     "airbnb-base",
     "airbnb-typescript/base",
@@ -15,10 +18,11 @@
     "@typescript-eslint",
     "prettier"
   ],
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2018,
     "sourceType": "module",
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.eslint.json"
   },
   "settings": {
     "import/resolver": {
@@ -30,9 +34,6 @@
         ]
       }
     }
-  },
-  "env": {
-    "node": true
   },
   "rules": {
     "prettier/prettier": "error",

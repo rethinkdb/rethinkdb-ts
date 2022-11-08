@@ -11,13 +11,8 @@ describe('manipulating tables', () => {
     // delete all but the system dbs
     await r
       .dbList()
-      .filter(db =>
-        r
-          .expr(['rethinkdb', 'test'])
-          .contains(db)
-          .not()
-      )
-      .forEach(db => r.dbDrop(db))
+      .filter((db) => r.expr(['rethinkdb', 'test']).contains(db).not())
+      .forEach((db) => r.dbDrop(db))
       .run();
     dbName = uuid(); // export to the global scope
     const result = await r.dbCreate(dbName).run();
@@ -28,49 +23,35 @@ describe('manipulating tables', () => {
     // delete all but the system dbs
     await r
       .dbList()
-      .filter(db =>
-        r
-          .expr(['rethinkdb', 'test'])
-          .contains(db)
-          .not()
-      )
-      .forEach(db => r.dbDrop(db))
+      .filter((db) => r.expr(['rethinkdb', 'test']).contains(db).not())
+      .forEach((db) => r.dbDrop(db))
       .run();
     await r.getPoolMaster().drain();
   });
 
   it('`tableList` should return a cursor', async () => {
-    const result = await r
-      .db(dbName)
-      .tableList()
-      .run();
+    const result = await r.db(dbName).tableList().run();
     assert(Array.isArray(result));
   });
 
   it('`tableList` should show the table we created', async () => {
     const tableName = uuid(); // export to the global scope
 
-    const result1 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result1 = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result1.tables_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableList()
-      .run();
+    const result2 = await r.db(dbName).tableList().run();
     assert(Array.isArray(result2));
-    assert.equal(tableName, result2.find(name => name === tableName));
+    assert.equal(
+      tableName,
+      result2.find((name) => name === tableName),
+    );
   });
 
   it('`tableCreate` should create a table', async () => {
     const tableName = uuid(); // export to the global scope
 
-    const result = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result.tables_created, 1);
   });
 
@@ -83,11 +64,7 @@ describe('manipulating tables', () => {
       .run();
     assert.equal(result1.tables_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .table(tableName)
-      .info()
-      .run();
+    const result2 = await r.db(dbName).table(tableName).info().run();
     assert.equal(result2.primary_key, 'foo');
   });
 
@@ -100,11 +77,7 @@ describe('manipulating tables', () => {
       .run();
     assert.equal(result1.tables_created, 1); // We can't really check other parameters...
 
-    const result2 = await r
-      .db(dbName)
-      .table(tableName)
-      .info()
-      .run();
+    const result2 = await r.db(dbName).table(tableName).info().run();
     assert.equal(result2.primary_key, 'foo');
   });
 
@@ -121,8 +94,8 @@ describe('manipulating tables', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_arg` in'
-        )
+          'Unrecognized optional argument `non_valid_arg` in',
+        ),
       );
     }
   });
@@ -130,30 +103,22 @@ describe('manipulating tables', () => {
   it('`tableCreate` should throw if no argument is given', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .tableCreate()
-        .run();
+      await r.db(dbName).tableCreate().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`tableCreate` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '")\n'
+        `\`tableCreate\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}")\n`,
       );
     }
   });
 
   it('`tableCreate` should throw is the name contains special char', async () => {
     try {
-      await r
-        .db(dbName)
-        .tableCreate('-_-')
-        .run();
+      await r.db(dbName).tableCreate('-_-').run();
     } catch (e) {
       assert(
-        e.message.match(/Table name `-_-` invalid \(Use A-Za-z0-9_ only\)/)
+        e.message.match(/Table name `-_-` invalid \(Use A-Za-z0-9_ only\)/),
       );
     }
   });
@@ -161,46 +126,32 @@ describe('manipulating tables', () => {
   it('`tableDrop` should drop a table', async () => {
     const tableName = uuid();
 
-    const result1 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result1 = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result1.tables_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableList()
-      .run();
+    const result2 = await r.db(dbName).tableList().run();
     assert(Array.isArray(result2));
-    assert.equal(result2.find(name => name === tableName), tableName);
+    assert.equal(
+      result2.find((name) => name === tableName),
+      tableName,
+    );
 
-    const result3 = await r
-      .db(dbName)
-      .tableDrop(tableName)
-      .run();
+    const result3 = await r.db(dbName).tableDrop(tableName).run();
     assert.equal(result3.tables_dropped, 1);
 
-    const result4 = await r
-      .db(dbName)
-      .tableList()
-      .run();
-    assert(result4.find(name => name === tableName) === undefined);
+    const result4 = await r.db(dbName).tableList().run();
+    assert(result4.find((name) => name === tableName) === undefined);
   });
 
   it('`tableDrop` should throw if no argument is given', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .tableDrop()
-        .run();
+      await r.db(dbName).tableDrop().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`tableDrop` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '")\n'
+        `\`tableDrop\` takes 1 argument, 0 provided after:\nr.db("${dbName}")\n`,
       );
     }
   });
@@ -213,10 +164,7 @@ describe('manipulating tables', () => {
       const result1 = await r.dbCreate(dbName1).run();
       assert.equal(result1.dbs_created, 1);
 
-      const result2 = await r
-        .db(dbName1)
-        .tableCreate(tableName1)
-        .run();
+      const result2 = await r.db(dbName1).tableCreate(tableName1).run();
       assert.equal(result2.tables_created, 1);
     });
 
@@ -228,11 +176,7 @@ describe('manipulating tables', () => {
         .run();
       assert.deepEqual(result1, { created: 1 });
 
-      const result2 = await r
-        .db(dbName1)
-        .table(tableName1)
-        .indexList()
-        .run();
+      const result2 = await r.db(dbName1).table(tableName1).indexList().run();
       assert.deepEqual(result2, ['newField']);
 
       const result3 = await r
@@ -260,7 +204,7 @@ describe('manipulating tables', () => {
       const result6 = await r
         .db(dbName1)
         .table(tableName1)
-        .indexCreate('field1', doc => doc('field1'))
+        .indexCreate('field1', (doc) => doc('field1'))
         .run();
       assert.deepEqual(result6, { created: 1 });
 
@@ -298,22 +242,18 @@ describe('manipulating tables', () => {
       result = await r
         .db(dbName1)
         .table(tableName1)
-        .indexCreate('foo1', row => row('foo'), { multi: true })
+        .indexCreate('foo1', (row) => row('foo'), { multi: true })
         .run();
       assert.deepEqual(result, { created: 1 });
 
       result = await r
         .db(dbName1)
         .table(tableName1)
-        .indexCreate('foo2', doc => doc('foo'), { multi: true })
+        .indexCreate('foo2', (doc) => doc('foo'), { multi: true })
         .run();
       assert.deepEqual(result, { created: 1 });
 
-      await r
-        .db(dbName1)
-        .table(tableName1)
-        .indexWait()
-        .run();
+      await r.db(dbName1).table(tableName1).indexWait().run();
 
       const result1 = await r
         .db(dbName1)
@@ -400,15 +340,11 @@ describe('manipulating tables', () => {
       const result12 = await r
         .db(dbName1)
         .table(tableName1)
-        .indexCreate('buzz', row => [row('buzz')])
+        .indexCreate('buzz', (row) => [row('buzz')])
         .run();
       assert.deepEqual(result12, { created: 1 });
 
-      await r
-        .db(dbName1)
-        .table(tableName1)
-        .indexWait()
-        .run();
+      await r.db(dbName1).table(tableName1).indexWait().run();
 
       const result13 = await r
         .db(dbName1)
@@ -422,20 +358,12 @@ describe('manipulating tables', () => {
     it('`indexCreate` should throw if no argument is passed', async () => {
       try {
         // @ts-ignore
-        await r
-          .db(dbName1)
-          .table(tableName1)
-          .indexCreate()
-          .run();
+        await r.db(dbName1).table(tableName1).indexCreate().run();
         assert.fail('should throw');
       } catch (e) {
         assert.equal(
           e.message,
-          '`indexCreate` takes at least 1 argument, 0 provided after:\nr.db("' +
-            dbName1 +
-            '").table("' +
-            tableName1 +
-            '")\n'
+          `\`indexCreate\` takes at least 1 argument, 0 provided after:\nr.db("${dbName1}").table("${tableName1}")\n`,
         );
       }
     });
@@ -443,20 +371,12 @@ describe('manipulating tables', () => {
     it('`indexDrop` should throw if no argument is passed', async () => {
       try {
         // @ts-ignore
-        await r
-          .db(dbName1)
-          .table(tableName1)
-          .indexDrop()
-          .run();
+        await r.db(dbName1).table(tableName1).indexDrop().run();
         assert.fail('should throw');
       } catch (e) {
         assert.equal(
           e.message,
-          '`indexDrop` takes 1 argument, 0 provided after:\nr.db("' +
-            dbName1 +
-            '").table("' +
-            tableName1 +
-            '")\n'
+          `\`indexDrop\` takes 1 argument, 0 provided after:\nr.db("${dbName1}").table("${tableName1}")\n`,
         );
       }
     });
@@ -537,8 +457,8 @@ describe('manipulating tables', () => {
       } catch (e) {
         assert(
           e.message.startsWith(
-            'Unrecognized optional argument `non_valid_arg` in'
-          )
+            'Unrecognized optional argument `non_valid_arg` in',
+          ),
         );
       }
     });

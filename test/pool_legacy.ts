@@ -14,13 +14,13 @@ describe('pool legacy', () => {
     servers: [
       {
         host: config.host,
-        port: config.port
-      }
+        port: config.port,
+      },
     ],
     user: config.user,
     password: config.password,
     discovery: false,
-    silent: true
+    silent: true,
   };
 
   it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
@@ -29,7 +29,7 @@ describe('pool legacy', () => {
     assert.equal(
       r.getPoolMaster().getPools().length,
       1,
-      'expected number of pools is 1'
+      'expected number of pools is 1',
     );
   });
 
@@ -41,15 +41,15 @@ describe('pool legacy', () => {
           ? resolve(numConnections)
           : reject(
               new Error(
-                'expected number of connections to equal option.buffer within 250 msecs'
-              )
+                'expected number of connections to equal option.buffer within 250 msecs',
+              ),
             );
       }, 50);
     });
     assert.equal(
       options.buffer,
       result,
-      'expected buffer option to result in number of created connections'
+      'expected buffer option to result in number of created connections',
     );
   });
 
@@ -59,14 +59,14 @@ describe('pool legacy', () => {
     const result1 = await Promise.all(
       Array(numExpr)
         .fill(r.expr(1))
-        .map(expr => expr.run())
+        .map((expr) => expr.run()),
     );
     assert.deepEqual(result1, Array(numExpr).fill(1));
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
     const numConnections = r.getPoolMaster().getAvailableLength();
     assert.ok(
       numConnections >= options.buffer + numExpr,
-      'expected number of connections to be at least buffer size plus number of run expressions'
+      'expected number of connections to be at least buffer size plus number of run expressions',
     );
   });
 
@@ -76,7 +76,7 @@ describe('pool legacy', () => {
     assert.equal(
       numConnections,
       r.getPoolMaster().getLength(),
-      'expected number of connections be equal before and after a noreply query'
+      'expected number of connections be equal before and after a noreply query',
     );
   });
 
@@ -84,19 +84,19 @@ describe('pool legacy', () => {
     let result = [];
     for (let i = 0; i <= options.max; i++) {
       result.push(r.expr(1).run());
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
     result = await Promise.all(result);
     assert.deepEqual(result, Array(options.max + 1).fill(1));
     assert.equal(r.getPoolMaster().getLength(), options.max);
     assert.ok(
       r.getPoolMaster().getAvailableLength() <= options.max,
-      'available connections more than max'
+      'available connections more than max',
     );
     assert.equal(
       r.getPoolMaster().getAvailableLength(),
       r.getPoolMaster().getLength(),
-      'expected available connections to equal pool size'
+      'expected available connections to equal pool size',
     );
   });
 
@@ -106,32 +106,32 @@ describe('pool legacy', () => {
     const result = await Promise.all(
       Array(9)
         .fill(r.expr(1))
-        .map(expr => expr.run())
+        .map((expr) => expr.run()),
     );
     assert.deepEqual(result, Array(9).fill(1));
 
     const { availableLength, length } = await new Promise<{
       availableLength: number;
       length: number;
-    }>(resolve => {
+    }>((resolve) => {
       setTimeout(
         () =>
           resolve({
             availableLength: r.getPoolMaster().getAvailableLength(),
-            length: r.getPoolMaster().getLength()
+            length: r.getPoolMaster().getLength(),
           }),
-        1000
+        1000,
       );
     });
     assert.equal(
       availableLength,
       options.buffer,
-      'expected available connections to equal buffer size'
+      'expected available connections to equal buffer size',
     );
     assert.equal(
       length,
       options.buffer,
-      'expected pool size to equal buffer size'
+      'expected pool size to equal buffer size',
     );
   });
 
@@ -148,7 +148,7 @@ describe('pool legacy', () => {
         servers: [{ host: 'notarealhost' }],
         buffer: 1,
         max: 2,
-        silent: true
+        silent: true,
       })
       .catch(() => undefined);
     try {
@@ -157,7 +157,7 @@ describe('pool legacy', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'None of the pools have an opened connection and failed to open a new one.'
+        'None of the pools have an opened connection and failed to open a new one.',
       );
     }
     await r.getPoolMaster().drain();
@@ -169,7 +169,7 @@ describe('pool legacy', () => {
         servers: [{ host: 'notarealhost' }],
         buffer: 1,
         max: 2,
-        silent: true
+        silent: true,
       })
       .catch(() => undefined);
     try {
@@ -178,7 +178,7 @@ describe('pool legacy', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        'None of the pools have an opened connection and failed to open a new one.'
+        'None of the pools have an opened connection and failed to open a new one.',
       );
     } finally {
       await r.getPoolMaster().drain();
@@ -191,7 +191,7 @@ describe('pool legacy', () => {
         buffer: 1,
         max: 2,
         port: config.port,
-        host: config.host
+        host: config.host,
       })
       .catch(() => undefined);
     await r.getPoolMaster().drain();
@@ -201,8 +201,8 @@ describe('pool legacy', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          '`run` was called without a connection and no pool has been created after:'
-        )
+          '`run` was called without a connection and no pool has been created after:',
+        ),
       );
     } finally {
       await r.getPoolMaster().drain();
@@ -215,7 +215,7 @@ describe('pool legacy', () => {
       max: 2,
       silent: true,
       port: config.port,
-      host: config.host
+      host: config.host,
     });
     r.getPoolMaster().drain();
     try {
@@ -224,8 +224,8 @@ describe('pool legacy', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          '`run` was called without a connection and no pool has been created after:'
-        )
+          '`run` was called without a connection and no pool has been created after:',
+        ),
       );
     } finally {
       await r.getPoolMaster().drain();
@@ -256,7 +256,7 @@ describe('pool legacy', () => {
       max: 2,
       silent: true,
       port: config.port,
-      host: config.host
+      host: config.host,
     });
     r.getPoolMaster().setOptions({ timeoutGb: 60 * 60 * 1000 });
 
@@ -264,7 +264,7 @@ describe('pool legacy', () => {
       const result1 = await Promise.all(
         Array(options.max)
           .fill(r.expr(1))
-          .map(expr => expr.run())
+          .map((expr) => expr.run()),
       );
       assert.deepEqual(result1, Array(options.max).fill(1));
     } catch (e) {
@@ -272,7 +272,7 @@ describe('pool legacy', () => {
 
       assert.equal(
         e.message,
-        'Client is buggy (failed to deserialize protobuf)'
+        'Client is buggy (failed to deserialize protobuf)',
       );
 
       // We expect the connection that errored to get closed in the next second
@@ -300,10 +300,7 @@ describe('pool legacy', () => {
       const result1 = await r.dbCreate(dbName).run();
       assert.equal(result1.dbs_created, 1);
 
-      const result2 = await r
-        .db(dbName)
-        .tableCreate(tableName)
-        .run();
+      const result2 = await r.db(dbName).tableCreate(tableName).run();
       assert.equal(result2.tables_created, 1);
 
       const result3 = await r
@@ -327,7 +324,7 @@ describe('pool legacy', () => {
           foooooooo: uuid(),
           fooooooooo: uuid(),
           foooooooooo: uuid(),
-          date: r.now()
+          date: r.now(),
         })
         .run();
       assert.equal(result4.replaced, 10000);
@@ -343,52 +340,47 @@ describe('pool legacy', () => {
     it('The pool should release a connection only when the cursor has fetch everything or get closed', async () => {
       const result = [];
       for (let i = 0; i < options.max; i++) {
-        result.push(
-          await r
-            .db(dbName)
-            .table(tableName)
-            .getCursor()
-        );
-        await new Promise(resolve => setTimeout(resolve, 100));
+        result.push(await r.db(dbName).table(tableName).getCursor());
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
       assert.equal(
         result.length,
         options.max,
-        'expected to get the same number of results as number of expressions'
+        'expected to get the same number of results as number of expressions',
       );
       assert.equal(
         r.getPoolMaster().getAvailableLength(),
         0,
-        'expected no available connections'
+        'expected no available connections',
       );
       await result[0].toArray();
       assert.equal(
         r.getPoolMaster().getAvailableLength(),
         1,
-        'expected available connections'
+        'expected available connections',
       );
       await result[1].toArray();
       assert.equal(
         r.getPoolMaster().getAvailableLength(),
         2,
-        'expected available connections'
+        'expected available connections',
       );
       await result[2].close();
       assert.equal(
         r.getPoolMaster().getAvailableLength(),
         3,
-        'expected available connections'
+        'expected available connections',
       );
       // close the 7 next seven cursors
       await Promise.all(
-        [...Array(7).keys()].map(key => {
+        [...Array(7).keys()].map((key) => {
           return result[key + 3].close();
-        })
+        }),
       );
       assert.equal(
         r.getPoolMaster().getAvailableLength(),
         options.max,
-        'expected available connections to equal option.max'
+        'expected available connections to equal option.max',
       );
     });
   });

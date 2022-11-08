@@ -5,6 +5,7 @@ import {
   isRethinkDBError,
   r,
   RCursor,
+  RDatum,
   RethinkDBErrorType,
 } from '../src';
 import { RethinkDBConnection } from '../src/connection/connection';
@@ -110,13 +111,13 @@ describe('cursor', () => {
     cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       let count = 0;
       cursor.each((err) => {
         if (err) {
           reject(err);
         }
-        count++;
+        count += 1;
         if (count === numDocs) {
           resolve();
         }
@@ -128,7 +129,7 @@ describe('cursor', () => {
     cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       let count = 0;
       cursor.each(
         (err) => {
@@ -156,7 +157,7 @@ describe('cursor', () => {
     cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       let count = 0;
       cursor.each(
         (err) => {
@@ -179,22 +180,22 @@ describe('cursor', () => {
     cursor = await r.db(dbName).table(tableName).getCursor();
     assert(cursor);
 
-    const history = [];
+    const history: number[] = [];
     let count = 0;
     let promisesWait = 0;
 
     // TODO cleanup
     await cursor.eachAsync(async () => {
       history.push(count);
-      count++;
-      await new Promise((resolve, reject) => {
+      count += 1;
+      await new Promise<void>((resolve, reject) => {
         setTimeout(() => {
           history.push(promisesWait);
-          promisesWait--;
+          promisesWait -= 1;
 
           if (count === numDocs) {
-            const expected = [];
-            for (let i = 0; i < numDocs; i++) {
+            const expected: number[] = [];
+            for (let i = 0; i < numDocs; i += 1) {
               expected.push(i);
               expected.push(-1 * i);
             }
@@ -273,7 +274,7 @@ describe('cursor', () => {
       while (true) {
         result = await cursor.next();
         assert(result);
-        i++;
+        i += 1;
       }
     } catch (e) {
       assert.equal(e.message, 'No more rows in the cursor.');
@@ -292,7 +293,7 @@ describe('cursor', () => {
     result = cursor.close();
     try {
       result.then(() => undefined); // Promise's contract is to have a `then` method
-    } catch (e) {
+    } catch (e: unknown) {
       assert.fail(e);
     }
   });
@@ -316,7 +317,7 @@ describe('cursor', () => {
       .db(dbName)
       .table(tableName)
       .sample(5)
-      .replace((row) => row.without('val'))
+      .replace((row: RDatum) => row.without('val'))
       .run();
     assert.equal(result.replaced, 5);
   });
@@ -395,7 +396,7 @@ describe('cursor', () => {
     try {
       while (true) {
         result = await cursor.next();
-        i++;
+        i += 1;
       }
     } catch (e) {
       if (i > 0 && e.message === 'No more rows in the cursor.') {
@@ -544,7 +545,7 @@ describe('cursor', () => {
     feed = await r.db(dbName).table(tableName2).changes().run();
     assert(feed);
 
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<void>((resolve, reject) => {
       let i = 0;
       while (true) {
         feed
@@ -634,7 +635,7 @@ describe('cursor', () => {
     await promise;
   });
 
-  it('`on` should work on cursor - a `end` event shoul be eventually emitted on a cursor', async () => {
+  it('`on` should work on cursor - a `end` event should be eventually emitted on a cursor', async () => {
     cursor = await r.db(dbName).table(tableName2).getCursor();
     assert(cursor);
 
@@ -676,7 +677,7 @@ describe('cursor', () => {
           reject(err);
         }
         if (res.new_val.foo instanceof Date) {
-          count++;
+          count += 1;
         }
         if (count === 1) {
           setTimeout(() => {
@@ -706,7 +707,7 @@ describe('cursor', () => {
           reject(err);
         }
         if (res.new_val.foo instanceof Date) {
-          count++;
+          count += 1;
         }
         if (count === 2) {
           setTimeout(() => {
@@ -750,7 +751,7 @@ describe('cursor', () => {
       let count = 0;
       feed.on('data', (res) => {
         if (res.new_val.foo instanceof Date) {
-          count++;
+          count += 1;
         }
         if (count === 1) {
           setTimeout(() => {

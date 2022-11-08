@@ -36,21 +36,18 @@ describe('extra', () => {
   it('Anonymous function should throw if they return undefined', async () => {
     try {
       // tslint:disable-next-line
-      r.expr(1).do(function() {});
+      r.expr(1).do(function () {});
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        'Anonymous function returned `undefined`. Did you forget a `return`? in:\nfunction () { }'
+        'Anonymous function returned `undefined`. Did you forget a `return`? in:\nfunction () { }',
       );
     }
   });
 
   it('toString should work', () => {
-    let result = r
-      .expr(1)
-      .add(2)
-      .toString();
+    let result = r.expr(1).add(2).toString();
     assert.equal(result, 'r.expr(1).add(2)');
 
     result = r.expr(1).toString();

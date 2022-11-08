@@ -22,10 +22,7 @@ describe('errors', () => {
 
   it('ReqlLogicError', async () => {
     try {
-      await r
-        .expr(1)
-        .add('foo')
-        .run();
+      await r.expr(1).add('foo').run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(e.name, 'ReqlLogicError');
@@ -34,10 +31,7 @@ describe('errors', () => {
 
   it('ReqlOpFailedError', async () => {
     try {
-      await r
-        .db('DatabaseThatDoesNotExist')
-        .tableList()
-        .run();
+      await r.db('DatabaseThatDoesNotExist').tableList().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(e.name, 'ReqlOpFailedError');

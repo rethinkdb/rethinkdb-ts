@@ -17,10 +17,7 @@ describe('pool legacy', () => {
     const result1 = await r.dbCreate(dbName).run();
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result2 = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result2.tables_created, 1);
 
     const result3 = await r
@@ -37,29 +34,19 @@ describe('pool legacy', () => {
   });
 
   it('`db` should work', async () => {
-    const result = await r
-      .db(dbName)
-      .info()
-      .run();
+    const result = await r.db(dbName).info().run();
     assert.equal(result.name, dbName);
     assert.equal(result.type, 'DB');
   });
 
   it('`table` should work', async () => {
-    const result1 = await r
-      .db(dbName)
-      .table(tableName)
-      .info()
-      .run();
+    const result1 = await r.db(dbName).table(tableName).info().run();
     assert.equal(result1.name, tableName);
     assert.equal(result1.type, 'TABLE');
     assert.equal(result1.primary_key, 'id');
     assert.equal(result1.db.name, dbName);
 
-    const result2 = await r
-      .db(dbName)
-      .table(tableName)
-      .run();
+    const result2 = await r.db(dbName).table(tableName).run();
     assert.equal(result2.length, 100);
   });
 
@@ -88,40 +75,28 @@ describe('pool legacy', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in:'
-        )
+          'Unrecognized optional argument `non_valid_key` in:',
+        ),
       );
     }
   });
 
   it('`get` should work', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(pks[0])
-      .run();
+    const result = await r.db(dbName).table(tableName).get(pks[0]).run();
     assert.deepEqual(result, { id: pks[0] });
   });
 
   it('`get` should throw if no argument is passed', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .get()
-        .run();
+      await r.db(dbName).table(tableName).get().run();
       assert.fail('should throw');
     } catch (e) {
       // assert(e instanceof r.Error.ReqlDriverError)
       assert(e instanceof Error);
       assert.equal(
         e.message,
-        '`get` takes 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`get\` takes 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -140,11 +115,7 @@ describe('pool legacy', () => {
 
   it('`getAll` should work with no argument - primary key', async () => {
     // @ts-ignore
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .getAll()
-      .run();
+    const result = await r.db(dbName).table(tableName).getAll().run();
     assert.equal(result.length, 0);
   });
 
@@ -221,7 +192,7 @@ describe('pool legacy', () => {
     const result1 = await r
       .db(dbName)
       .table(tableName)
-      .indexCreate('fieldAddOne', doc => doc('field').add(1))
+      .indexCreate('fieldAddOne', (doc) => doc('field').add(1))
       .run();
     assert.deepEqual(result1, { created: 1 });
 
@@ -259,7 +230,7 @@ describe('pool legacy', () => {
       .between(5, 20, {
         index: 'fieldAddOne',
         leftBound: 'open',
-        rightBound: 'closed'
+        rightBound: 'closed',
       })
       .run();
     assert(result);
@@ -269,22 +240,14 @@ describe('pool legacy', () => {
   it('`between` should throw if no argument is passed', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .between()
-        .run();
+      await r.db(dbName).table(tableName).between().run();
       assert.fail('should throw');
     } catch (e) {
       // assert(e instanceof r.Error.ReqlDriverError)
       assert(e instanceof Error);
       assert.equal(
         e.message,
-        '`between` takes at least 2 arguments, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`between\` takes at least 2 arguments, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -303,8 +266,8 @@ describe('pool legacy', () => {
       assert(e instanceof Error);
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in:'
-        )
+          'Unrecognized optional argument `non_valid_key` in:',
+        ),
       );
     }
   });
@@ -333,7 +296,7 @@ describe('pool legacy', () => {
     const result = await r
       .db(dbName)
       .table(tableName)
-      .filter(doc => doc('field').eq(10))
+      .filter((doc) => doc('field').eq(10))
       .run();
     assert(result);
     assert.equal(result.length, 20);
@@ -374,22 +337,14 @@ describe('pool legacy', () => {
   it('`filter` should throw if no argument is passed', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .filter()
-        .run();
+      await r.db(dbName).table(tableName).filter().run();
       assert.fail('should throw');
     } catch (e) {
       // assert(e instanceof r.Error.ReqlDriverError)
       assert(e instanceof Error);
       assert.equal(
         e.message,
-        '`filter` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`filter\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -406,8 +361,8 @@ describe('pool legacy', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in:'
-        )
+          'Unrecognized optional argument `non_valid_key` in:',
+        ),
       );
     }
   });

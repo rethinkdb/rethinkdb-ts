@@ -45,10 +45,7 @@ describe('dates and times', () => {
     const result1 = await r.time(1986, 11, 3, 12, 0, 0, 'Z').run();
     assert.equal(result1 instanceof Date, true);
 
-    const result2 = await r
-      .time(1986, 11, 3, 12, 20, 0, 'Z')
-      .minutes()
-      .run();
+    const result2 = await r.time(1986, 11, 3, 12, 20, 0, 'Z').minutes().run();
     assert.equal(result2, 20);
   });
 
@@ -73,7 +70,7 @@ describe('dates and times', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.time` takes at least 4 arguments, 0 provided.'
+        '`r.time` takes at least 4 arguments, 0 provided.',
       );
     }
   });
@@ -85,7 +82,7 @@ describe('dates and times', () => {
       assert.fail('should throw');
     } catch (e) {
       assert(
-        e.message.startsWith('Got 5 arguments to TIME (expected 4 or 7) in:')
+        e.message.startsWith('Got 5 arguments to TIME (expected 4 or 7) in:'),
       );
     }
   });
@@ -152,7 +149,7 @@ describe('dates and times', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.ISO8601` takes at least 1 argument, 0 provided.'
+        '`r.ISO8601` takes at least 1 argument, 0 provided.',
       );
     }
   });
@@ -165,7 +162,7 @@ describe('dates and times', () => {
     } catch (e) {
       assert.equal(
         e.message,
-        '`r.ISO8601` takes at most 2 arguments, 3 provided.'
+        '`r.ISO8601` takes at most 2 arguments, 3 provided.',
       );
     }
   });
@@ -188,22 +185,11 @@ describe('dates and times', () => {
       .now()
       .inTimezone('-08:00')
       .hours()
-      .do(h => {
+      .do((h) => {
         return r.branch(
           h.eq(0),
-          r.expr(23).eq(
-            r
-              .now()
-              .inTimezone('-09:00')
-              .hours()
-          ),
-          h.eq(
-            r
-              .now()
-              .inTimezone('-09:00')
-              .hours()
-              .add(1)
-          )
+          r.expr(23).eq(r.now().inTimezone('-09:00').hours()),
+          h.eq(r.now().inTimezone('-09:00').hours().add(1)),
         );
       })
       .run();
@@ -213,15 +199,12 @@ describe('dates and times', () => {
   it('`inTimezone` should throw if no argument has been given', async () => {
     try {
       // @ts-ignore
-      await r
-        .now()
-        .inTimezone()
-        .run();
+      await r.now().inTimezone().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`inTimezone` takes 1 argument, 0 provided after:\nr.now()\n'
+        '`inTimezone` takes 1 argument, 0 provided after:\nr.now()\n',
       );
     }
   });
@@ -245,7 +228,7 @@ describe('dates and times', () => {
       .now()
       .during(r.time(2013, 12, 1, 'Z'), r.now(), {
         leftBound: 'closed',
-        rightBound: 'closed'
+        rightBound: 'closed',
       })
       .run();
     assert.equal(result, true);
@@ -254,7 +237,7 @@ describe('dates and times', () => {
       .now()
       .during(r.time(2013, 12, 1, 'Z'), r.now(), {
         leftBound: 'closed',
-        rightBound: 'open'
+        rightBound: 'open',
       })
       .run();
     assert.equal(result, false);
@@ -263,15 +246,12 @@ describe('dates and times', () => {
   it('`during` should throw if no argument has been given', async () => {
     try {
       // @ts-ignore
-      await r
-        .now()
-        .during()
-        .run();
+      await r.now().during().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`during` takes at least 2 arguments, 0 provided after:\nr.now()\n'
+        '`during` takes at least 2 arguments, 0 provided after:\nr.now()\n',
       );
     }
   });
@@ -279,15 +259,12 @@ describe('dates and times', () => {
   it('`during` should throw if just one argument has been given', async () => {
     try {
       // @ts-ignore
-      await r
-        .now()
-        .during(1)
-        .run();
+      await r.now().during(1).run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`during` takes at least 2 arguments, 1 provided after:\nr.now()\n'
+        '`during` takes at least 2 arguments, 1 provided after:\nr.now()\n',
       );
     }
   });
@@ -295,47 +272,29 @@ describe('dates and times', () => {
   it('`during` should throw if too many arguments', async () => {
     try {
       // @ts-ignore
-      await r
-        .now()
-        .during(1, 1, 1, 1, 1)
-        .run();
+      await r.now().during(1, 1, 1, 1, 1).run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`during` takes at most 3 arguments, 5 provided after:\nr.now()\n'
+        '`during` takes at most 3 arguments, 5 provided after:\nr.now()\n',
       );
     }
   });
 
   it('`date` should work', async () => {
-    let result = await r
-      .now()
-      .date()
-      .hours()
-      .run();
+    let result = await r.now().date().hours().run();
     assert.equal(result, 0);
 
-    result = await r
-      .now()
-      .date()
-      .minutes()
-      .run();
+    result = await r.now().date().minutes().run();
     assert.equal(result, 0);
 
-    result = await r
-      .now()
-      .date()
-      .seconds()
-      .run();
+    result = await r.now().date().seconds().run();
     assert.equal(result, 0);
   });
 
   it('`timeOfDay` should work', async () => {
-    const result = await r
-      .now()
-      .timeOfDay()
-      .run();
+    const result = await r.now().timeOfDay().run();
     assert(result >= 0);
   });
 
@@ -388,18 +347,12 @@ describe('dates and times', () => {
   });
 
   it('`toISO8601` should work', async () => {
-    const result = await r
-      .now()
-      .toISO8601()
-      .run();
+    const result = await r.now().toISO8601().run();
     assert.equal(typeof result, 'string');
   });
 
   it('`toEpochTime` should work', async () => {
-    const result = await r
-      .now()
-      .toEpochTime()
-      .run();
+    const result = await r.now().toEpochTime().run();
     assert.equal(typeof result, 'number');
   });
 
@@ -427,30 +380,13 @@ describe('dates and times', () => {
         r.september,
         r.october,
         r.november,
-        r.december
+        r.december,
       ])
       .run();
-    assert.deepEqual(result, [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12
-    ]);
+    assert.deepEqual(
+      result,
+      [1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    );
   });
 
   it('`epochTime` should work', async () => {

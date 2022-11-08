@@ -15,10 +15,7 @@ describe('writing data', () => {
     const result1 = await r.dbCreate(dbName).run();
     assert.equal(result1.dbs_created, 1);
 
-    const result2 = await r
-      .db(dbName)
-      .tableCreate(tableName)
-      .run();
+    const result2 = await r.db(dbName).tableCreate(tableName).run();
     assert.equal(result2.tables_created, 1);
   });
 
@@ -27,11 +24,7 @@ describe('writing data', () => {
   });
 
   it('`insert` should work - single insert`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({})
-      .run();
+    let result = await r.db(dbName).table(tableName).insert({}).run();
     assert.equal(result.inserted, 1);
 
     result = await r
@@ -43,11 +36,7 @@ describe('writing data', () => {
   });
 
   it('`insert` should work - batch insert 1`', async () => {
-    const result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert([{}, {}])
-      .run();
+    const result = await r.db(dbName).table(tableName).insert([{}, {}]).run();
     assert.equal(result.inserted, 2);
   });
 
@@ -134,20 +123,12 @@ describe('writing data', () => {
   it('`insert` should throw if no argument is given', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .insert()
-        .run();
+      await r.db(dbName).table(tableName).insert().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`insert` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`insert\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -169,9 +150,9 @@ describe('writing data', () => {
         {
           name: 'Michel',
           age: 27,
-          birthdate: new Date()
+          birthdate: new Date(),
         },
-        { name: 'Sophie', age: 23 }
+        { name: 'Sophie', age: 23 },
       ])
       .run();
     assert.deepEqual(result.inserted, 2);
@@ -184,7 +165,7 @@ describe('writing data', () => {
       .insert({
         field: 'test',
         field2: { nested: 'test' },
-        date: new Date()
+        date: new Date(),
       })
       .run();
     assert.deepEqual(result.inserted, 1);
@@ -197,7 +178,7 @@ describe('writing data', () => {
       .insert({
         field: 'test',
         field2: { nested: 'test' },
-        date: r.now()
+        date: r.now(),
       })
       .run();
     assert.deepEqual(result.inserted, 1);
@@ -215,8 +196,8 @@ describe('writing data', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in:'
-        )
+          'Unrecognized optional argument `non_valid_key` in:',
+        ),
       );
     }
   });
@@ -226,7 +207,7 @@ describe('writing data', () => {
       .db(dbName)
       .table(tableName)
       .insert({
-        count: 7
+        count: 7,
       })
       .run();
     const savedId = result.generated_keys[0];
@@ -236,45 +217,33 @@ describe('writing data', () => {
       .insert(
         {
           id: savedId,
-          count: 10
+          count: 10,
         },
         {
           conflict: (id, oldDoc, newDoc) =>
             newDoc.merge({
-              count: newDoc('count').add(oldDoc('count'))
-            })
-        }
+              count: newDoc('count').add(oldDoc('count')),
+            }),
+        },
       )
       .run();
     assert.equal(result.replaced, 1);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(savedId)
-      .run();
+    result = await r.db(dbName).table(tableName).get(savedId).run();
     assert.deepEqual(result, {
       id: savedId,
-      count: 17
+      count: 17,
     });
   });
 
   it('`replace` should throw if no argument is given', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .replace()
-        .run();
+      await r.db(dbName).table(tableName).replace().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`replace` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`replace\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -290,40 +259,24 @@ describe('writing data', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in:'
-        )
+          'Unrecognized optional argument `non_valid_key` in:',
+        ),
       );
     }
   });
 
   it('`delete` should work`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result.deleted > 0);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    result = await r.db(dbName).table(tableName).delete().run();
     assert.equal(result.deleted, 0);
   });
 
   it('`delete` should work -- soft durability`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({})
-      .run();
+    result = await r.db(dbName).table(tableName).insert({}).run();
     assert(result);
 
     result = await r
@@ -333,33 +286,17 @@ describe('writing data', () => {
       .run();
     assert.equal(result.deleted, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({})
-      .run();
+    result = await r.db(dbName).table(tableName).insert({}).run();
     assert(result);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    result = await r.db(dbName).table(tableName).delete().run();
     assert.equal(result.deleted, 1);
   });
 
   it('`delete` should work -- hard durability`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({})
-      .run();
+    result = await r.db(dbName).table(tableName).insert({}).run();
     assert(result);
 
     result = await r
@@ -369,18 +306,10 @@ describe('writing data', () => {
       .run();
     assert.equal(result.deleted, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({})
-      .run();
+    result = await r.db(dbName).table(tableName).insert({}).run();
     assert(result);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    result = await r.db(dbName).table(tableName).delete().run();
     assert.equal(result.deleted, 1);
   });
 
@@ -396,24 +325,16 @@ describe('writing data', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in:'
-        )
+          'Unrecognized optional argument `non_valid_key` in:',
+        ),
       );
     }
   });
 
   it('`update` should work - point update`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -424,20 +345,12 @@ describe('writing data', () => {
       .run();
     assert.equal(result.replaced, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`update` should work - range update`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
     result = await r
       .db(dbName)
@@ -446,39 +359,19 @@ describe('writing data', () => {
       .run();
     assert(result);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .update({ foo: 'bar' })
-      .run();
+    result = await r.db(dbName).table(tableName).update({ foo: 'bar' }).run();
     assert.equal(result.replaced, 2);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(2)
-      .run();
+    result = await r.db(dbName).table(tableName).get(2).run();
     assert.deepEqual(result, { id: 2, foo: 'bar' });
   });
 
   it('`update` should work - soft durability`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -489,26 +382,14 @@ describe('writing data', () => {
       .run();
     assert.equal(result.replaced, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`update` should work - hard durability`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -519,26 +400,14 @@ describe('writing data', () => {
       .run();
     assert.equal(result.replaced, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`update` should work - returnChanges true', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -551,26 +420,14 @@ describe('writing data', () => {
     assert.deepEqual(result.changes[0].new_val, { id: 1, foo: 'bar' });
     assert.deepEqual(result.changes[0].old_val, { id: 1 });
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`update` should work - returnChanges false`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -583,31 +440,19 @@ describe('writing data', () => {
     assert.equal(result.changes, undefined);
     assert.equal(result.changes, undefined);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`update` should throw if no argument is given', async () => {
     try {
       // @ts-ignore
-      await r
-        .db(dbName)
-        .table(tableName)
-        .update()
-        .run();
+      await r.db(dbName).table(tableName).update().run();
       assert.fail('should throw');
     } catch (e) {
       assert.equal(
         e.message,
-        '`update` takes at least 1 argument, 0 provided after:\nr.db("' +
-          dbName +
-          '").table("' +
-          tableName +
-          '")\n'
+        `\`update\` takes at least 1 argument, 0 provided after:\nr.db("${dbName}").table("${tableName}")\n`,
       );
     }
   });
@@ -624,24 +469,16 @@ describe('writing data', () => {
     } catch (e) {
       assert(
         e.message.startsWith(
-          'Unrecognized optional argument `non_valid_key` in:'
-        )
+          'Unrecognized optional argument `non_valid_key` in:',
+        ),
       );
     }
   });
 
   it('`replace` should work - point replace`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -652,20 +489,12 @@ describe('writing data', () => {
       .run();
     assert.equal(result.replaced, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`replace` should work - range replace`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
     result = await r
       .db(dbName)
@@ -677,37 +506,21 @@ describe('writing data', () => {
     result = await r
       .db(dbName)
       .table(tableName)
-      .replace(row => row.merge({ foo: 'bar' }))
+      .replace((row) => row.merge({ foo: 'bar' }))
       .run();
     assert.equal(result.replaced, 2);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(2)
-      .run();
+    result = await r.db(dbName).table(tableName).get(2).run();
     assert.deepEqual(result, { id: 2, foo: 'bar' });
   });
 
   it('`replace` should work - soft durability`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -718,26 +531,14 @@ describe('writing data', () => {
       .run();
     assert.equal(result.replaced, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`replace` should work - hard durability`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -748,26 +549,14 @@ describe('writing data', () => {
       .run();
     assert.equal(result.replaced, 1);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`replace` should work - returnChanges true', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -780,26 +569,14 @@ describe('writing data', () => {
     assert.deepEqual(result.changes[0].new_val, { id: 1, foo: 'bar' });
     assert.deepEqual(result.changes[0].old_val, { id: 1 });
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 
   it('`replace` should work - returnChanges false`', async () => {
-    let result = await r
-      .db(dbName)
-      .table(tableName)
-      .delete()
-      .run();
+    let result = await r.db(dbName).table(tableName).delete().run();
     assert(result);
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .insert({ id: 1 })
-      .run();
+    result = await r.db(dbName).table(tableName).insert({ id: 1 }).run();
     assert(result);
 
     result = await r
@@ -812,11 +589,7 @@ describe('writing data', () => {
     assert.equal(result.changes, undefined);
     assert.equal(result.changes, undefined);
 
-    result = await r
-      .db(dbName)
-      .table(tableName)
-      .get(1)
-      .run();
+    result = await r.db(dbName).table(tableName).get(1).run();
     assert.deepEqual(result, { id: 1, foo: 'bar' });
   });
 });
