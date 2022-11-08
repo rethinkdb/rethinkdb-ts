@@ -277,18 +277,20 @@ export class RethinkDBSocket extends EventEmitter {
   }
 
   private async performHandshake() {
-    let token = 0;
-    const generateRunningQuery = () => {
-      this.runningQueries.set(token++, {
-        data: new DataQueue(),
-        query: [QueryType.START],
-      });
-    };
     if (!this.socket || this.status !== 'handshake') {
       throw new RethinkDBError('Connection is not open', {
         type: RethinkDBErrorType.CONNECTION,
       });
     }
+
+    let token = 0;
+    const generateRunningQuery = () => {
+      this.runningQueries.set(token, {
+        data: new DataQueue(),
+        query: [QueryType.START],
+      });
+      token += 1;
+    };
     const { randomString, authBuffer } = buildAuthBuffer(this.user);
     generateRunningQuery();
     generateRunningQuery();
@@ -311,7 +313,7 @@ export class RethinkDBSocket extends EventEmitter {
   private handleHandshakeData() {
     let index = -1;
     while ((index = this.buffer.indexOf(0)) >= 0) {
-      const strMsg = this.buffer.slice(0, index).toString('utf8');
+      const strMsg = this.buffer.subarray(0, index).toString('utf8');
       const { data = null } = this.runningQueries.get(this.nextToken++) || {};
       let error: RethinkDBError | undefined;
       try {
@@ -337,7 +339,7 @@ export class RethinkDBSocket extends EventEmitter {
         }
         this.handleError(error);
       }
-      this.buffer = this.buffer.slice(index + 1);
+      this.buffer = this.buffer.subarray(index + 1);
       index = this.buffer.indexOf(0);
     }
   }
@@ -352,11 +354,11 @@ export class RethinkDBSocket extends EventEmitter {
         break;
       }
 
-      const responseBuffer = this.buffer.slice(12, 12 + responseLength);
+      const responseBuffer = this.buffer.subarray(12, 12 + responseLength);
       const response: ResponseJson = JSON.parse(
         responseBuffer.toString('utf8'),
       );
-      this.buffer = this.buffer.slice(12 + responseLength);
+      this.buffer = this.buffer.subarray(12 + responseLength);
       const { data = null } = this.runningQueries.get(token) || {};
       if (data) {
         data.enqueue(response);
