@@ -6,7 +6,7 @@ export { r } from './query-builder/r';
 export { isQuery, RQuery } from './query-builder/query';
 export * from './types';
 export { isRethinkDBError } from './error';
-export { isCursor } from './response/cursor';
+export * from './response/cursor';
 export * from './connection';
 export * from './connection/connection';
 
