@@ -33,21 +33,22 @@ describe('pool legacy', () => {
 
   it('`createPool` should create a PoolMaster and `getPoolMaster` should return it', async () => {
     assert.ok(pool, 'expected an instance of pool master');
-    assert.equal(pool.getPools().length, 1, 'expected number of pools is 1',
-    );
+    assert.equal(pool.getPools().length, 1, 'expected number of pools is 1');
   });
 
   it('The pool should create a buffer', async () => {
     const result = await new Promise((resolve, reject) => {
       setTimeout(() => {
         const numConnections = pool.getAvailableLength();
-        numConnections >= options.buffer
-          ? resolve(numConnections)
-          : reject(
-              new Error(
-                'expected number of connections to equal option.buffer within 250 msecs',
-              ),
-            );
+        if (numConnections >= options.buffer) {
+          resolve(numConnections);
+        } else {
+          reject(
+            new Error(
+              'expected number of connections to equal option.buffer within 250 msecs',
+            ),
+          );
+        }
       }, 50);
     });
     assert.equal(
@@ -66,7 +67,9 @@ describe('pool legacy', () => {
         .map((expr) => pool.run(expr)),
     );
     assert.deepEqual(result1, Array(numExpr).fill(1));
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 200);
+    });
     const numConnections = pool.getAvailableLength();
     assert.ok(
       numConnections >= options.buffer + numExpr,
@@ -89,7 +92,9 @@ describe('pool legacy', () => {
     let result = [];
     for (let i = 0; i <= options.max; i++) {
       result.push(pool.run(r.expr(1)));
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 100);
+      });
     }
     result = await Promise.all(result);
     assert.deepEqual(result, Array(options.max + 1).fill(1));
@@ -147,51 +152,15 @@ describe('pool legacy', () => {
     assert.equal(pool.getLength(), 0);
   });
 
-  it('If the pool cannot create a connection, it should reject queries', async () => {
-    await r
-      .connectPool({
-        servers: [{ host: 'notarealhost' }],
-        buffer: 1,
-        max: 2,
-        silent: true,
-      })
-      .catch(() => undefined);
-    try {
-      const notARealPool = await connectPool(
-        [{ host: 'notarealhost' }],
-        {
-          db: 'test',
-          buffer: 1,
-          max: 2,
-          silent: true,
-        },
-      );
-      await notARealPool.run(r.expr(1));
-      if (notARealPool) {
-        await notARealPool.drain();
-      }
-      await r.expr(1).run();
-      assert.fail('should throw');
-    } catch (e) {
-      assert.equal(
-        e.message,
-        'None of the pools have an opened connection and failed to open a new one.',
-      );
-    }
-    await r.getPoolMaster().drain();
-  });
-
   it('If the driver cannot create a connection, it should reject queries - timeout', async () => {
-    await r
-      .connectPool({
-        servers: [{ host: 'notarealhost' }],
+    try {
+      const firstPool = await connectPool([{ host: 'notarealhost' }], {
+        db: 'test',
         buffer: 1,
         max: 2,
         silent: true,
-      })
-      .catch(() => undefined);
-    try {
-      await r.expr(1).run();
+      });
+      await firstPool.run(r.expr(1));
       assert.fail('should throw');
     } catch (e) {
       assert.match(e.message, /Error initializing master pool/);
