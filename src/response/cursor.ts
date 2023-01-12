@@ -22,7 +22,7 @@ export class Cursor extends Readable implements RCursor {
 
   private includeStates = false;
 
-  private closed = false;
+  private _closed = false;
 
   private emitting = false;
 
@@ -105,12 +105,12 @@ export class Cursor extends Readable implements RCursor {
   }
 
   public async close() {
-    if (!this.closed) {
+    if (!this._closed) {
       if (this.conn.status === 'open') {
         this.conn.stopQuery(this.token);
       }
       this.emitting = false;
-      this.closed = true;
+      this._closed = true;
     }
   }
 
@@ -121,7 +121,7 @@ export class Cursor extends Readable implements RCursor {
         { type: RethinkDBErrorType.CURSOR },
       );
     }
-    if (this.closed) {
+    if (this._closed) {
       throw new RethinkDBError(
         `You cannot call \`next\` on a closed ${this.type}`,
         { type: RethinkDBErrorType.CURSOR },
@@ -161,7 +161,7 @@ export class Cursor extends Readable implements RCursor {
         { type: RethinkDBErrorType.CURSOR },
       );
     }
-    if (this.closed) {
+    if (this._closed) {
       cb(
         new RethinkDBError(
           'You cannot retrieve data from a cursor that is closed',
@@ -176,7 +176,7 @@ export class Cursor extends Readable implements RCursor {
     let resume = true;
     let err: RethinkDBError | undefined;
     let next: any;
-    while (resume !== false && !this.closed) {
+    while (resume !== false && !this._closed) {
       err = undefined;
       try {
         next = await this.next();
@@ -203,7 +203,7 @@ export class Cursor extends Readable implements RCursor {
         { type: RethinkDBErrorType.CURSOR },
       );
     }
-    if (this.closed) {
+    if (this._closed) {
       throw new RethinkDBError(
         'You cannot retrieve data from a cursor that is closed',
         { type: RethinkDBErrorType.CURSOR },
@@ -211,7 +211,7 @@ export class Cursor extends Readable implements RCursor {
     }
     let nextRow: any;
     try {
-      while (!this.closed) {
+      while (!this._closed) {
         nextRow = await this.next();
         if (rowHandler.length > 1) {
           await new Promise<void>((resolve, reject) => {
@@ -264,7 +264,7 @@ export class Cursor extends Readable implements RCursor {
       return this.results;
     } catch (error) {
       this.emitting = false;
-      this.closed = true;
+      this._closed = true;
       this.results = undefined;
       this.hasNextBatch = false;
       throw error;
@@ -274,7 +274,7 @@ export class Cursor extends Readable implements RCursor {
   public [Symbol.asyncIterator](): AsyncIterableIterator<any> {
     return {
       next: async () => {
-        if (this.closed) {
+        if (this._closed) {
           return { done: true, value: undefined };
         }
         try {
@@ -299,7 +299,7 @@ export class Cursor extends Readable implements RCursor {
   private async _next() {
     if (this.lastError) {
       this.emitting = false;
-      this.closed = true;
+      this._closed = true;
       this.results = undefined;
       this.hasNextBatch = false;
       throw this.lastError;
@@ -329,7 +329,7 @@ export class Cursor extends Readable implements RCursor {
       this.position += 1;
       return next;
     } catch (error) {
-      this.closed = true;
+      this._closed = true;
       throw error;
     }
   }
