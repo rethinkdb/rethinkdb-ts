@@ -70,7 +70,6 @@ export class ServerConnectionPool extends EventEmitter {
     this.log = log;
     this.serverOptions = setConnectionDefaults(connectionOptions);
     this.connParam = { db, user, password, timeout, pingInterval, silent, log };
-    this.connections = [];
   }
 
   public eventNames(): string[] {
