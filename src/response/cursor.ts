@@ -154,12 +154,9 @@ export class Cursor<T = any> extends Readable {
       );
     }
     if (this.type.endsWith('Feed')) {
-      throw new RethinkDBError(
-        'You cannot call `toArray` on a change Feed.',
-        {
-          type: RethinkDBErrorType.CURSOR,
-        },
-      );
+      throw new RethinkDBError('You cannot call `toArray` on a change Feed.', {
+        type: RethinkDBErrorType.CURSOR,
+      });
     }
     const all: T[] = [];
     await this.eachAsync(async (row) => {
