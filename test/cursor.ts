@@ -1,4 +1,5 @@
 import assert from 'assert';
+import Stream from 'stream';
 import {
   Changes,
   Connection,
@@ -884,5 +885,48 @@ describe('cursor', () => {
     await r.db(dbName).table(tableName2).insert({ foo: value }).run();
     result = await promise;
     assert(result.new_val.foo === value);
+  });
+
+  it('pipes all objects', async () => {
+    // create fresh db/table for testing
+    dbName = uuid();
+    tableName = uuid();
+
+    result = await r.dbCreate(dbName).run();
+    assert.equal(result.dbs_created, 1);
+
+    result = await r.db(dbName).tableCreate(tableName).run();
+    assert.equal(result.tables_created, 1);
+
+    // fill it up with some records
+    result = await r
+      .db(dbName)
+      .table(tableName)
+      .insert(r.expr(Array(numDocs).fill({})))
+      .run();
+
+    // try to pipe() it into a "Writable stream"
+    cursor = await r.db(dbName).table(tableName).getCursor();
+
+    const retrieved = [];
+
+    const writeStream = new Stream.Writable({
+      objectMode: true,
+      write(obj, encoding, next) {
+        retrieved.push(obj);
+        setTimeout(next, 0);
+      },
+    });
+
+    cursor.pipe(writeStream);
+
+    return new Promise((resolve, reject) => {
+      writeStream
+        .on('finish', () => {
+          assert.equal(retrieved.length, numDocs);
+          resolve();
+        })
+        .on('error', reject);
+    });
   });
 });
