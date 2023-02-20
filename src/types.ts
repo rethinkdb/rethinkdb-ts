@@ -1006,6 +1006,8 @@ export interface RTable<T = any> extends RSelection<T> {
     options?: { index: string },
   ): RSelection<T>;
   getAll(...params: Array<string | { index: string }>): RSelection<T>;
+  // TODO a document id can be an array, for example
+  getAll(...params: Array<any | { index: string }>): RSelection<T>;
 
   between(
     lowKey: any,
