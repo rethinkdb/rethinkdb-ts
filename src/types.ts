@@ -460,7 +460,10 @@ export interface RDatum<T = any> extends RQuery<T> {
   nth(
     attribute: RValue<number>,
   ): T extends Array<infer T1> ? RDatum<T1> : never;
-  default<U>(value: RValue<U>): RDatum<NonNullable<T> | U>;
+  default<U>(value: RValue<U>): RDatum<Exclude<T, null | undefined>>;
+  hasFields(
+    field: RDatum<string>,
+  ): T extends Array<infer _T1> ? RDatum<T> : RDatum<boolean>;
   hasFields(
     ...fields: MultiFieldSelector[]
   ): T extends Array<infer T1> ? RDatum<T> : RDatum<boolean>;
@@ -693,6 +696,10 @@ export interface RDatum<T = any> extends RQuery<T> {
   ceil(): T extends number ? RDatum<number> : never;
   floor(): T extends number ? RDatum<number> : never;
   // Works only for bool
+  branch<U, V>(
+    trueBranch: RValue<U>,
+    falseBranch: RValue<V>,
+  ): T extends boolean ? RDatum<U | V> : never;
   branch(
     trueBranch: any,
     falseBranchOrTest: any,
@@ -822,14 +829,24 @@ export interface RStream<T = any> extends RQuery<T[]> {
       U | ((row: RDatum<T>) => any) | { index?: string; multi?: boolean }
     >
   ): T extends Array<infer T1> ? RDatum : never; // <GroupResults<T[U], T[]>>;
+  group<U extends keyof T>(
+    ...fieldOrFunc: Array<
+      U | ((row: RDatum<T>) => any) | { index?: string; multi?: boolean }
+    >
+  ): RDatum<GroupResults<any, T>>; // <GroupResults<T[U], T[]>>;
 
   // SELECT FUNCTIONS
   count(value?: RValue<T> | Func<T, boolean>): RDatum<number>;
+  count<U = T extends RDatum<GroupResults<any, any>> ? RDatum<T> : never>(
+    value?: RValue<U> | Func<U, boolean>,
+  ): RDatum<Array<GroupResults<any, number>>>;
+
   sum(value?: RValue<T> | Func<T, number | null>): RDatum<number>;
   avg(value?: RValue<T> | Func<T, number | null>): RDatum<number>;
   min(
     value?: RValue<T> | Func<T, number | null> | { index: string },
   ): RDatum<number>;
+  min(value: { index: string }): RDatum<T>;
   max(
     value?: RValue<T> | Func<T, number | null> | { index: string },
   ): RDatum<number>;
@@ -928,7 +945,7 @@ export interface RSingleSelection<T = any> extends RDatum<T> {
     options?: UpdateOptions,
   ): RDatum<WriteResult<T>>;
   delete(options?: DeleteOptions): RDatum<WriteResult<T>>;
-  changes(options?: ChangesOptions): RFeed<Changes<T>>;
+  changes(options?: ChangesOptions): RFeed<Changes<T | null>>;
 }
 
 export interface RSelection<T = any> extends RStream<T> {
@@ -1861,14 +1878,20 @@ export interface R {
   ceil(datum: RValue<number>): RDatum<number>;
   floor(datum: RValue<number>): RDatum<number>;
   // Works only for bool
+  branch<U, V>(
+    datum: RValue<boolean>,
+    trueBranch: RValue<U>,
+    falseBranch: RValue<V>,
+  ): RDatum<U | V>;
   branch(
     datum: RValue<boolean>,
     trueBranch: any,
     falseBranchOrTest: any,
     ...branches: any[]
   ): RDatum;
+
   and(datum: RValue<boolean>, ...bool: Array<RValue<boolean>>): RDatum<boolean>;
-  or(datum: RValue<boolean>, ...bool: Array<RValue<boolean>>): RDatum<boolean>;
+  or(...bool: Array<RValue<boolean>>): RDatum<boolean>;
   not(datum: RValue<boolean>): RDatum<boolean>;
   // Works only for Date
   inTimezone(datum: RValue<Date>, timezone: string): RDatum<Date>;
