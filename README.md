@@ -49,8 +49,9 @@ const conn = await r.connect(options);
       port: 21085,
       tls: true,
       ca: caCert,
-      rejectUnauthorized: false
-   } 
+      // If your certificate common name doesn't match the host:
+      // checkServerIdentity() {}
+   }
 }
 ```
 The options for standard connections is described [here](https://nodejs.org/dist/latest-v10.x/docs/api/net.html#net_net_createconnection_options_connectlistener).
