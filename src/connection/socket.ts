@@ -96,7 +96,11 @@ export class RethinkDBSocket extends EventEmitter {
       const socket = await new Promise<Socket>((resolve, reject) => {
         if (tls) {
           let socket = tlsConnect(options);
-          socket.once('secureConnect', () => resolve(socket));
+          socket.once('secureConnect', () => {
+            if (socket.authorized) {
+              resolve(socket);
+            }
+          });
           socket.once("error", reject);
         } else {
           let socket = netConnect(options);
