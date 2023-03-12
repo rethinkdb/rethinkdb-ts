@@ -91,13 +91,13 @@ export class RethinkDBSocket extends EventEmitter {
         type: RethinkDBErrorType.CONNECTION,
       });
     }
-    const { tls = false, ...options } = this.connectionOptions;
+    const options = this.connectionOptions;
     try {
       const socket = await new Promise<Socket>((resolve, reject) => {
-        if (tls) {
+        if (options.tls) {
           let socket = tlsConnect(options);
           socket.once('secureConnect', () => {
-            if (socket.authorized) {
+            if (socket.authorized || options.rejectUnauthorized === false) {
               resolve(socket);
             } else {
               reject(socket.authorizationError);
