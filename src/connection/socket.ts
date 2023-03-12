@@ -99,9 +99,12 @@ export class RethinkDBSocket extends EventEmitter {
           socket.once('secureConnect', () => {
             if (socket.authorized) {
               resolve(socket);
+            } else {
+              reject(socket.authorizationError);
+              socket.destroy();
             }
           });
-          socket.once("error", reject);
+          socket.once('error', reject);
         } else {
           let socket = netConnect(options);
           socket.once('connect', () => resolve(socket));
