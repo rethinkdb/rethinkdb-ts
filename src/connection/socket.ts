@@ -91,14 +91,27 @@ export class RethinkDBSocket extends EventEmitter {
         type: RethinkDBErrorType.CONNECTION,
       });
     }
-    const { tls = false, ...options } = this.connectionOptions;
+    const options = this.connectionOptions;
     try {
       const socket = await new Promise<Socket>((resolve, reject) => {
-        const s = tls
-          ? tlsConnect(options)
-          : netConnect(options as TcpNetConnectOpts);
-        s.once('connect', () => resolve(s)).once('error', reject);
+        if (options.tls) {
+          let socket = tlsConnect(options);
+          socket.once('secureConnect', () => {
+            if (socket.authorized || options.rejectUnauthorized === false) {
+              resolve(socket);
+            } else {
+              reject(socket.authorizationError);
+              socket.destroy();
+            }
+          });
+          socket.once('error', reject);
+        } else {
+          let socket = netConnect(options);
+          socket.once('connect', () => resolve(socket));
+          socket.once("error", reject);
+        }
       });
+
       socket.removeAllListeners();
       socket
         .on('close', () => this.close())
@@ -121,21 +134,10 @@ export class RethinkDBSocket extends EventEmitter {
             this.handleError(error);
           }
         });
+
       socket.setKeepAlive(true);
       this.socket = socket;
-      await new Promise<void>((resolve, reject) => {
-        socket.once('connect', resolve);
-        socket.once('error', reject);
-        if (socket.destroyed) {
-          socket.removeListener('connect', resolve);
-          socket.removeListener('error', reject);
-          reject(this.lastError);
-        } else if (!socket.connecting) {
-          socket.removeListener('connect', resolve);
-          socket.removeListener('error', reject);
-          resolve();
-        }
-      });
+
       this.isOpen = true;
       this.lastError = undefined;
       await this.performHandshake();
