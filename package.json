@@ -16,7 +16,7 @@
     "test": "test"
   },
   "engines": {
-    "node": ">=12.x <=18.x"
+    "node": ">=16.x <=20.x"
   },
   "scripts": {
     "prepare": "husky install && tsc",
