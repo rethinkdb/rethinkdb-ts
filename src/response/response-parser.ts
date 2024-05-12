@@ -67,7 +67,7 @@ export function getNativeTypes(
     }
   }
   return Object.entries(obj).reduce((acc: any, [key, val]) => {
-    acc[key] = getNativeTypes(val);
+    acc[key] = getNativeTypes(val, { binaryFormat, groupFormat, timeFormat });
     return acc;
   }, {});
 }
