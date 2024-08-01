@@ -250,14 +250,26 @@ describe('accessing-reql', () => {
     const result3 = await r.now().run(connection, { timeFormat: 'raw' });
     // @ts-ignore
     assert.equal(result3.$reql_type$, 'TIME');
+
+    const result4 = await r
+      .expr({ date: r.now() })
+      .run(connection, { timeFormat: 'raw' });
+    // @ts-ignore
+    assert.equal(result4.date.$reql_type$, 'TIME');
   });
 
   it('`binaryFormat` should work', async () => {
-    const result = await r
+    const result1 = await r
       .binary(Buffer.from([1, 2, 3]))
       .run(connection, { binaryFormat: 'raw' });
     // @ts-ignore
-    assert.equal(result.$reql_type$, 'BINARY');
+    assert.equal(result1.$reql_type$, 'BINARY');
+
+    const result2 = await r
+      .expr({ binary: r.binary(Buffer.from([3, 2, 1])) })
+      .run(connection, { binaryFormat: 'raw' });
+    // @ts-ignore
+    assert.equal(result2.binary.$reql_type$, 'BINARY');
   });
 
   it('`groupFormat` should work', async () => {
