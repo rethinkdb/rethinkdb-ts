@@ -271,7 +271,9 @@ export class Cursor extends Readable implements RCursor {
     }
   }
 
-  public [Symbol.asyncIterator](): AsyncIterableIterator<any> {
+  public [Symbol.asyncIterator](): ReturnType<
+    Readable[typeof Symbol.asyncIterator]
+  > {
     return {
       next: async () => {
         if (this._closed) {
@@ -293,7 +295,7 @@ export class Cursor extends Readable implements RCursor {
           throw error;
         }
       },
-    } as AsyncIterableIterator<any>;
+    } as ReturnType<Readable[typeof Symbol.asyncIterator]>;
   }
 
   private async _next() {
